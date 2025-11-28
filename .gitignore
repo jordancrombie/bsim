@@ -149,3 +149,6 @@ certs/*.csr
 !certs/.gitkeep
 certs/*.bak
 certs/*.intermediates
+
+# AWS Deployment Notes (contains sensitive info)
+AWS_DEPLOYMENT_NOTES.md
