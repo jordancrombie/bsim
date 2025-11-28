@@ -69,6 +69,40 @@ class ApiClient {
     return response.data;
   }
 
+  // Passkey API
+  async generatePasskeyRegistrationOptions(): Promise<any> {
+    const response = await this.client.post('/auth/passkey/register-options');
+    return response.data;
+  }
+
+  async verifyPasskeyRegistration(credential: any): Promise<any> {
+    const response = await this.client.post('/auth/passkey/register-verify', credential);
+    return response.data;
+  }
+
+  async generatePasskeyAuthenticationOptions(email?: string): Promise<any> {
+    const response = await this.client.post('/auth/passkey/login-options', { email });
+    return response.data;
+  }
+
+  async verifyPasskeyAuthentication(email: string | undefined, credential: any): Promise<AuthResponse> {
+    const response = await this.client.post<AuthResponse>('/auth/passkey/login-verify', {
+      email,
+      response: credential,
+    });
+    return response.data;
+  }
+
+  async getUserPasskeys(): Promise<{ passkeys: any[] }> {
+    const response = await this.client.get('/auth/passkeys');
+    return response.data;
+  }
+
+  async deletePasskey(passkeyId: string): Promise<{ message: string }> {
+    const response = await this.client.delete(`/auth/passkeys/${passkeyId}`);
+    return response.data;
+  }
+
   // Accounts API
   async getAccounts(): Promise<AccountsResponse> {
     const response = await this.client.get<AccountsResponse>('/accounts');

@@ -1,7 +1,12 @@
 import { Response, NextFunction } from 'express';
 import { AuthService } from '../services/AuthService';
+import { PasskeyService } from '../services/PasskeyService';
 import { AuthRequest } from '../middleware/auth';
 import { z } from 'zod';
+import type {
+  RegistrationResponseJSON,
+  AuthenticationResponseJSON,
+} from '@simplewebauthn/server/script/deps';
 
 const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -16,7 +21,10 @@ const loginSchema = z.object({
 });
 
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private passkeyService: PasskeyService
+  ) {}
 
   register = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -62,6 +70,144 @@ export class AuthController {
       }
 
       res.status(200).json({ user });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // Passkey registration - Generate options
+  generatePasskeyRegistrationOptions = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      if (!req.user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const options = await this.passkeyService.generateRegistrationOptions(req.user.userId);
+      res.status(200).json(options);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // Passkey registration - Verify response
+  verifyPasskeyRegistration = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      if (!req.user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const result = await this.passkeyService.verifyRegistration(
+        req.user.userId,
+        req.body as RegistrationResponseJSON
+      );
+
+      if (!result.verified) {
+        res.status(400).json({ error: 'Failed to verify passkey registration' });
+        return;
+      }
+
+      res.status(201).json({
+        verified: true,
+        message: 'Passkey registered successfully',
+        passkey: result.passkey,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // Passkey authentication - Generate options
+  generatePasskeyAuthenticationOptions = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { email } = req.body;
+      const options = await this.passkeyService.generateAuthenticationOptions(email);
+      res.status(200).json(options);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // Passkey authentication - Verify response
+  verifyPasskeyAuthentication = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { email, response } = req.body;
+      const result = await this.passkeyService.verifyAuthentication(
+        response as AuthenticationResponseJSON,
+        email
+      );
+
+      if (!result.verified || !result.user) {
+        res.status(401).json({ error: 'Failed to verify passkey authentication' });
+        return;
+      }
+
+      // Generate JWT token for the authenticated user
+      const token = this.authService.generateToken(result.user.id);
+
+      res.status(200).json({
+        token,
+        user: {
+          id: result.user.id,
+          email: result.user.email,
+          firstName: result.user.firstName,
+          lastName: result.user.lastName,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // Get user's passkeys
+  getUserPasskeys = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!req.user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const passkeys = await this.passkeyService.getUserPasskeys(req.user.userId);
+      res.status(200).json({ passkeys });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // Delete a passkey
+  deletePasskey = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!req.user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const { passkeyId } = req.params;
+      const deleted = await this.passkeyService.deletePasskey(passkeyId, req.user.userId);
+
+      if (!deleted) {
+        res.status(404).json({ error: 'Passkey not found' });
+        return;
+      }
+
+      res.status(200).json({ message: 'Passkey deleted successfully' });
     } catch (error) {
       next(error);
     }

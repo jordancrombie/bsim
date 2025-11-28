@@ -1,4 +1,7 @@
 import express from 'express';
+import https from 'https';
+import fs from 'fs';
+import path from 'path';
 import cors from 'cors';
 import { config } from './config/env';
 import { getPrismaClient } from './config/database';
@@ -12,6 +15,7 @@ import { PrismaTransactionRepository } from './repositories/postgres/PrismaTrans
 // Services
 import { AuthService } from './services/AuthService';
 import { AccountService } from './services/AccountService';
+import { PasskeyService } from './services/PasskeyService';
 
 // Controllers
 import { AuthController } from './controllers/authController';
@@ -39,9 +43,10 @@ const transactionRepository = new PrismaTransactionRepository(prisma);
 // Services
 const authService = new AuthService(userRepository);
 const accountService = new AccountService(accountRepository, transactionRepository);
+const passkeyService = new PasskeyService(userRepository, prisma);
 
 // Controllers
-const authController = new AuthController(authService);
+const authController = new AuthController(authService, passkeyService);
 const accountController = new AccountController(accountService);
 
 // Routes
@@ -59,11 +64,32 @@ app.use(errorHandler);
 
 // Start server
 const PORT = config.port;
-app.listen(PORT, () => {
-  console.log(`BSIM Backend API running on port ${PORT}`);
-  console.log(`Environment: ${config.nodeEnv}`);
-  console.log(`CORS origin: ${config.cors.origin}`);
-});
+const USE_HTTPS = process.env.USE_HTTPS === 'true';
+const DOMAIN = process.env.DOMAIN || 'localhost';
+
+if (USE_HTTPS) {
+  // HTTPS server with SSL certificates
+  const certPath = path.join(__dirname, '../../certs');
+  const httpsOptions = {
+    key: fs.readFileSync(path.join(certPath, 'banksim.ca.key')),
+    cert: fs.readFileSync(path.join(certPath, 'banksim.ca.crt')),
+  };
+
+  https.createServer(httpsOptions, app).listen(PORT, () => {
+    console.log(`🔒 BSIM Backend API running with HTTPS`);
+    console.log(`   Local:          https://localhost:${PORT}`);
+    console.log(`   Network:        https://${DOMAIN}:${PORT}`);
+    console.log(`   Environment:    ${config.nodeEnv}`);
+    console.log(`   WebAuthn RP ID: ${process.env.RP_ID || DOMAIN}`);
+  });
+} else {
+  // HTTP server (development only)
+  app.listen(PORT, () => {
+    console.log(`BSIM Backend API running on http://localhost:${PORT}`);
+    console.log(`Environment: ${config.nodeEnv}`);
+    console.log(`CORS origin: ${config.cors.origin}`);
+  });
+}
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {

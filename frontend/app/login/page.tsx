@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import { authenticateWithPasskey, isPlatformAuthenticatorAvailable } from '@/lib/passkey';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,6 +12,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
+  const [passkeyAvailable, setPasskeyAvailable] = useState(false);
+
+  useEffect(() => {
+    // Check if platform authenticator is available
+    isPlatformAuthenticatorAvailable().then(setPasskeyAvailable);
+  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -29,6 +37,29 @@ export default function LoginPage() {
       setError(err.response?.data?.error || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePasskeyLogin = async () => {
+    setError('');
+    setPasskeyLoading(true);
+
+    try {
+      const result = await authenticateWithPasskey(email || undefined);
+
+      if (result.success && result.token) {
+        // Store token
+        localStorage.setItem('token', result.token);
+
+        // Redirect to dashboard
+        router.push('/dashboard');
+      } else {
+        setError(result.error || 'Passkey authentication failed');
+      }
+    } catch (err: any) {
+      setError('Passkey authentication failed. Please try again.');
+    } finally {
+      setPasskeyLoading(false);
     }
   };
 
@@ -79,12 +110,38 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || passkeyLoading}
             className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
+
+        {passkeyAvailable && (
+          <>
+            <div className="mt-6 relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <button
+                onClick={handlePasskeyLogin}
+                disabled={loading || passkeyLoading}
+                className="w-full bg-white text-gray-700 py-3 px-4 rounded-lg border-2 border-indigo-600 hover:bg-indigo-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                {passkeyLoading ? 'Authenticating...' : 'Sign in with Passkey'}
+              </button>
+            </div>
+          </>
+        )}
 
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">

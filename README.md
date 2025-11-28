@@ -1,34 +1,56 @@
 # BSIM - Banking Simulator
 
-A full-stack banking simulator application with user authentication, account management, and transaction processing. Built with TypeScript, Express.js, PostgreSQL, and Next.js (frontend coming soon).
+A full-stack banking simulator application with passwordless authentication (WebAuthn/passkeys), account management, and transaction processing. Built with TypeScript, Express.js, PostgreSQL, and Next.js.
 
 ## Features
 
-- 🔐 User authentication with JWT
+- 🔐 **Passwordless Authentication** with WebAuthn/Passkeys (biometric login)
+- 🔑 JWT token-based sessions
 - 💰 Account creation and management
 - 📊 Transaction tracking (deposits, withdrawals, transfers)
 - 🗄️ PostgreSQL database with Prisma ORM
-- 🐳 Docker support for easy development
+- 🐳 **Full Docker containerization** for development and production
+- 🚀 **AWS ECS Fargate deployment ready**
 - 🏗️ Clean architecture with repository pattern
+- 🔒 HTTPS support with configurable domain names
 - 🔄 Database-agnostic design (easy to swap PostgreSQL for MongoDB)
 
 ## Quick Start
 
-### Prerequisites
+### Option 1: Docker Compose (Recommended)
 
+The fastest way to run the entire stack locally:
+
+```bash
+# Start all services (database, backend, frontend)
+docker compose up -d
+
+# View logs
+docker compose logs -f
+
+# Stop all services
+docker compose down
+```
+
+Access the application:
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:3001
+- **Database**: localhost:5432
+
+### Option 2: Local Development
+
+#### Prerequisites
 - Node.js 18+
 - Docker Desktop (for PostgreSQL)
 
-### 1. Start the Database
+#### 1. Start the Database
 
 ```bash
 # Start Docker Desktop first, then:
 ./scripts/db.sh start
 ```
 
-This starts a PostgreSQL container ready for development.
-
-### 2. Set Up and Run Backend
+#### 2. Set Up and Run Backend
 
 ```bash
 cd backend
@@ -46,28 +68,34 @@ npm run dev
 
 The API will be available at `http://localhost:3001`
 
-### 3. Test the API
+#### 3. Set Up and Run Frontend
 
 ```bash
-# Check health
-curl http://localhost:3001/health
+cd frontend
 
-# Register a user
-curl -X POST http://localhost:3001/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "test@example.com",
-    "password": "password123",
-    "firstName": "John",
-    "lastName": "Doe"
-  }'
+# Install dependencies
+npm install
+
+# Start the development server
+npm run dev
 ```
+
+The frontend will be available at `http://localhost:3000`
+
+### Testing the Application
+
+Visit http://localhost:3000 and try:
+1. **Sign Up** - Create an account using passkey/biometric authentication
+2. **Create Account** - Set up a banking account
+3. **Make Transactions** - Test deposits, withdrawals, and transfers
 
 ## Documentation
 
 - **[QUICKSTART.md](QUICKSTART.md)** - Get started in 5 minutes
 - **[BACKEND_SETUP.md](BACKEND_SETUP.md)** - Detailed backend documentation
 - **[IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md)** - Full architecture overview
+- **[DOCKER_README.md](DOCKER_README.md)** - Docker setup and usage
+- **[AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md)** - Deploy to AWS ECS Fargate
 
 ## Project Structure
 
@@ -93,9 +121,11 @@ bsim/
 
 ## API Endpoints
 
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login and get JWT token
+### Authentication (WebAuthn/Passkeys)
+- `POST /api/passkeys/register-options` - Get passkey registration options
+- `POST /api/passkeys/register-verify` - Verify and complete passkey registration
+- `POST /api/passkeys/login-options` - Get passkey login options
+- `POST /api/passkeys/login-verify` - Verify passkey and get JWT token
 - `GET /api/auth/me` - Get current user (protected)
 
 ### Accounts
@@ -175,11 +205,13 @@ Controllers → Services → Repositories → Database
 - bcrypt - Password hashing
 - Zod - Validation
 
-**Frontend (Coming Soon):**
-- Next.js 14
-- React
+**Frontend:**
+- Next.js 14 (App Router)
+- React 18
+- TypeScript
 - Tailwind CSS
-- Axios
+- WebAuthn/Passkeys API
+- Axios for API calls
 
 ## Environment Variables
 
@@ -195,13 +227,23 @@ NODE_ENV="development"
 
 ⚠️ **Important:** Change `JWT_SECRET` to a secure random string in production!
 
-## Next Steps
+## Deployment
+
+See [AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md) for complete instructions on deploying to AWS ECS Fargate.
+
+See [DOCKER_README.md](DOCKER_README.md) for Docker containerization details.
+
+## Roadmap
 
 - [x] Backend API implementation
-- [x] Docker setup for PostgreSQL
-- [ ] Next.js frontend
+- [x] PostgreSQL database with Prisma ORM
+- [x] WebAuthn/Passkey authentication
+- [x] Next.js frontend
+- [x] Full Docker containerization
+- [x] AWS deployment documentation
+- [ ] CI/CD pipeline setup
 - [ ] Mobile app support
-- [ ] Production deployment
+- [ ] Additional banking features (loans, investments, etc.)
 
 ## License
 

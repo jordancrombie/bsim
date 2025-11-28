@@ -78,4 +78,9 @@ export class AuthService {
   async getUserById(userId: string): Promise<User | null> {
     return this.userRepository.findById(userId);
   }
+
+  generateToken(userId: string): string {
+    const user = this.userRepository.findById(userId);
+    return generateToken({ userId, email: '' });
+  }
 }
