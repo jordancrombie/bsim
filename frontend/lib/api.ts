@@ -13,14 +13,25 @@ import type {
   TransferRequest,
 } from '@/types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+// Use relative URL so it works with any subdomain
+// When accessing from https://banksim.ca, calls https://banksim.ca/api
+// When accessing from https://testing.banksim.ca, calls https://testing.banksim.ca/api
+const getApiUrl = (): string => {
+  // In browser, use relative URL to current domain
+  if (typeof window !== 'undefined') {
+    return '/api';
+  }
+
+  // During SSR, use environment variable or fallback
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+};
 
 class ApiClient {
   private client: AxiosInstance;
 
   constructor() {
     this.client = axios.create({
-      baseURL: API_URL,
+      baseURL: getApiUrl(),
       headers: {
         'Content-Type': 'application/json',
       },

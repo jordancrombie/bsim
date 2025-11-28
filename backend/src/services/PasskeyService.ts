@@ -21,14 +21,40 @@ const RP_NAME = 'BSIM Banking Simulator';
 const DOMAIN = process.env.DOMAIN || 'localhost';
 const FRONTEND_PORT = process.env.FRONTEND_PORT || '3000';
 const RP_ID = process.env.RP_ID || DOMAIN;
-const ORIGIN = process.env.ORIGIN || `https://${DOMAIN}:${FRONTEND_PORT}`;
 
-// Build allowed origins dynamically from domain
-const ALLOWED_ORIGINS = [
-  `https://localhost:${FRONTEND_PORT}`,
-  `https://${DOMAIN}:${FRONTEND_PORT}`,
-  `http://localhost:${FRONTEND_PORT}`, // Fallback for development
-].filter((origin, index, self) => self.indexOf(origin) === index); // Remove duplicates
+// Build origin - don't include port for standard HTTPS (443) or HTTP (80)
+const buildOrigin = () => {
+  if (process.env.ORIGIN) return process.env.ORIGIN;
+
+  const isStandardPort = FRONTEND_PORT === '443' || FRONTEND_PORT === '80';
+  const protocol = FRONTEND_PORT === '80' ? 'http' : 'https';
+
+  return isStandardPort
+    ? `${protocol}://${DOMAIN}`
+    : `${protocol}://${DOMAIN}:${FRONTEND_PORT}`;
+};
+
+const ORIGIN = buildOrigin();
+
+// Build allowed origins dynamically
+const buildAllowedOrigins = () => {
+  const origins = [
+    ORIGIN, // Primary origin
+    `https://localhost`,
+    `https://banksim.ca`,
+    `https://${DOMAIN}`,
+  ];
+
+  // Add non-standard ports if needed
+  if (FRONTEND_PORT !== '443' && FRONTEND_PORT !== '80') {
+    origins.push(`https://localhost:${FRONTEND_PORT}`);
+    origins.push(`https://${DOMAIN}:${FRONTEND_PORT}`);
+  }
+
+  return [...new Set(origins)]; // Remove duplicates
+};
+
+const ALLOWED_ORIGINS = buildAllowedOrigins();
 
 interface StoredPasskey {
   id: string;
