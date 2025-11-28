@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Full Docker containerization for all services
 - Multi-stage Docker builds for production optimization
 - Docker Compose for local development stack
+- nginx reverse proxy for SSL termination
 - AWS ECS Fargate deployment documentation
 - HTTPS support with configurable domain names
 - OpenSSL integration for Prisma in Docker
@@ -25,12 +26,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Frontend API client with Axios
 - Protected routes with authentication middleware
 - Responsive mobile-first design
+- Dynamic subdomain support (*.banksim.ca)
+- Relative API URLs for cross-subdomain compatibility
 
 ### Changed
 - Migrated from password authentication to WebAuthn/passkeys
 - Updated API endpoints to support passkey authentication
 - Enhanced security with passwordless biometric authentication
 - Improved Docker setup with health checks and non-root users
+- Frontend API client now uses relative URLs instead of hardcoded domain
+- Backend CORS configured with dynamic subdomain validation
 
 ### Fixed
 - TypeScript compilation errors in production Docker builds
@@ -39,6 +44,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WebAuthn credential type compatibility
 - React.Node type error in Next.js layout
 - Docker OpenSSL compatibility for Prisma
+- SSL certificate chain configuration for nginx
+- CORS errors when accessing from different subdomains
+- Browser caching issues with stale JavaScript files
+- Cross-origin API requests when using subdomain URLs
 
 ## [0.1.0] - 2025-11-28
 

@@ -28,8 +28,37 @@ import { createTransactionRoutes } from './routes/transactionRoutes';
 
 const app = express();
 
+// CORS configuration that supports subdomains
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    // Get allowed origins from config
+    const allowedOrigins = Array.isArray(config.cors.origin) ? config.cors.origin : [config.cors.origin];
+
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    // Check if origin matches *.banksim.ca pattern
+    const domain = process.env.DOMAIN || 'banksim.ca';
+    const subdomainPattern = new RegExp(`^https://[a-zA-Z0-9-]+\\.${domain.replace('.', '\\.')}$`);
+    if (subdomainPattern.test(origin)) {
+      return callback(null, true);
+    }
+
+    // Otherwise, reject
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+};
+
 // Middleware
-app.use(cors({ origin: config.cors.origin }));
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Initialize dependencies

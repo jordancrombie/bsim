@@ -12,7 +12,8 @@ A full-stack banking simulator application with passwordless authentication (Web
 - 🐳 **Full Docker containerization** for development and production
 - 🚀 **AWS ECS Fargate deployment ready**
 - 🏗️ Clean architecture with repository pattern
-- 🔒 HTTPS support with configurable domain names
+- 🔒 HTTPS support with configurable domain names and wildcard subdomains
+- 🌐 Dynamic subdomain support (works with any *.domain.com)
 - 🔄 Database-agnostic design (easy to swap PostgreSQL for MongoDB)
 
 ## Quick Start
@@ -33,9 +34,12 @@ docker compose down
 ```
 
 Access the application:
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:3001
+- **Frontend (HTTPS)**: https://localhost
+- **Backend API (HTTPS)**: https://localhost/api/health
+- **HTTP**: http://localhost (redirects to HTTPS)
 - **Database**: localhost:5432
+
+Note: The application runs with SSL/HTTPS using nginx as a reverse proxy. See [DOCKER_SSL_SETUP.md](DOCKER_SSL_SETUP.md) for details.
 
 ### Option 2: Local Development
 
@@ -95,6 +99,7 @@ Visit http://localhost:3000 and try:
 - **[BACKEND_SETUP.md](BACKEND_SETUP.md)** - Detailed backend documentation
 - **[IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md)** - Full architecture overview
 - **[DOCKER_README.md](DOCKER_README.md)** - Docker setup and usage
+- **[DOCKER_SSL_SETUP.md](DOCKER_SSL_SETUP.md)** - SSL/HTTPS configuration for local and AWS
 - **[AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md)** - Deploy to AWS ECS Fargate
 
 ## Project Structure
