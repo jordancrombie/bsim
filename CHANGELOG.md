@@ -8,24 +8,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Next.js 14 frontend with TypeScript and Tailwind CSS
-- Frontend API client with Axios for backend communication
-- Authentication pages (login and signup)
-- Protected dashboard with navigation
-- Dashboard home page with account overview
-- Accounts page with create account modal
-- Account summary cards showing total balance
-- Responsive UI with modern design
-- TypeScript types for all API requests and responses
-- Client-side JWT token management
-- Protected routes with authentication checks
-- Loading states and error handling
+- WebAuthn/Passkey passwordless authentication system
+- Biometric login support (Face ID, Touch ID, Windows Hello)
+- Complete passkey registration and authentication flow
+- Frontend passkey integration with @simplewebauthn/browser
+- Backend passkey verification with @simplewebauthn/server
+- Next.js 14 frontend with App Router
+- Full Docker containerization for all services
+- Multi-stage Docker builds for production optimization
+- Docker Compose for local development stack
+- AWS ECS Fargate deployment documentation
+- HTTPS support with configurable domain names
+- OpenSSL integration for Prisma in Docker
+- Health checks for all Docker containers
+- Complete frontend UI with dashboard, accounts, and transactions
+- Frontend API client with Axios
+- Protected routes with authentication middleware
+- Responsive mobile-first design
 
 ### Changed
-- N/A
+- Migrated from password authentication to WebAuthn/passkeys
+- Updated API endpoints to support passkey authentication
+- Enhanced security with passwordless biometric authentication
+- Improved Docker setup with health checks and non-root users
 
 ### Fixed
-- N/A
+- TypeScript compilation errors in production Docker builds
+- Prisma Client type issues with User model
+- JWT token type inference issues
+- WebAuthn credential type compatibility
+- React.Node type error in Next.js layout
+- Docker OpenSSL compatibility for Prisma
 
 ## [0.1.0] - 2025-11-28
 

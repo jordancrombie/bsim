@@ -32,17 +32,16 @@ export class PrismaUserRepository implements IUserRepository {
 
     if (!user) return null;
 
-    return {
-      ...new User(
-        user.id,
-        user.email,
-        user.firstName,
-        user.lastName,
-        user.createdAt,
-        user.updatedAt
-      ),
-      password: user.password,
-    };
+    const userInstance = new User(
+      user.id,
+      user.email,
+      user.firstName,
+      user.lastName,
+      user.createdAt,
+      user.updatedAt
+    );
+
+    return Object.assign(userInstance, { password: user.password });
   }
 
   async findById(id: string): Promise<User | null> {

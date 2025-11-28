@@ -140,3 +140,12 @@ vite.config.ts.timestamp-*
 
 # macOS
 .DS_Store
+
+# SSL/TLS Certificates and Private Keys
+certs/*.key
+certs/*.pem
+certs/*.crt
+certs/*.csr
+!certs/.gitkeep
+certs/*.bak
+certs/*.intermediates

@@ -3,16 +3,44 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import { isPlatformAuthenticatorAvailable } from '@/lib/passkey';
+import PasskeyPrompt from '@/components/PasskeyPrompt';
 import type { Account } from '@/types';
 
 export default function DashboardPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showPasskeyPrompt, setShowPasskeyPrompt] = useState(false);
+  const [passkeyAvailable, setPasskeyAvailable] = useState(false);
 
   useEffect(() => {
     loadAccounts();
+    checkPasskeySetup();
   }, []);
+
+  const checkPasskeySetup = async () => {
+    // Check if platform authenticator is available
+    const available = await isPlatformAuthenticatorAvailable();
+    if (!available) return;
+
+    setPasskeyAvailable(true);
+
+    // Check if user has dismissed the prompt permanently
+    const dismissed = localStorage.getItem('passkey-prompt-dismissed');
+    if (dismissed === 'true') return;
+
+    // Check if user has any passkeys
+    try {
+      const response = await api.getUserPasskeys();
+      if (response.passkeys.length === 0) {
+        setShowPasskeyPrompt(true);
+      }
+    } catch (err) {
+      // If error, don't show prompt
+      console.error('Failed to check passkeys:', err);
+    }
+  };
 
   const loadAccounts = async () => {
     try {
@@ -27,12 +55,29 @@ export default function DashboardPage() {
 
   const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0);
 
+  const handlePasskeyDismiss = () => {
+    setShowPasskeyPrompt(false);
+  };
+
+  const handlePasskeySetupComplete = () => {
+    setShowPasskeyPrompt(false);
+    // Could show a success message here if desired
+  };
+
   return (
     <div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-600 mt-2">Welcome to your banking dashboard</p>
       </div>
+
+      {/* Passkey Setup Prompt */}
+      {showPasskeyPrompt && passkeyAvailable && (
+        <PasskeyPrompt
+          onDismiss={handlePasskeyDismiss}
+          onSetupComplete={handlePasskeySetupComplete}
+        />
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

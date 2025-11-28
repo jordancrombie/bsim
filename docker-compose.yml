@@ -1,7 +1,11 @@
+# Docker Compose for BSIM Banking Simulator
+# For local testing and development
+
 services:
-  postgres:
+  # PostgreSQL Database
+  db:
     image: postgres:15-alpine
-    container_name: bsim-postgres
+    container_name: bsim-db
     environment:
       POSTGRES_USER: bsim
       POSTGRES_PASSWORD: bsim_dev_password
@@ -15,7 +19,64 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - bsim-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bsim-backend
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://bsim:bsim_dev_password@db:5432/bsim
+      JWT_SECRET: dev-secret-key-change-in-production
+      JWT_EXPIRES_IN: 7d
+      USE_HTTPS: "false"
+      DOMAIN: localhost
+      FRONTEND_PORT: 3000
+      CORS_ORIGIN: http://localhost:3000,http://frontend:3000
+      RP_ID: localhost
+      ORIGIN: http://localhost:3000
+    ports:
+      - "3001:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - bsim-network
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        npx prisma migrate deploy &&
+        npx prisma generate &&
+        node dist/server.js
+      "
+
+  # Frontend (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: bsim-frontend
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_DOMAIN: localhost
+      NEXT_PUBLIC_BACKEND_PORT: 3001
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - bsim-network
+
+networks:
+  bsim-network:
+    driver: bridge
 
 volumes:
   postgres_data:
-    driver: local
