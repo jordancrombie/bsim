@@ -8,32 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Complete backend API with Express.js and TypeScript
-- User authentication system with JWT tokens
-- Account management (create, list, view)
-- Banking operations (deposit, withdraw, transfer)
-- Transaction history tracking
-- PostgreSQL database with Prisma ORM
-- Repository pattern for database abstraction
-- Docker Compose setup for PostgreSQL
-- Database management script (`scripts/db.sh`)
-- Comprehensive documentation (README, QUICKSTART, BACKEND_SETUP)
-- Makefile for common development tasks
-- Health check endpoint
-- Input validation with Zod
-- Password hashing with bcrypt
-- CORS support for frontend integration
-- Environment variable configuration
+- Next.js 14 frontend with TypeScript and Tailwind CSS
+- Frontend API client with Axios for backend communication
+- Authentication pages (login and signup)
+- Protected dashboard with navigation
+- Dashboard home page with account overview
+- Accounts page with create account modal
+- Account summary cards showing total balance
+- Responsive UI with modern design
+- TypeScript types for all API requests and responses
+- Client-side JWT token management
+- Protected routes with authentication checks
+- Loading states and error handling
 
 ### Changed
-- Updated to Docker Compose V2 syntax (removed hyphen from commands)
-- Removed obsolete `version` field from docker-compose.yml
-- Updated Prisma migration script to use `--name auto` flag
-- Enhanced documentation with Docker Compose V2 commands
+- N/A
 
 ### Fixed
-- Docker Compose V2 compatibility issues
-- Interactive migration prompts in automated scripts
+- N/A
 
 ## [0.1.0] - 2025-11-28
 
