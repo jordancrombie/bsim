@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Settings stored in database via SiteSettings model
   - Shared Docker volume for uploads between admin and backend containers
   - `GET /api/settings` endpoint for frontend to fetch branding
+- **S3 Storage Support** - Production-ready file storage
+  - Amazon S3 integration for logo and file uploads
+  - Automatic fallback to local filesystem when S3 not configured
+  - CloudFront CDN URL support for fast global delivery
+  - S3-compatible endpoint support (MinIO, DigitalOcean Spaces, etc.)
+  - Storage type indicator in admin settings page
+  - Environment variable configuration for easy deployment
 - **Clickable Dashboard Cards** - Admin dashboard stat cards now link to relevant pages
   - Total Users card links to /users
   - Total Admins card links to /admins

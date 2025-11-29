@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 interface SiteSettings {
   logoUrl: string | null;
   siteName: string;
+  storageType?: 'local' | 's3';
 }
 
 export default function SettingsPage() {
@@ -227,6 +228,46 @@ export default function SettingsPage() {
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Storage Info */}
+      <div className="bg-white shadow rounded-lg overflow-hidden mb-6">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-medium text-gray-900">Storage</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Where uploaded files are stored.
+          </p>
+        </div>
+        <div className="px-6 py-4">
+          <div className="flex items-center space-x-3">
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+              settings?.storageType === 's3'
+                ? 'bg-green-100 text-green-800'
+                : 'bg-blue-100 text-blue-800'
+            }`}>
+              {settings?.storageType === 's3' ? (
+                <>
+                  <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.5 17a4.5 4.5 0 01-1.44-8.765 4 4 0 117.78-1.47A4.5 4.5 0 0115.5 17H5.5z" clipRule="evenodd" />
+                  </svg>
+                  Amazon S3
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm11 1H6v8l4-2 4 2V6z" clipRule="evenodd" />
+                  </svg>
+                  Local Storage
+                </>
+              )}
+            </span>
+            <span className="text-sm text-gray-500">
+              {settings?.storageType === 's3'
+                ? 'Files are stored in Amazon S3 for durability and scalability.'
+                : 'Files are stored on the local filesystem. Configure S3 for production.'}
+            </span>
           </div>
         </div>
       </div>

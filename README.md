@@ -276,6 +276,27 @@ NODE_ENV="development"
 
 ⚠️ **Important:** Change `JWT_SECRET` to a secure random string in production!
 
+### S3 Storage (Production)
+
+For production deployments, configure S3 for file storage instead of local filesystem:
+
+```env
+# Storage configuration
+STORAGE_TYPE=s3
+S3_BUCKET=your-bucket-name
+S3_REGION=us-east-1
+S3_ACCESS_KEY_ID=your-access-key
+S3_SECRET_ACCESS_KEY=your-secret-key
+
+# Optional: CloudFront CDN URL for faster delivery
+CLOUDFRONT_URL=https://d123456.cloudfront.net
+
+# Optional: S3-compatible endpoint (MinIO, DigitalOcean Spaces, etc.)
+S3_ENDPOINT=https://your-endpoint.com
+```
+
+When `STORAGE_TYPE` is not set or set to `local`, files are stored in the container's `/app/uploads` directory (shared via Docker volume).
+
 ## Deployment
 
 See [AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md) for complete instructions on deploying to AWS ECS Fargate.
@@ -293,6 +314,7 @@ See [DOCKER_README.md](DOCKER_README.md) for Docker containerization details.
 - [x] Credit card system
 - [x] Admin interface
 - [x] Configurable branding (logo and site name)
+- [x] S3 storage support for production deployments
 - [ ] CI/CD pipeline setup
 - [ ] Mobile app support
 - [ ] Additional banking features (loans, investments, etc.)

@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
-import { writeFile, mkdir, unlink } from 'fs/promises';
-import { existsSync } from 'fs';
+import { uploadFile, deleteFile, getStorageType } from '@/lib/storage';
 import path from 'path';
 
 export const dynamic = 'force-dynamic';
-
-// Directory where logos are stored
-const UPLOAD_DIR = process.env.UPLOAD_DIR || '/app/uploads';
 
 // POST /api/settings/logo - Upload a new logo
 export async function POST(request: NextRequest) {
@@ -35,25 +31,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File must be less than 5MB' }, { status: 400 });
     }
 
-    // Ensure upload directory exists
-    if (!existsSync(UPLOAD_DIR)) {
-      await mkdir(UPLOAD_DIR, { recursive: true });
+    // Get current settings to delete old logo if exists
+    const currentSettings = await prisma.siteSettings.findUnique({
+      where: { id: 'default' },
+    });
+
+    // Delete old logo if it exists
+    if (currentSettings?.logoUrl) {
+      try {
+        await deleteFile(currentSettings.logoUrl);
+      } catch (err) {
+        console.error('Failed to delete old logo:', err);
+        // Continue anyway - don't fail the upload
+      }
     }
 
     // Generate unique filename
     const ext = path.extname(file.name) || '.png';
     const filename = `logo-${Date.now()}${ext}`;
-    const filepath = path.join(UPLOAD_DIR, filename);
 
-    // Convert file to buffer and save
+    // Convert file to buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    await writeFile(filepath, buffer);
+
+    // Upload file (to S3 or local storage)
+    const { url: logoUrl } = await uploadFile(buffer, filename, file.type);
 
     // Update database with new logo URL
-    // The logo is served via the backend API
-    const logoUrl = `/uploads/${filename}`;
-
     await prisma.siteSettings.upsert({
       where: { id: 'default' },
       update: { logoUrl },
@@ -64,7 +68,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ logoUrl });
+    const storageType = getStorageType();
+    console.log(`Logo uploaded successfully to ${storageType}: ${logoUrl}`);
+
+    return NextResponse.json({ logoUrl, storageType });
   } catch (error) {
     console.error('Failed to upload logo:', error);
     return NextResponse.json(
@@ -87,17 +94,12 @@ export async function DELETE() {
       where: { id: 'default' },
     });
 
-    if (settings?.logoUrl && settings.logoUrl.startsWith('/uploads/')) {
-      // Delete the file
-      const filename = settings.logoUrl.replace('/uploads/', '');
-      const filepath = path.join(UPLOAD_DIR, filename);
-
+    if (settings?.logoUrl) {
       try {
-        if (existsSync(filepath)) {
-          await unlink(filepath);
-        }
+        await deleteFile(settings.logoUrl);
       } catch (err) {
         console.error('Failed to delete logo file:', err);
+        // Continue anyway - database should still be updated
       }
     }
 

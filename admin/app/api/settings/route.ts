@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import { getStorageType } from '@/lib/storage';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,6 +26,7 @@ export async function GET() {
     return NextResponse.json({
       logoUrl: settings.logoUrl,
       siteName: settings.siteName,
+      storageType: getStorageType(),
     });
   } catch (error) {
     console.error('Failed to fetch site settings:', error);
