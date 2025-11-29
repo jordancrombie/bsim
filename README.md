@@ -7,7 +7,9 @@ A full-stack banking simulator application with passwordless authentication (Web
 - 🔐 **Passwordless Authentication** with WebAuthn/Passkeys (biometric login)
 - 🔑 JWT token-based sessions
 - 💰 Account creation and management
+- 💳 **Credit Card System** with charges, payments, and refunds
 - 📊 Transaction tracking (deposits, withdrawals, transfers)
+- 🛠️ **Admin Interface** - Separate admin dashboard for user management
 - 🗄️ PostgreSQL database with Prisma ORM
 - 🐳 **Full Docker containerization** for development and production
 - 🚀 **AWS ECS Fargate deployment ready**
@@ -34,7 +36,8 @@ docker compose down
 ```
 
 Access the application:
-- **Frontend (HTTPS)**: https://localhost
+- **Frontend (HTTPS)**: https://localhost (or https://banksim.ca with DNS)
+- **Admin Interface**: https://admin.banksim.ca (requires DNS setup)
 - **Backend API (HTTPS)**: https://localhost/api/health
 - **HTTP**: http://localhost (redirects to HTTPS)
 - **Database**: localhost:5432
@@ -117,11 +120,18 @@ bsim/
 │   │   ├── routes/        # API routes
 │   │   └── utils/         # Helper functions
 │   └── prisma/            # Database schema
-├── frontend/              # Next.js app (coming soon)
+├── frontend/              # Next.js customer-facing app
+├── admin/                 # Next.js admin interface (separate container)
+│   ├── app/              # Next.js App Router pages
+│   │   ├── users/        # User management pages
+│   │   └── api/          # Admin API routes
+│   ├── lib/              # Prisma client
+│   └── prisma/           # Database schema (shared)
 ├── shared/                # Shared types
 ├── scripts/               # Helper scripts
 │   └── db.sh             # Database management
-└── docker-compose.yml     # PostgreSQL container
+├── nginx/                 # nginx reverse proxy config
+└── docker-compose.yml     # Full stack orchestration
 ```
 
 ## API Endpoints
@@ -143,6 +153,35 @@ bsim/
 - `POST /api/transactions/deposit` - Deposit money (protected)
 - `POST /api/transactions/withdraw` - Withdraw money (protected)
 - `POST /api/transactions/transfer` - Transfer between accounts (protected)
+
+### Credit Cards
+- `POST /api/credit-cards` - Create new credit card (protected)
+- `GET /api/credit-cards` - List user's credit cards (protected)
+- `GET /api/credit-cards/:cardNumber` - Get card details (protected)
+- `GET /api/credit-cards/:cardNumber/transactions` - Card transaction history (protected)
+- `POST /api/credit-card-transactions/charge` - Charge to card (protected)
+- `POST /api/credit-card-transactions/payment` - Make payment (protected)
+- `POST /api/credit-card-transactions/refund` - Process refund (protected)
+
+## Admin Interface
+
+The admin interface runs as a separate Next.js application accessible at `https://admin.banksim.ca`.
+
+### Features
+- **Dashboard** - System statistics (users, accounts, credit cards)
+- **User Management** - View all registered users
+- **User Details** - View user's accounts, credit cards, and passkeys
+
+### Access
+```bash
+# With DNS configured for admin.banksim.ca:
+https://admin.banksim.ca
+
+# Or test locally with curl:
+curl --resolve admin.banksim.ca:443:127.0.0.1 https://admin.banksim.ca/
+```
+
+The admin interface connects directly to the PostgreSQL database and runs in its own Docker container for independent deployment and scaling.
 
 ## Development
 
@@ -246,6 +285,8 @@ See [DOCKER_README.md](DOCKER_README.md) for Docker containerization details.
 - [x] Next.js frontend
 - [x] Full Docker containerization
 - [x] AWS deployment documentation
+- [x] Credit card system
+- [x] Admin interface
 - [ ] CI/CD pipeline setup
 - [ ] Mobile app support
 - [ ] Additional banking features (loans, investments, etc.)

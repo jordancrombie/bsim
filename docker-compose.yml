@@ -73,6 +73,22 @@ services:
     networks:
       - bsim-network
 
+  # Admin Interface (Next.js)
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: bsim-admin
+    environment:
+      NODE_ENV: production
+      PORT: 3002
+      DATABASE_URL: postgresql://bsim:bsim_dev_password@db:5432/bsim
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - bsim-network
+
   # Nginx Reverse Proxy (SSL Termination)
   nginx:
     image: nginx:alpine

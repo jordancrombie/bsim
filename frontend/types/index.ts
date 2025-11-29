@@ -92,3 +92,72 @@ export interface TransactionsResponse {
 export interface ErrorResponse {
   error: string;
 }
+
+// Credit Card types
+export interface CreditCard {
+  id: string;
+  cardNumber: string;
+  cardHolder: string;
+  expiryMonth: number;
+  expiryYear: number;
+  cvv: string;
+  creditLimit: number;
+  availableCredit: number;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Credit Card Transaction types
+export enum CreditCardTransactionType {
+  CHARGE = 'CHARGE',
+  PAYMENT = 'PAYMENT',
+  REFUND = 'REFUND',
+}
+
+export interface CreditCardTransaction {
+  id: string;
+  type: CreditCardTransactionType;
+  amount: number;
+  availableAfter: number;
+  description?: string;
+  creditCardId: string;
+  createdAt: string;
+}
+
+// Credit Card API Request types
+export interface CreateCreditCardRequest {
+  creditLimit: number;
+  cardHolder?: string;
+}
+
+export interface ChargeRequest {
+  cardNumber: string;
+  amount: number;
+  description?: string;
+}
+
+export interface PaymentRequest {
+  cardNumber: string;
+  amount: number;
+  description?: string;
+}
+
+export interface RefundRequest {
+  cardNumber: string;
+  amount: number;
+  description?: string;
+}
+
+// Credit Card API Response types
+export interface CreditCardResponse {
+  creditCard: CreditCard;
+}
+
+export interface CreditCardsResponse {
+  creditCards: CreditCard[];
+}
+
+export interface CreditCardTransactionsResponse {
+  transactions: CreditCardTransaction[];
+}
