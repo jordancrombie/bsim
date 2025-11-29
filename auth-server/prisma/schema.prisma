@@ -169,23 +169,24 @@ enum AdminRole {
 
 // OAuth 2.0 / OIDC Clients (Third-party applications)
 model OAuthClient {
-  id            String    @id @default(uuid())
-  clientId      String    @unique
-  clientSecret  String    // bcrypt hashed
-  clientName    String
-  redirectUris  String[]  // Array of allowed redirect URIs
-  grantTypes    String[]  @default(["authorization_code"])
-  responseTypes String[]  @default(["code"])
-  scope         String    // Space-separated allowed scopes
-  logoUri       String?
-  policyUri     String?
-  tosUri        String?
-  contacts      String[]
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                      String    @id @default(uuid())
+  clientId                String    @unique
+  clientSecret            String    // plaintext (oidc-provider does direct comparison)
+  clientName              String
+  redirectUris            String[]  // Array of allowed redirect URIs
+  postLogoutRedirectUris  String[]  @default([]) // For RP-Initiated Logout
+  grantTypes              String[]  @default(["authorization_code"])
+  responseTypes           String[]  @default(["code"])
+  scope                   String    // Space-separated allowed scopes
+  logoUri                 String?
+  policyUri               String?
+  tosUri                  String?
+  contacts                String[]
+  isActive                Boolean   @default(true)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 
-  consents      Consent[]
+  consents                Consent[]
 
   @@map("oauth_clients")
 }

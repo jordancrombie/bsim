@@ -173,9 +173,10 @@ model SiteSettings {
 model OAuthClient {
   id            String    @id @default(uuid())
   clientId      String    @unique
-  clientSecret  String    // bcrypt hashed
+  clientSecret            String    // plaintext (oidc-provider does direct comparison)
   clientName    String
   redirectUris  String[]  // Array of allowed redirect URIs
+  postLogoutRedirectUris  String[]  @default([]) // For RP-Initiated Logout
   grantTypes    String[]  @default(["authorization_code"])
   responseTypes String[]  @default(["code"])
   scope         String    // Space-separated allowed scopes

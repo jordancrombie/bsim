@@ -106,6 +106,7 @@ Visit http://localhost:3000 and try:
 - **[BACKEND_SETUP.md](BACKEND_SETUP.md)** - Detailed backend documentation
 - **[IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md)** - Full architecture overview
 - **[OPENBANKING_PLAN.md](OPENBANKING_PLAN.md)** - Open Banking architecture and implementation
+- **[auth-server/README.md](auth-server/README.md)** - Authorization Server (OIDC) documentation
 - **[DOCKER_README.md](DOCKER_README.md)** - Docker setup and usage
 - **[DOCKER_SSL_SETUP.md](DOCKER_SSL_SETUP.md)** - SSL/HTTPS configuration for local and AWS
 - **[AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md)** - Deploy to AWS ECS Fargate
@@ -254,7 +255,18 @@ curl https://auth.banksim.ca/.well-known/jwks.json
 
 ### Registering OAuth Clients
 
-OAuth clients are stored in the database and loaded dynamically by the authorization server. To register a new client:
+OAuth clients are stored in the database and loaded dynamically by the authorization server.
+
+#### Option 1: Admin Interface (Recommended)
+
+Navigate to **https://auth.banksim.ca/administration** to:
+- View all registered OAuth clients
+- Create new clients with auto-generated secrets
+- Edit client settings (redirect URIs, scopes, branding)
+- Regenerate client secrets
+- Enable/disable clients
+
+#### Option 2: Direct Database Insert
 
 ```bash
 # Generate a secure client secret
@@ -292,7 +304,7 @@ INSERT INTO oauth_clients (
 **Registered Clients:**
 | Client ID | Application | Description |
 |-----------|-------------|-------------|
-| `ssim-client` | SSIM Stock Simulator | Demo third-party app for testing OAuth flow |
+| `ssim-client` | SSIM Store Simulator | Demo third-party app for testing OAuth flow |
 
 ## Development
 
@@ -422,9 +434,10 @@ See [DOCKER_README.md](DOCKER_README.md) for Docker containerization details.
 - [x] Configurable branding (logo and site name)
 - [x] S3 storage support for production deployments
 - [x] Open Banking platform (OAuth 2.0/OIDC, FDX-inspired API)
+- [x] OAuth client administration interface
+- [x] OIDC auto-discovery (`.well-known/openid-configuration`)
 - [ ] CI/CD pipeline setup
 - [ ] Mobile app support
-- [ ] PKCE support for public OAuth clients
 - [ ] Client credentials grant for server-to-server
 - [ ] Additional banking features (loans, investments, etc.)
 

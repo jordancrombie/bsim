@@ -227,11 +227,13 @@ export function createOidcProvider(prisma: PrismaClient): Provider {
       console.log(`[OIDC] Found client in database: ${dbClient.clientName}`);
 
       // Create the client instance by adding it to the provider's store
+      // Note: oidc-provider expects snake_case and converts to camelCase internally
       const clientMetadata = {
         client_id: dbClient.clientId,
         client_secret: dbClient.clientSecret,
         client_name: dbClient.clientName,
         redirect_uris: dbClient.redirectUris,
+        post_logout_redirect_uris: dbClient.postLogoutRedirectUris || [],
         grant_types: dbClient.grantTypes,
         response_types: dbClient.responseTypes,
         scope: dbClient.scope,
