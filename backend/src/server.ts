@@ -31,6 +31,7 @@ import { createAccountRoutes } from './routes/accountRoutes';
 import { createTransactionRoutes } from './routes/transactionRoutes';
 import { createCreditCardRoutes } from './routes/creditCardRoutes';
 import { createCreditCardTransactionRoutes } from './routes/creditCardTransactionRoutes';
+import { createSettingsRoutes } from './routes/settingsRoutes';
 
 const app = express();
 
@@ -67,6 +68,10 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// Serve uploaded files (logos, etc.)
+const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, '../uploads');
+app.use('/uploads', express.static(UPLOAD_DIR));
+
 // Initialize dependencies
 const prisma = getPrismaClient();
 
@@ -94,6 +99,7 @@ app.use('/api/accounts', createAccountRoutes(accountController));
 app.use('/api/transactions', createTransactionRoutes(accountController));
 app.use('/api/credit-cards', createCreditCardRoutes(creditCardController));
 app.use('/api/credit-card-transactions', createCreditCardTransactionRoutes(creditCardController));
+app.use('/api/settings', createSettingsRoutes(prisma));
 
 // Health check
 app.get('/health', (req, res) => {

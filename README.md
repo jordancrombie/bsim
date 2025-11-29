@@ -16,6 +16,7 @@ A full-stack banking simulator application with passwordless authentication (Web
 - 🏗️ Clean architecture with repository pattern
 - 🔒 HTTPS support with configurable domain names and wildcard subdomains
 - 🌐 Dynamic subdomain support (works with any *.domain.com)
+- 🎨 **Configurable branding** - Custom logo and site name via admin interface
 - 🔄 Database-agnostic design (easy to swap PostgreSQL for MongoDB)
 
 ## Quick Start
@@ -163,14 +164,18 @@ bsim/
 - `POST /api/credit-card-transactions/payment` - Make payment (protected)
 - `POST /api/credit-card-transactions/refund` - Process refund (protected)
 
+### Site Settings
+- `GET /api/settings` - Get site settings (logo URL, site name)
+
 ## Admin Interface
 
 The admin interface runs as a separate Next.js application accessible at `https://admin.banksim.ca`.
 
 ### Features
-- **Dashboard** - System statistics (users, accounts, credit cards)
+- **Dashboard** - System statistics (users, accounts, credit cards) with clickable cards
 - **User Management** - View all registered users
 - **User Details** - View user's accounts, credit cards, and passkeys
+- **Site Settings** - Configure site logo and name displayed on user login page
 
 ### Access
 ```bash
@@ -287,6 +292,7 @@ See [DOCKER_README.md](DOCKER_README.md) for Docker containerization details.
 - [x] AWS deployment documentation
 - [x] Credit card system
 - [x] Admin interface
+- [x] Configurable branding (logo and site name)
 - [ ] CI/CD pipeline setup
 - [ ] Mobile app support
 - [ ] Additional banking features (loans, investments, etc.)

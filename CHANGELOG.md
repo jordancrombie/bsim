@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Configurable Site Branding** - Admin-managed logo and site name
+  - Logo displayed on user login page
+  - Logo upload via admin settings page with drag-and-drop support
+  - Configurable site name shown throughout user-facing pages
+  - Settings stored in database via SiteSettings model
+  - Shared Docker volume for uploads between admin and backend containers
+  - `GET /api/settings` endpoint for frontend to fetch branding
+- **Clickable Dashboard Cards** - Admin dashboard stat cards now link to relevant pages
+  - Total Users card links to /users
+  - Total Admins card links to /admins
 - **Credit Card System** - Full credit card management functionality
   - Create credit cards with customizable credit limits
   - Automatic card number generation (Visa-style 16-digit)
@@ -53,6 +63,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Relative API URLs for cross-subdomain compatibility
 
 ### Changed
+- Admin dashboard cards now clickable with hover effects
+- Login page dynamically loads logo and site name from settings API
 - Dashboard updated to 4-column layout with credit card summary
 - Added "Your Credit Cards" section to main dashboard
 - nginx configuration updated with admin subdomain routing
@@ -65,6 +77,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Backend CORS configured with dynamic subdomain validation
 
 ### Fixed
+- Docker volume permissions for logo uploads in admin container
+- Next.js Image component issues with dynamic sources (switched to standard img tags)
 - TypeScript compilation errors in production Docker builds
 - Prisma Client type issues with User model
 - JWT token type inference issues

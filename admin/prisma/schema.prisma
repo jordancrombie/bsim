@@ -110,3 +110,48 @@ enum CreditCardTransactionType {
   PAYMENT
   REFUND
 }
+
+// Admin-specific models (separate from end users)
+model AdminUser {
+  id          String         @id @default(uuid())
+  email       String         @unique
+  firstName   String
+  lastName    String
+  role        AdminRole      @default(ADMIN)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  passkeys    AdminPasskey[]
+
+  @@map("admin_users")
+}
+
+model AdminPasskey {
+  id                  String    @id @default(uuid())
+  adminUserId         String
+  adminUser           AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+  credentialId        String    @unique
+  credentialPublicKey Bytes
+  counter             BigInt
+  deviceType          String
+  backedUp            Boolean
+  transports          String[]
+  createdAt           DateTime  @default(now())
+  lastUsedAt          DateTime?
+
+  @@map("admin_passkeys")
+}
+
+enum AdminRole {
+  ADMIN
+  SUPER_ADMIN
+}
+
+model SiteSettings {
+  id        String   @id @default("default")
+  logoUrl   String?
+  siteName  String   @default("BSIM")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
+}
