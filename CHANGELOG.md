@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **FI User Reference Number** - Unique identifier for Open Banking integrations
+  - New `fi_user_ref` field on User model (UUID, auto-generated)
+  - Database migration to add field and populate existing users
+  - Stable identifier separate from internal user ID for third-party access
+- **Dynamic nginx DNS Resolution** - Eliminates stale IP caching after container restarts
+  - Uses Docker's internal DNS resolver (127.0.0.11) with 10-second TTL
+  - Variable-based proxy_pass for runtime resolution
+  - No more manual nginx restarts needed after rebuilding containers
 - **OAuth Client Administration Interface** - Web UI for managing OAuth clients
   - List all registered OAuth clients at `https://auth.banksim.ca/administration`
   - Create new clients with auto-generated secure secrets
