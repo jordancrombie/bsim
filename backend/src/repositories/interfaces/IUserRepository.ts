@@ -5,6 +5,14 @@ export interface CreateUserDto {
   password: string;
   firstName: string;
   lastName: string;
+  // Customer Information File (CIF) fields
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  dateOfBirth?: Date;
 }
 
 export interface IUserRepository {

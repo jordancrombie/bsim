@@ -5,26 +5,39 @@ This guide walks you through deploying BSIM to AWS using ECS Fargate, RDS Postgr
 ## Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                         AWS Cloud                            │
-│                                                              │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │          Application Load Balancer (ALB)             │   │
-│  │              with AWS Certificate Manager            │   │
-│  └──────────────┬──────────────────────┬────────────────┘   │
-│                 │                      │                     │
-│        ┌────────▼─────────┐   ┌───────▼──────────┐          │
-│        │  ECS Fargate     │   │  ECS Fargate     │          │
-│        │  Frontend        │   │  Backend API     │          │
-│        │  (Next.js)       │   │  (Express.js)    │          │
-│        └────────┬─────────┘   └───────┬──────────┘          │
-│                 │                     │                      │
-│                 │             ┌───────▼──────────┐           │
-│                 └─────────────►  RDS PostgreSQL  │           │
-│                               │   (Managed DB)   │           │
-│                               └──────────────────┘           │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                                AWS Cloud                                      │
+│                                                                               │
+│  ┌────────────────────────────────────────────────────────────────────────┐  │
+│  │                 Application Load Balancer (ALB)                        │  │
+│  │                   with AWS Certificate Manager                         │  │
+│  │   Routes: banksim.ca, admin.*, auth.*, openbanking.*, api.*           │  │
+│  └────┬──────────┬──────────────┬───────────────┬───────────────┬────────┘  │
+│       │          │              │               │               │            │
+│  ┌────▼────┐ ┌───▼────┐  ┌─────▼─────┐  ┌─────▼─────┐  ┌──────▼──────┐     │
+│  │Frontend │ │ Admin  │  │Auth Server│  │OpenBanking│  │  Backend    │     │
+│  │Next.js  │ │Next.js │  │  OIDC     │  │ FDX API   │  │  Express    │     │
+│  │ :3000   │ │ :3002  │  │  :3003    │  │  :3004    │  │   :3001     │     │
+│  └────┬────┘ └───┬────┘  └─────┬─────┘  └─────┬─────┘  └──────┬──────┘     │
+│       │          │             │               │               │            │
+│       └──────────┴─────────────┴───────────────┴───────────────┘            │
+│                                       │                                      │
+│                            ┌──────────▼───────────┐                          │
+│                            │   RDS PostgreSQL     │                          │
+│                            │    (Managed DB)      │                          │
+│                            └──────────────────────┘                          │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
+
+### Services Overview
+
+| Service | Subdomain | Port | Description |
+|---------|-----------|------|-------------|
+| Frontend | banksim.ca | 3000 | Customer-facing Next.js app |
+| Admin | admin.banksim.ca | 3002 | Admin dashboard |
+| Auth Server | auth.banksim.ca | 3003 | OIDC Authorization Server |
+| Open Banking | openbanking.banksim.ca | 3004 | FDX-inspired resource API |
+| Backend | api.banksim.ca | 3001 | Core banking API |
 
 ## Prerequisites
 
@@ -99,25 +112,25 @@ aws rds describe-db-instances \
 ### 2. Set Up Container Registry (ECR)
 
 ```bash
-# Create ECR repositories
+# Create ECR repositories for all services
 aws ecr create-repository --repository-name bsim/backend
 aws ecr create-repository --repository-name bsim/frontend
+aws ecr create-repository --repository-name bsim/admin
+aws ecr create-repository --repository-name bsim/auth-server
+aws ecr create-repository --repository-name bsim/openbanking
 
 # Get ECR login credentials
 aws ecr get-login-password --region us-east-1 | \
   docker login --username AWS --password-stdin ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com
 
-# Build and push backend
-cd backend
-docker build -t bsim/backend .
-docker tag bsim/backend:latest ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bsim/backend:latest
-docker push ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bsim/backend:latest
-
-# Build and push frontend
-cd ../frontend
-docker build -t bsim/frontend .
-docker tag bsim/frontend:latest ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bsim/frontend:latest
-docker push ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bsim/frontend:latest
+# Build and push all services
+for service in backend frontend admin auth-server openbanking; do
+  cd $service
+  docker build -t bsim/$service .
+  docker tag bsim/$service:latest ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bsim/$service:latest
+  docker push ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bsim/$service:latest
+  cd ..
+done
 ```
 
 ### 3. Create ECS Cluster
@@ -126,9 +139,12 @@ docker push ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bsim/frontend:latest
 # Create ECS cluster
 aws ecs create-cluster --cluster-name bsim-cluster
 
-# Create CloudWatch log groups
+# Create CloudWatch log groups for all services
 aws logs create-log-group --log-group-name /ecs/bsim/backend
 aws logs create-log-group --log-group-name /ecs/bsim/frontend
+aws logs create-log-group --log-group-name /ecs/bsim/admin
+aws logs create-log-group --log-group-name /ecs/bsim/auth-server
+aws logs create-log-group --log-group-name /ecs/bsim/openbanking
 ```
 
 ### 4. Create IAM Roles
@@ -295,11 +311,110 @@ Create `frontend-task-definition.json`:
 }
 ```
 
+Create `auth-server-task-definition.json`:
+
+```json
+{
+  "family": "bsim-auth-server",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "auth-server",
+      "image": "ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bsim/auth-server:latest",
+      "portMappings": [
+        {
+          "containerPort": 3003,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "environment": [
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "PORT", "value": "3003" },
+        { "name": "ISSUER", "value": "https://auth.banksim.ca" },
+        { "name": "DATABASE_URL", "value": "postgresql://bsim:YOUR_PASSWORD@RDS_ENDPOINT:5432/bsim" },
+        { "name": "COOKIE_SECRET", "value": "YOUR_COOKIE_SECRET" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/bsim/auth-server",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3003/.well-known/openid-configuration', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})\""],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    }
+  ]
+}
+```
+
+Create `openbanking-task-definition.json`:
+
+```json
+{
+  "family": "bsim-openbanking",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "openbanking",
+      "image": "ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bsim/openbanking:latest",
+      "portMappings": [
+        {
+          "containerPort": 3004,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "environment": [
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "PORT", "value": "3004" },
+        { "name": "DATABASE_URL", "value": "postgresql://bsim:YOUR_PASSWORD@RDS_ENDPOINT:5432/bsim" },
+        { "name": "AUTH_SERVER_ISSUER", "value": "https://auth.banksim.ca" },
+        { "name": "JWKS_URI", "value": "https://auth.banksim.ca/.well-known/jwks.json" },
+        { "name": "CORS_ORIGIN", "value": "*" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/bsim/openbanking",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3004/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})\""],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    }
+  ]
+}
+```
+
 Register task definitions:
 
 ```bash
 aws ecs register-task-definition --cli-input-json file://backend-task-definition.json
 aws ecs register-task-definition --cli-input-json file://frontend-task-definition.json
+aws ecs register-task-definition --cli-input-json file://auth-server-task-definition.json
+aws ecs register-task-definition --cli-input-json file://openbanking-task-definition.json
 ```
 
 ### 6. Create Application Load Balancer
@@ -332,7 +447,7 @@ aws elbv2 create-load-balancer \
   --scheme internet-facing \
   --type application
 
-# Create target groups
+# Create target groups for all services
 aws elbv2 create-target-group \
   --name bsim-backend-tg \
   --protocol HTTP \
@@ -348,6 +463,30 @@ aws elbv2 create-target-group \
   --vpc-id $VPC_ID \
   --target-type ip \
   --health-check-path /
+
+aws elbv2 create-target-group \
+  --name bsim-admin-tg \
+  --protocol HTTP \
+  --port 3002 \
+  --vpc-id $VPC_ID \
+  --target-type ip \
+  --health-check-path /
+
+aws elbv2 create-target-group \
+  --name bsim-auth-server-tg \
+  --protocol HTTP \
+  --port 3003 \
+  --vpc-id $VPC_ID \
+  --target-type ip \
+  --health-check-path /.well-known/openid-configuration
+
+aws elbv2 create-target-group \
+  --name bsim-openbanking-tg \
+  --protocol HTTP \
+  --port 3004 \
+  --vpc-id $VPC_ID \
+  --target-type ip \
+  --health-check-path /health
 ```
 
 ### 7. Request SSL Certificate (AWS Certificate Manager)
@@ -384,6 +523,27 @@ aws elbv2 create-rule \
   --conditions Field=host-header,Values=api.banksim.ca \
   --actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:.../bsim-backend-tg
 
+# Create rule for admin (admin.banksim.ca)
+aws elbv2 create-rule \
+  --listener-arn arn:aws:elasticloadbalancing:... \
+  --priority 2 \
+  --conditions Field=host-header,Values=admin.banksim.ca \
+  --actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:.../bsim-admin-tg
+
+# Create rule for auth server (auth.banksim.ca)
+aws elbv2 create-rule \
+  --listener-arn arn:aws:elasticloadbalancing:... \
+  --priority 3 \
+  --conditions Field=host-header,Values=auth.banksim.ca \
+  --actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:.../bsim-auth-server-tg
+
+# Create rule for open banking API (openbanking.banksim.ca)
+aws elbv2 create-rule \
+  --listener-arn arn:aws:elasticloadbalancing:... \
+  --priority 4 \
+  --conditions Field=host-header,Values=openbanking.banksim.ca \
+  --actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:.../bsim-openbanking-tg
+
 # Create HTTP to HTTPS redirect
 aws elbv2 create-listener \
   --load-balancer-arn arn:aws:elasticloadbalancing:... \
@@ -401,18 +561,14 @@ aws ec2 create-security-group \
   --description "Security group for BSIM ECS tasks" \
   --vpc-id $VPC_ID
 
-# Allow traffic from ALB
-aws ec2 authorize-security-group-ingress \
-  --group-id sg-ecs-xxxxxxxxx \
-  --protocol tcp \
-  --port 3001 \
-  --source-group sg-alb-xxxxxxxxx
-
-aws ec2 authorize-security-group-ingress \
-  --group-id sg-ecs-xxxxxxxxx \
-  --protocol tcp \
-  --port 3000 \
-  --source-group sg-alb-xxxxxxxxx
+# Allow traffic from ALB on all service ports
+for port in 3000 3001 3002 3003 3004; do
+  aws ec2 authorize-security-group-ingress \
+    --group-id sg-ecs-xxxxxxxxx \
+    --protocol tcp \
+    --port $port \
+    --source-group sg-alb-xxxxxxxxx
+done
 
 # Create backend service
 aws ecs create-service \
@@ -433,6 +589,36 @@ aws ecs create-service \
   --launch-type FARGATE \
   --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_1,$SUBNET_2],securityGroups=[sg-ecs-xxxxxxxxx],assignPublicIp=ENABLED}" \
   --load-balancers targetGroupArn=arn:aws:elasticloadbalancing:.../bsim-frontend-tg,containerName=frontend,containerPort=3000
+
+# Create admin service
+aws ecs create-service \
+  --cluster bsim-cluster \
+  --service-name bsim-admin-service \
+  --task-definition bsim-admin \
+  --desired-count 1 \
+  --launch-type FARGATE \
+  --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_1,$SUBNET_2],securityGroups=[sg-ecs-xxxxxxxxx],assignPublicIp=ENABLED}" \
+  --load-balancers targetGroupArn=arn:aws:elasticloadbalancing:.../bsim-admin-tg,containerName=admin,containerPort=3002
+
+# Create auth server service
+aws ecs create-service \
+  --cluster bsim-cluster \
+  --service-name bsim-auth-server-service \
+  --task-definition bsim-auth-server \
+  --desired-count 2 \
+  --launch-type FARGATE \
+  --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_1,$SUBNET_2],securityGroups=[sg-ecs-xxxxxxxxx],assignPublicIp=ENABLED}" \
+  --load-balancers targetGroupArn=arn:aws:elasticloadbalancing:.../bsim-auth-server-tg,containerName=auth-server,containerPort=3003
+
+# Create open banking service
+aws ecs create-service \
+  --cluster bsim-cluster \
+  --service-name bsim-openbanking-service \
+  --task-definition bsim-openbanking \
+  --desired-count 2 \
+  --launch-type FARGATE \
+  --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_1,$SUBNET_2],securityGroups=[sg-ecs-xxxxxxxxx],assignPublicIp=ENABLED}" \
+  --load-balancers targetGroupArn=arn:aws:elasticloadbalancing:.../bsim-openbanking-tg,containerName=openbanking,containerPort=3004
 ```
 
 ### 10. Run Database Migrations
@@ -466,39 +652,46 @@ aws elbv2 describe-load-balancers \
   --output text
 
 # Create Route 53 records (or configure with your DNS provider)
+# All subdomains point to the same ALB, routing is done by listener rules
 # banksim.ca -> ALB (A record alias)
 # api.banksim.ca -> ALB (A record alias)
+# admin.banksim.ca -> ALB (A record alias)
+# auth.banksim.ca -> ALB (A record alias)
+# openbanking.banksim.ca -> ALB (A record alias)
 ```
 
 ## Monitoring and Logs
 
 ```bash
-# View backend logs
+# View logs for each service
 aws logs tail /ecs/bsim/backend --follow
-
-# View frontend logs
 aws logs tail /ecs/bsim/frontend --follow
+aws logs tail /ecs/bsim/admin --follow
+aws logs tail /ecs/bsim/auth-server --follow
+aws logs tail /ecs/bsim/openbanking --follow
 
-# Check service status
+# Check all service statuses
 aws ecs describe-services \
   --cluster bsim-cluster \
-  --services bsim-backend-service bsim-frontend-service
+  --services bsim-backend-service bsim-frontend-service bsim-admin-service bsim-auth-server-service bsim-openbanking-service
 ```
 
 ## Cost Optimization
 
-- **Fargate Tasks**: ~$20-40/month for 2 backend + 2 frontend tasks (256 CPU, 512 MB)
+- **Fargate Tasks**: ~$50-80/month for all 5 services (256 CPU, 512 MB each)
+  - Backend (2 tasks), Frontend (2 tasks), Admin (1 task), Auth Server (2 tasks), Open Banking (2 tasks)
 - **RDS t3.micro**: ~$15/month
 - **ALB**: ~$20/month
 - **Data Transfer**: Variable based on usage
-- **Total Estimated**: ~$60-80/month
+- **Total Estimated**: ~$90-120/month
 
 ### Cost Saving Tips
 
-1. Use fewer Fargate tasks (1 backend + 1 frontend) for development
+1. Use single Fargate task per service for development/staging
 2. Use RDS t4g.micro with Reserved Instance pricing
 3. Enable auto-scaling to scale down during low traffic
 4. Use CloudWatch to monitor and optimize resource usage
+5. Consider combining auth-server and openbanking services in dev environments
 
 ## Security Checklist
 

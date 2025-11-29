@@ -17,11 +17,20 @@ model User {
   password    String
   firstName   String
   lastName    String
+  // Customer Information File (CIF) fields
+  phone       String?
+  address     String?
+  city        String?
+  state       String?
+  postalCode  String?
+  country     String?      @default("Canada")
+  dateOfBirth DateTime?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   accounts    Account[]
   passkeys    Passkey[]
   creditCards CreditCard[]
+  consents    Consent[]
 
   @@map("users")
 }
@@ -154,4 +163,67 @@ model SiteSettings {
   updatedAt DateTime @updatedAt
 
   @@map("site_settings")
+}
+
+// ============================================
+// Open Banking / OAuth 2.0 / OIDC Models
+// ============================================
+
+// OAuth 2.0 / OIDC Clients (Third-party applications)
+model OAuthClient {
+  id            String    @id @default(uuid())
+  clientId      String    @unique
+  clientSecret  String    // bcrypt hashed
+  clientName    String
+  redirectUris  String[]  // Array of allowed redirect URIs
+  grantTypes    String[]  @default(["authorization_code"])
+  responseTypes String[]  @default(["code"])
+  scope         String    // Space-separated allowed scopes
+  logoUri       String?
+  policyUri     String?
+  tosUri        String?
+  contacts      String[]
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  consents      Consent[]
+
+  @@map("oauth_clients")
+}
+
+// User consents for third-party access
+model Consent {
+  id            String      @id @default(uuid())
+  grantId       String      @unique // Used by oidc-provider
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientId      String
+  client        OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  scopes        String[]    // Granted scopes
+  accountIds    String[]    // Specific accounts user consented to share
+  expiresAt     DateTime?   // Consent expiration
+  revokedAt     DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@map("consents")
+}
+
+// OIDC Provider storage for tokens, sessions, etc.
+model OidcPayload {
+  id            String    @id
+  type          String    // 'Session', 'AccessToken', 'AuthorizationCode', etc.
+  payload       Json
+  grantId       String?
+  userCode      String?
+  uid           String?
+  expiresAt     DateTime?
+  consumedAt    DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([grantId])
+  @@index([userCode])
+  @@index([uid])
+  @@map("oidc_payloads")
 }

@@ -117,6 +117,62 @@ export default async function UserDetailPage({
         </div>
       </div>
 
+      {/* Customer Information File (CIF) */}
+      <div className="bg-white shadow rounded-lg overflow-hidden mb-6">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-medium text-gray-900">
+            Customer Information File (CIF)
+          </h2>
+        </div>
+        <div className="px-6 py-4">
+          <dl className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Phone Number</dt>
+              <dd className="mt-1 text-sm text-gray-900">
+                {user.phone || <span className="text-gray-400 italic">Not provided</span>}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Date of Birth</dt>
+              <dd className="mt-1 text-sm text-gray-900">
+                {user.dateOfBirth ? (
+                  new Date(user.dateOfBirth).toLocaleDateString('en-CA', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })
+                ) : (
+                  <span className="text-gray-400 italic">Not provided</span>
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Country</dt>
+              <dd className="mt-1 text-sm text-gray-900">
+                {user.country || <span className="text-gray-400 italic">Not provided</span>}
+              </dd>
+            </div>
+            <div className="md:col-span-2 lg:col-span-3">
+              <dt className="text-sm font-medium text-gray-500">Address</dt>
+              <dd className="mt-1 text-sm text-gray-900">
+                {user.address || user.city || user.state || user.postalCode ? (
+                  <div>
+                    {user.address && <div>{user.address}</div>}
+                    <div>
+                      {[user.city, user.state, user.postalCode]
+                        .filter(Boolean)
+                        .join(', ')}
+                    </div>
+                  </div>
+                ) : (
+                  <span className="text-gray-400 italic">Not provided</span>
+                )}
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+
       {/* Bank Accounts */}
       <div className="bg-white shadow rounded-lg overflow-hidden mb-6">
         <div className="px-6 py-4 border-b border-gray-200">

@@ -8,6 +8,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Open Banking Platform** - Third-party data access via OAuth 2.0/OIDC
+  - Authorization Server at `auth.banksim.ca` with oidc-provider
+  - Open Banking API at `openbanking.banksim.ca` with FDX-inspired endpoints
+  - OAuth 2.0 Authorization Code flow with PKCE for third-party applications
+  - Consent screen for users to approve data access requests
+  - FDX-inspired scopes: `fdx:accountdetailed:read`, `fdx:transactions:read`, `fdx:customercontact:read`
+  - JWT token validation with JWKS support (RS256 signing)
+  - Account selection during consent flow
+  - OAuth client management (registration stored in database)
+  - Dynamic client lookup from database with proper Client instantiation
+  - OIDC discovery endpoint (`/.well-known/openid-configuration`)
+  - New Prisma models: OAuthClient, Consent, OidcPayload
+  - Two new Docker containers: auth-server (port 3003) and openbanking (port 3004)
+- **SSIM Integration** - Stock Simulator OAuth client registered
+  - SSIM can authenticate users via BSIM's authorization server
+  - Full OAuth 2.0 Authorization Code flow with PKCE support
+  - Redirect URIs configured for both production and local development
+- Open Banking API endpoints:
+  - `GET /customers/current` - Get authenticated user's profile
+  - `GET /accounts` - List consented accounts
+  - `GET /accounts/{accountId}` - Account details
+  - `GET /accounts/{accountId}/transactions` - Transaction history
+- Authorization Server endpoints:
+  - `GET /.well-known/openid-configuration` - OIDC discovery
+  - `GET /.well-known/jwks.json` - JSON Web Key Set
+  - `GET /auth` - Authorization endpoint
+  - `POST /token` - Token endpoint
+  - `GET /me` - UserInfo endpoint
+  - `GET /interaction/:uid` - Consent UI
 - **Configurable Site Branding** - Admin-managed logo and site name
   - Logo displayed on user login page
   - Logo upload via admin settings page with drag-and-drop support
@@ -70,6 +99,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Relative API URLs for cross-subdomain compatibility
 
 ### Changed
+- nginx configuration updated with auth.banksim.ca and openbanking.banksim.ca routing
+- Docker Compose now includes auth-server and openbanking services
 - Admin dashboard cards now clickable with hover effects
 - Login page dynamically loads logo and site name from settings API
 - Dashboard updated to 4-column layout with credit card summary

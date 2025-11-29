@@ -10,6 +10,7 @@ A full-stack banking simulator application with passwordless authentication (Web
 - 💳 **Credit Card System** with charges, payments, and refunds
 - 📊 Transaction tracking (deposits, withdrawals, transfers)
 - 🛠️ **Admin Interface** - Separate admin dashboard for user management
+- 🏦 **Open Banking Platform** - OAuth 2.0/OIDC for third-party data access (FDX-inspired)
 - 🗄️ PostgreSQL database with Prisma ORM
 - 🐳 **Full Docker containerization** for development and production
 - 🚀 **AWS ECS Fargate deployment ready**
@@ -39,6 +40,8 @@ docker compose down
 Access the application:
 - **Frontend (HTTPS)**: https://localhost (or https://banksim.ca with DNS)
 - **Admin Interface**: https://admin.banksim.ca (requires DNS setup)
+- **Authorization Server**: https://auth.banksim.ca (OIDC Provider)
+- **Open Banking API**: https://openbanking.banksim.ca (FDX-style API)
 - **Backend API (HTTPS)**: https://localhost/api/health
 - **HTTP**: http://localhost (redirects to HTTPS)
 - **Database**: localhost:5432
@@ -102,6 +105,7 @@ Visit http://localhost:3000 and try:
 - **[QUICKSTART.md](QUICKSTART.md)** - Get started in 5 minutes
 - **[BACKEND_SETUP.md](BACKEND_SETUP.md)** - Detailed backend documentation
 - **[IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md)** - Full architecture overview
+- **[OPENBANKING_PLAN.md](OPENBANKING_PLAN.md)** - Open Banking architecture and implementation
 - **[DOCKER_README.md](DOCKER_README.md)** - Docker setup and usage
 - **[DOCKER_SSL_SETUP.md](DOCKER_SSL_SETUP.md)** - SSL/HTTPS configuration for local and AWS
 - **[AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md)** - Deploy to AWS ECS Fargate
@@ -127,6 +131,20 @@ bsim/
 │   │   ├── users/        # User management pages
 │   │   └── api/          # Admin API routes
 │   ├── lib/              # Prisma client
+│   └── prisma/           # Database schema (shared)
+├── auth-server/           # OpenID Connect Authorization Server
+│   ├── src/
+│   │   ├── config/       # OIDC provider configuration
+│   │   ├── adapters/     # Prisma adapter for token storage
+│   │   ├── routes/       # Interaction routes (login, consent)
+│   │   └── views/        # EJS templates for consent UI
+│   └── prisma/           # Database schema (shared)
+├── openbanking/           # Open Banking API (FDX-inspired)
+│   ├── src/
+│   │   ├── controllers/  # API controllers
+│   │   ├── middleware/   # Token validation
+│   │   ├── services/     # Consent verification
+│   │   └── routes/       # API routes
 │   └── prisma/           # Database schema (shared)
 ├── shared/                # Shared types
 ├── scripts/               # Helper scripts
@@ -187,6 +205,94 @@ curl --resolve admin.banksim.ca:443:127.0.0.1 https://admin.banksim.ca/
 ```
 
 The admin interface connects directly to the PostgreSQL database and runs in its own Docker container for independent deployment and scaling.
+
+## Open Banking Platform
+
+BSIM includes a complete Open Banking implementation allowing third-party applications to access customer data with user consent.
+
+### Architecture
+
+- **Authorization Server** (`auth.banksim.ca`) - OpenID Connect provider using oidc-provider
+- **Resource Server** (`openbanking.banksim.ca`) - FDX-inspired API for account and transaction data
+
+### OAuth 2.0 Flow
+
+1. Third-party app redirects user to Authorization Server
+2. User logs in and sees consent screen with requested scopes
+3. User selects which accounts to share
+4. Authorization code is returned to third-party app
+5. App exchanges code for access token
+6. App calls Open Banking API with access token
+
+### FDX-Inspired Scopes
+
+| Scope | Description |
+|-------|-------------|
+| `openid` | OpenID Connect authentication |
+| `profile` | User profile (name) |
+| `email` | User email address |
+| `fdx:accountdetailed:read` | Read account details and balances |
+| `fdx:transactions:read` | Read transaction history |
+| `fdx:customercontact:read` | Read customer contact information |
+
+### Open Banking API Endpoints
+
+- `GET /customers/current` - Get authenticated user's profile
+- `GET /accounts` - List accounts the user consented to share
+- `GET /accounts/{accountId}` - Get account details and balance
+- `GET /accounts/{accountId}/transactions` - Get transaction history
+
+### OIDC Discovery
+
+```bash
+# Get OIDC configuration
+curl https://auth.banksim.ca/.well-known/openid-configuration
+
+# Get JSON Web Key Set (for token verification)
+curl https://auth.banksim.ca/.well-known/jwks.json
+```
+
+### Registering OAuth Clients
+
+OAuth clients are stored in the database and loaded dynamically by the authorization server. To register a new client:
+
+```bash
+# Generate a secure client secret
+openssl rand -hex 32
+
+# Connect to the database
+docker exec -it bsim-db psql -U bsim
+```
+
+```sql
+INSERT INTO oauth_clients (
+  id, "clientId", "clientSecret", "clientName",
+  "redirectUris", "grantTypes", "responseTypes", scope,
+  "isActive", "createdAt", "updatedAt"
+) VALUES (
+  gen_random_uuid(),
+  'your-client-id',
+  'your-generated-secret',  -- plaintext (not bcrypt hashed)
+  'Your App Name',
+  ARRAY['https://yourapp.com/callback', 'http://localhost:3000/callback'],
+  ARRAY['authorization_code', 'refresh_token'],
+  ARRAY['code'],
+  'openid profile email fdx:accountdetailed:read fdx:transactions:read',
+  true,
+  NOW(), NOW()
+);
+```
+
+**Important Notes:**
+- Client secrets are stored in **plaintext** (oidc-provider performs direct string comparison)
+- Include both production and development redirect URIs
+- The `grantTypes` and `responseTypes` arrays are required for proper OAuth flow
+- Set `isActive` to `true` to enable the client
+
+**Registered Clients:**
+| Client ID | Application | Description |
+|-----------|-------------|-------------|
+| `ssim-client` | SSIM Stock Simulator | Demo third-party app for testing OAuth flow |
 
 ## Development
 
@@ -315,8 +421,11 @@ See [DOCKER_README.md](DOCKER_README.md) for Docker containerization details.
 - [x] Admin interface
 - [x] Configurable branding (logo and site name)
 - [x] S3 storage support for production deployments
+- [x] Open Banking platform (OAuth 2.0/OIDC, FDX-inspired API)
 - [ ] CI/CD pipeline setup
 - [ ] Mobile app support
+- [ ] PKCE support for public OAuth clients
+- [ ] Client credentials grant for server-to-server
 - [ ] Additional banking features (loans, investments, etc.)
 
 ## License
