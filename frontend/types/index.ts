@@ -4,6 +4,14 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
+  // Customer Information File (CIF) fields
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postalCode?: string | null;
+  country?: string | null;
+  dateOfBirth?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -41,6 +49,14 @@ export interface RegisterRequest {
   password: string;
   firstName: string;
   lastName: string;
+  // Customer Information File (CIF) fields
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  dateOfBirth?: string;
 }
 
 export interface LoginRequest {

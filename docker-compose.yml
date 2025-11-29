@@ -110,6 +110,58 @@ services:
         su -s /bin/sh nextjs -c 'node server.js'
       "
 
+  # Authorization Server (OpenID Connect)
+  auth-server:
+    build:
+      context: ./auth-server
+      dockerfile: Dockerfile
+    container_name: bsim-auth
+    environment:
+      NODE_ENV: production
+      PORT: 3003
+      DATABASE_URL: postgresql://bsim:bsim_dev_password@db:5432/bsim
+      ISSUER: https://auth.banksim.ca
+      COOKIE_KEYS: ${COOKIE_KEYS:-dev-cookie-key-1-32chars-long,dev-cookie-key-2-32chars-long}
+      JWKS_SECRET: ${JWKS_SECRET:-dev-jwks-secret-key-change-in-production}
+      CORS_ORIGIN: https://banksim.ca,https://auth.banksim.ca,https://openbanking.banksim.ca,http://localhost:3005
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - bsim-network
+    command: >
+      sh -c "
+        npx prisma generate &&
+        node dist/server.js
+      "
+
+  # Open Banking Resource Server
+  openbanking:
+    build:
+      context: ./openbanking
+      dockerfile: Dockerfile
+    container_name: bsim-openbanking
+    environment:
+      NODE_ENV: production
+      PORT: 3004
+      DATABASE_URL: postgresql://bsim:bsim_dev_password@db:5432/bsim
+      AUTH_SERVER_ISSUER: https://auth.banksim.ca
+      JWKS_URI: http://auth-server:3003/.well-known/jwks.json
+      AUDIENCE: https://openbanking.banksim.ca
+      CORS_ORIGIN: "*"
+    depends_on:
+      auth-server:
+        condition: service_started
+      db:
+        condition: service_healthy
+    networks:
+      - bsim-network
+    command: >
+      sh -c "
+        npx prisma generate &&
+        node dist/server.js
+      "
+
   # Nginx Reverse Proxy (SSL Termination)
   nginx:
     image: nginx:alpine
@@ -123,6 +175,8 @@ services:
     depends_on:
       - backend
       - frontend
+      - auth-server
+      - openbanking
     networks:
       - bsim-network
     healthcheck:

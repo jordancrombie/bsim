@@ -8,6 +8,14 @@ export interface RegisterDto {
   password: string;
   firstName: string;
   lastName: string;
+  // Customer Information File (CIF) fields
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  dateOfBirth?: string; // ISO date string
 }
 
 export interface LoginDto {
@@ -33,12 +41,19 @@ export class AuthService {
     // Hash password
     const hashedPassword = await hashPassword(data.password);
 
-    // Create user
+    // Create user with CIF data
     const user = await this.userRepository.create({
       email: data.email,
       password: hashedPassword,
       firstName: data.firstName,
       lastName: data.lastName,
+      phone: data.phone,
+      address: data.address,
+      city: data.city,
+      state: data.state,
+      postalCode: data.postalCode,
+      country: data.country || 'Canada',
+      dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
     });
 
     // Generate JWT token

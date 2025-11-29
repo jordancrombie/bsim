@@ -12,6 +12,13 @@ export class PrismaUserRepository implements IUserRepository {
         password: data.password,
         firstName: data.firstName,
         lastName: data.lastName,
+        phone: data.phone,
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        postalCode: data.postalCode,
+        country: data.country,
+        dateOfBirth: data.dateOfBirth,
       },
     });
 
@@ -21,7 +28,14 @@ export class PrismaUserRepository implements IUserRepository {
       user.firstName,
       user.lastName,
       user.createdAt,
-      user.updatedAt
+      user.updatedAt,
+      user.phone,
+      user.address,
+      user.city,
+      user.state,
+      user.postalCode,
+      user.country,
+      user.dateOfBirth
     );
   }
 
@@ -38,7 +52,14 @@ export class PrismaUserRepository implements IUserRepository {
       user.firstName,
       user.lastName,
       user.createdAt,
-      user.updatedAt
+      user.updatedAt,
+      user.phone,
+      user.address,
+      user.city,
+      user.state,
+      user.postalCode,
+      user.country,
+      user.dateOfBirth
     );
 
     return Object.assign(userInstance, { password: user.password });
@@ -57,7 +78,14 @@ export class PrismaUserRepository implements IUserRepository {
       user.firstName,
       user.lastName,
       user.createdAt,
-      user.updatedAt
+      user.updatedAt,
+      user.phone,
+      user.address,
+      user.city,
+      user.state,
+      user.postalCode,
+      user.country,
+      user.dateOfBirth
     );
   }
 

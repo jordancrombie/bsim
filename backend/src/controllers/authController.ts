@@ -13,6 +13,14 @@ const registerSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
+  // Customer Information File (CIF) fields - optional
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  postalCode: z.string().optional(),
+  country: z.string().optional(),
+  dateOfBirth: z.string().optional(), // ISO date string
 });
 
 const loginSchema = z.object({
