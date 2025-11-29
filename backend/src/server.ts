@@ -11,20 +11,26 @@ import { errorHandler } from './middleware/errorHandler';
 import { PrismaUserRepository } from './repositories/postgres/PrismaUserRepository';
 import { PrismaAccountRepository } from './repositories/postgres/PrismaAccountRepository';
 import { PrismaTransactionRepository } from './repositories/postgres/PrismaTransactionRepository';
+import { PrismaCreditCardRepository } from './repositories/postgres/PrismaCreditCardRepository';
+import { PrismaCreditCardTransactionRepository } from './repositories/postgres/PrismaCreditCardTransactionRepository';
 
 // Services
 import { AuthService } from './services/AuthService';
 import { AccountService } from './services/AccountService';
 import { PasskeyService } from './services/PasskeyService';
+import { CreditCardService } from './services/CreditCardService';
 
 // Controllers
 import { AuthController } from './controllers/authController';
 import { AccountController } from './controllers/accountController';
+import { CreditCardController } from './controllers/creditCardController';
 
 // Routes
 import { createAuthRoutes } from './routes/authRoutes';
 import { createAccountRoutes } from './routes/accountRoutes';
 import { createTransactionRoutes } from './routes/transactionRoutes';
+import { createCreditCardRoutes } from './routes/creditCardRoutes';
+import { createCreditCardTransactionRoutes } from './routes/creditCardTransactionRoutes';
 
 const app = express();
 
@@ -68,20 +74,26 @@ const prisma = getPrismaClient();
 const userRepository = new PrismaUserRepository(prisma);
 const accountRepository = new PrismaAccountRepository(prisma);
 const transactionRepository = new PrismaTransactionRepository(prisma);
+const creditCardRepository = new PrismaCreditCardRepository(prisma);
+const creditCardTransactionRepository = new PrismaCreditCardTransactionRepository(prisma);
 
 // Services
 const authService = new AuthService(userRepository);
 const accountService = new AccountService(accountRepository, transactionRepository);
 const passkeyService = new PasskeyService(userRepository, prisma);
+const creditCardService = new CreditCardService(creditCardRepository, creditCardTransactionRepository);
 
 // Controllers
 const authController = new AuthController(authService, passkeyService);
 const accountController = new AccountController(accountService);
+const creditCardController = new CreditCardController(creditCardService);
 
 // Routes
 app.use('/api/auth', createAuthRoutes(authController));
 app.use('/api/accounts', createAccountRoutes(accountController));
 app.use('/api/transactions', createTransactionRoutes(accountController));
+app.use('/api/credit-cards', createCreditCardRoutes(creditCardController));
+app.use('/api/credit-card-transactions', createCreditCardTransactionRoutes(creditCardController));
 
 // Health check
 app.get('/health', (req, res) => {

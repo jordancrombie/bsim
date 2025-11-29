@@ -1,0 +1,29 @@
+{
+  "name": "bsim-admin",
+  "version": "0.1.0",
+  "description": "BSIM Banking Simulator - Admin Interface",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3002",
+    "build": "next build",
+    "start": "next start -p 3002",
+    "lint": "next lint",
+    "prisma:generate": "prisma generate"
+  },
+  "dependencies": {
+    "next": "14.2.18",
+    "react": "^18",
+    "react-dom": "^18",
+    "@prisma/client": "^5.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "typescript": "^5",
+    "tailwindcss": "^3.4.1",
+    "postcss": "^8",
+    "autoprefixer": "^10.0.1",
+    "prisma": "^5.7.0"
+  }
+}

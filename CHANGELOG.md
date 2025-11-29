@@ -8,6 +8,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Credit Card System** - Full credit card management functionality
+  - Create credit cards with customizable credit limits
+  - Automatic card number generation (Visa-style 16-digit)
+  - Auto-generated CVV and expiry dates (3 years from creation)
+  - Credit card transactions: CHARGE, PAYMENT, REFUND
+  - Available credit tracking (credit limit minus charges)
+  - Transaction history per card
+  - Beautiful gradient card UI design in dashboard
+- **Admin Interface** - Separate administrative dashboard
+  - Standalone Next.js application on admin.banksim.ca subdomain
+  - User listing with account/card/passkey counts
+  - User detail view with all associated accounts and cards
+  - Dashboard with system statistics
+  - Runs in its own Docker container for independent deployment
+  - Direct database access via Prisma ORM
+- Credit card API endpoints:
+  - `POST /api/credit-cards` - Create new credit card
+  - `GET /api/credit-cards` - List user's credit cards
+  - `GET /api/credit-cards/:cardNumber` - Get card details
+  - `POST /api/credit-card-transactions/charge` - Charge to card
+  - `POST /api/credit-card-transactions/payment` - Make payment
+  - `POST /api/credit-card-transactions/refund` - Process refund
+  - `GET /api/credit-cards/:cardNumber/transactions` - Transaction history
 - WebAuthn/Passkey passwordless authentication system
 - Biometric login support (Face ID, Touch ID, Windows Hello)
 - Complete passkey registration and authentication flow
@@ -30,6 +53,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Relative API URLs for cross-subdomain compatibility
 
 ### Changed
+- Dashboard updated to 4-column layout with credit card summary
+- Added "Your Credit Cards" section to main dashboard
+- nginx configuration updated with admin subdomain routing
+- Docker Compose now includes admin service container
 - Migrated from password authentication to WebAuthn/passkeys
 - Updated API endpoints to support passkey authentication
 - Enhanced security with passwordless biometric authentication

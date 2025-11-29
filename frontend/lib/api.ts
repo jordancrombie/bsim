@@ -11,6 +11,14 @@ import type {
   DepositRequest,
   WithdrawRequest,
   TransferRequest,
+  CreditCard,
+  CreditCardResponse,
+  CreditCardsResponse,
+  CreditCardTransactionsResponse,
+  CreateCreditCardRequest,
+  ChargeRequest,
+  PaymentRequest,
+  RefundRequest,
 } from '@/types';
 
 // Use relative URL so it works with any subdomain
@@ -157,6 +165,45 @@ class ApiClient {
   async healthCheck(): Promise<{ status: string; timestamp: string }> {
     const response = await this.client.get<{ status: string; timestamp: string }>('/health');
     return response.data;
+  }
+
+  // Credit Card endpoints
+  async createCreditCard(data: CreateCreditCardRequest): Promise<CreditCard> {
+    const response = await this.client.post<CreditCardResponse>('/credit-cards', data);
+    return response.data.creditCard;
+  }
+
+  async getCreditCards(): Promise<CreditCard[]> {
+    const response = await this.client.get<CreditCardsResponse>('/credit-cards');
+    return response.data.creditCards;
+  }
+
+  async getCreditCard(cardNumber: string): Promise<CreditCard> {
+    const response = await this.client.get<CreditCardResponse>(`/credit-cards/${cardNumber}`);
+    return response.data.creditCard;
+  }
+
+  async getCreditCardTransactions(cardNumber: string): Promise<CreditCardTransactionsResponse> {
+    const response = await this.client.get<CreditCardTransactionsResponse>(
+      `/credit-cards/${cardNumber}/transactions`
+    );
+    return response.data;
+  }
+
+  // Credit Card Transaction endpoints
+  async chargeCreditCard(data: ChargeRequest): Promise<CreditCard> {
+    const response = await this.client.post<CreditCardResponse>('/credit-card-transactions/charge', data);
+    return response.data.creditCard;
+  }
+
+  async payCreditCard(data: PaymentRequest): Promise<CreditCard> {
+    const response = await this.client.post<CreditCardResponse>('/credit-card-transactions/payment', data);
+    return response.data.creditCard;
+  }
+
+  async refundCreditCard(data: RefundRequest): Promise<CreditCard> {
+    const response = await this.client.post<CreditCardResponse>('/credit-card-transactions/refund', data);
+    return response.data.creditCard;
   }
 }
 

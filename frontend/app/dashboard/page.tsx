@@ -5,10 +5,11 @@ import Link from 'next/link';
 import { api } from '@/lib/api';
 import { isPlatformAuthenticatorAvailable } from '@/lib/passkey';
 import PasskeyPrompt from '@/components/PasskeyPrompt';
-import type { Account } from '@/types';
+import type { Account, CreditCard } from '@/types';
 
 export default function DashboardPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showPasskeyPrompt, setShowPasskeyPrompt] = useState(false);
@@ -16,6 +17,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadAccounts();
+    loadCreditCards();
     checkPasskeySetup();
   }, []);
 
@@ -53,7 +55,18 @@ export default function DashboardPage() {
     }
   };
 
+  const loadCreditCards = async () => {
+    try {
+      const cards = await api.getCreditCards();
+      setCreditCards(cards);
+    } catch (err: any) {
+      console.error('Failed to load credit cards:', err);
+    }
+  };
+
   const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0);
+  const totalAvailableCredit = creditCards.reduce((sum, card) => sum + card.availableCredit, 0);
+  const totalCreditLimit = creditCards.reduce((sum, card) => sum + card.creditLimit, 0);
 
   const handlePasskeyDismiss = () => {
     setShowPasskeyPrompt(false);
@@ -80,7 +93,7 @@ export default function DashboardPage() {
       )}
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
@@ -114,19 +127,36 @@ export default function DashboardPage() {
         <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
+              <p className="text-sm font-medium text-gray-600">Available Credit</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">
+                ${totalAvailableCredit.toFixed(2)}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">of ${totalCreditLimit.toFixed(2)}</p>
+            </div>
+            <div className="bg-purple-100 rounded-full p-3">
+              <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
               <p className="text-sm font-medium text-gray-600">Quick Actions</p>
-              <div className="flex gap-2 mt-2">
+              <div className="flex flex-col gap-2 mt-2">
                 <Link
                   href="/dashboard/accounts"
-                  className="text-sm bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700 transition-colors"
+                  className="text-sm bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700 transition-colors text-center"
                 >
                   New Account
                 </Link>
                 <Link
-                  href="/dashboard/transfer"
-                  className="text-sm bg-white text-indigo-600 px-3 py-1 rounded border border-indigo-600 hover:bg-indigo-50 transition-colors"
+                  href="/dashboard/credit-cards"
+                  className="text-sm bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 transition-colors text-center"
                 >
-                  Transfer
+                  New Card
                 </Link>
               </div>
             </div>
@@ -180,6 +210,71 @@ export default function DashboardPage() {
                 </div>
               </Link>
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* Credit Cards List */}
+      <div className="bg-white rounded-lg shadow border border-gray-200 mt-8">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-gray-900">Your Credit Cards</h2>
+          <Link
+            href="/dashboard/credit-cards"
+            className="text-sm text-indigo-600 hover:text-indigo-700"
+          >
+            View All →
+          </Link>
+        </div>
+
+        {creditCards.length === 0 ? (
+          <div className="p-12 text-center">
+            <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+            </svg>
+            <p className="text-gray-600 mb-4">You don't have any credit cards yet</p>
+            <Link
+              href="/dashboard/credit-cards"
+              className="inline-block bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              Create Your First Credit Card
+            </Link>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-200">
+            {creditCards.slice(0, 3).map((card) => {
+              const formatCardNumber = (cardNumber: string) => {
+                return cardNumber.replace(/(\d{4})/g, '$1 ').trim();
+              };
+
+              return (
+                <Link
+                  key={card.id}
+                  href={`/dashboard/credit-cards/${card.cardNumber}`}
+                  className="block p-6 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-lg p-3">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="font-mono text-sm text-gray-900">{formatCardNumber(card.cardNumber)}</p>
+                        <p className="text-sm text-gray-500 mt-1">{card.cardHolder}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-600">Available Credit</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        ${card.availableCredit.toFixed(2)}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">of ${card.creditLimit.toFixed(2)}</p>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
