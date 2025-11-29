@@ -8,6 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **OAuth Client Administration Interface** - Web UI for managing OAuth clients
+  - List all registered OAuth clients at `https://auth.banksim.ca/administration`
+  - Create new clients with auto-generated secure secrets
+  - Edit client settings (redirect URIs, scopes, branding)
+  - Regenerate client secrets with warning confirmation
+  - Enable/disable clients without deletion
+  - Delete clients with confirmation dialog
+  - Professional admin UI with consistent styling
+- **SSIM nginx Proxy Configuration** - Added `ssim.banksim.ca` subdomain routing
+  - Routes to SSIM running on host machine (localhost:3005)
+  - Uses same wildcard SSL certificate as other services
+  - Full WebSocket support for Next.js hot reload
+- **Authorization Server Documentation** - Comprehensive auth-server README
+  - OIDC endpoint reference and configuration guide
+  - OAuth client registration instructions (admin UI and SQL)
+  - Integration guide with code examples for third-party apps
+  - Troubleshooting section for common issues
+  - Token lifetimes and security considerations
 - **Open Banking Platform** - Third-party data access via OAuth 2.0/OIDC
   - Authorization Server at `auth.banksim.ca` with oidc-provider
   - Open Banking API at `openbanking.banksim.ca` with FDX-inspired endpoints

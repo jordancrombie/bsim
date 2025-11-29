@@ -37,15 +37,19 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
 
       const { uid, prompt, params, session } = details;
 
-      // Get client info
-      const client = await provider.Client.find(params.client_id as string);
+      // Get client info - oidc-provider converts snake_case to camelCase (e.g., client_name → clientName)
+      const client = await provider.Client.find(params.client_id as string) as any;
+
+      // Helper to get client display properties
+      const getClientName = () => client?.clientName || 'Unknown Application';
+      const getClientLogo = () => client?.logoUri || null;
 
       if (prompt.name === 'login') {
         // Show login page
         return res.render('login', {
           uid,
-          clientName: client?.client_name || 'Unknown Application',
-          clientLogo: client?.logo_uri || null,
+          clientName: getClientName(),
+          clientLogo: getClientLogo(),
           error: null,
         });
       }
@@ -77,8 +81,8 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
         // Show consent page
         return res.render('consent', {
           uid,
-          clientName: client?.client_name || 'Unknown Application',
-          clientLogo: client?.logo_uri || null,
+          clientName: getClientName(),
+          clientLogo: getClientLogo(),
           scopes: scopeDetails,
           accounts: user?.accounts || [],
           user: {
@@ -110,11 +114,11 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
       const user = await verifyUserPassword(prisma, email, password);
 
       if (!user) {
-        const client = await provider.Client.find(params.client_id as string);
+        const client = await provider.Client.find(params.client_id as string) as any;
         return res.render('login', {
           uid,
-          clientName: client?.client_name || 'Unknown Application',
-          clientLogo: client?.logo_uri || null,
+          clientName: client?.clientName || client?.client_name || 'Unknown Application',
+          clientLogo: client?.logoUri || client?.logo_uri || null,
           error: 'Invalid email or password',
         });
       }
