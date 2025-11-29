@@ -205,6 +205,12 @@ class ApiClient {
     const response = await this.client.post<CreditCardResponse>('/credit-card-transactions/refund', data);
     return response.data.creditCard;
   }
+
+  // Site Settings API (public, no auth required)
+  async getSiteSettings(): Promise<{ logoUrl: string | null; siteName: string }> {
+    const response = await this.client.get<{ logoUrl: string | null; siteName: string }>('/settings');
+    return response.data;
+  }
 }
 
 export const api = new ApiClient();

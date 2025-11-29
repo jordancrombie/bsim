@@ -40,6 +40,9 @@ services:
       CORS_ORIGIN: https://localhost,https://banksim.ca,https://*.banksim.ca,http://frontend:3000
       RP_ID: banksim.ca
       ORIGIN: https://banksim.ca
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - uploads_data:/app/uploads
     # No exposed ports - nginx will proxy to backend:3001
     depends_on:
       db:
@@ -79,15 +82,24 @@ services:
       context: ./admin
       dockerfile: Dockerfile
     container_name: bsim-admin
+    user: "0:0"  # Run as root initially to fix permissions, then switch
     environment:
       NODE_ENV: production
       PORT: 3002
       DATABASE_URL: postgresql://bsim:bsim_dev_password@db:5432/bsim
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - uploads_data:/app/uploads
     depends_on:
       db:
         condition: service_healthy
     networks:
       - bsim-network
+    command: >
+      sh -c "
+        chown -R 1001:1001 /app/uploads &&
+        su -s /bin/sh nextjs -c 'node server.js'
+      "
 
   # Nginx Reverse Proxy (SSL Termination)
   nginx:
@@ -117,3 +129,4 @@ networks:
 
 volumes:
   postgres_data:
+  uploads_data:

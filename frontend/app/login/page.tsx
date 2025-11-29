@@ -3,6 +3,7 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+/* eslint-disable @next/next/no-img-element */
 import { api } from '@/lib/api';
 import { authenticateWithPasskey, isPlatformAuthenticatorAvailable } from '@/lib/passkey';
 
@@ -14,10 +15,27 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
   const [passkeyAvailable, setPasskeyAvailable] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [siteName, setSiteName] = useState('BSIM');
 
   useEffect(() => {
     // Check if platform authenticator is available
     isPlatformAuthenticatorAvailable().then(setPasskeyAvailable);
+
+    // Fetch site settings (logo)
+    api.getSiteSettings()
+      .then((settings) => {
+        if (settings.logoUrl) {
+          setLogoUrl(settings.logoUrl);
+        }
+        if (settings.siteName) {
+          setSiteName(settings.siteName);
+        }
+      })
+      .catch(() => {
+        // Use default logo if settings fail to load
+        setLogoUrl('/logo.png');
+      });
   }, []);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -67,8 +85,17 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
         <div className="text-center mb-8">
+          {logoUrl && (
+            <div className="mb-4 flex justify-center">
+              <img
+                src={logoUrl}
+                alt={`${siteName} Logo`}
+                className="w-48 h-48 object-contain"
+              />
+            </div>
+          )}
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-          <p className="text-gray-600">Sign in to your BSIM account</p>
+          <p className="text-gray-600">Sign in to your {siteName} account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
