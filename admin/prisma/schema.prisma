@@ -17,6 +17,8 @@ model User {
   password    String
   firstName   String
   lastName    String
+  // FI User Reference Number - unique identifier for Open Banking
+  fiUserRef   String       @unique @default(uuid()) @map("fi_user_ref")
   // Customer Information File (CIF) fields
   phone       String?
   address     String?
