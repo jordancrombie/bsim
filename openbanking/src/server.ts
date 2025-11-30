@@ -4,8 +4,10 @@ import { config } from './config/env';
 import { getPrismaClient, disconnectPrisma } from './config/database';
 import { CustomerController } from './controllers/customerController';
 import { AccountController } from './controllers/accountController';
+import { UserController } from './controllers/userController';
 import { createCustomerRoutes } from './routes/customerRoutes';
 import { createAccountRoutes } from './routes/accountRoutes';
+import { createUserRoutes } from './routes/userRoutes';
 
 const app = express();
 
@@ -27,10 +29,12 @@ const prisma = getPrismaClient();
 // Controllers
 const customerController = new CustomerController(prisma);
 const accountController = new AccountController(prisma);
+const userController = new UserController(prisma);
 
 // Routes
 app.use('/customers', createCustomerRoutes(customerController));
 app.use('/accounts', createAccountRoutes(accountController));
+app.use('/users', createUserRoutes(userController));
 
 // Health check
 app.get('/health', (req, res) => {
@@ -48,6 +52,7 @@ app.get('/', (req, res) => {
       accounts: '/accounts',
       accountDetails: '/accounts/{accountId}',
       transactions: '/accounts/{accountId}/transactions',
+      userAccounts: '/users/{fiUserRef}/accounts',
     },
     authorization: {
       type: 'OAuth 2.0 / OpenID Connect',

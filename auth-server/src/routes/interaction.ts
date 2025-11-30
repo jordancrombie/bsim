@@ -56,8 +56,9 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
 
       if (prompt.name === 'consent') {
         // Get user's accounts for selection
+        // Note: session.accountId is now the fiUserRef (external identifier)
         const user = await prisma.user.findUnique({
-          where: { id: session?.accountId },
+          where: { fiUserRef: session?.accountId },
           include: {
             accounts: {
               select: {
@@ -123,10 +124,10 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
         });
       }
 
-      // Login successful
+      // Login successful - use fiUserRef as accountId for consistent external identity
       const result = {
         login: {
-          accountId: user.id,
+          accountId: user.fiUserRef,
           remember: req.body.remember === 'on',
         },
       };
@@ -139,8 +140,11 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
 
   // POST /interaction/:uid/confirm - Handle consent confirmation
   router.post('/:uid/confirm', async (req: Request, res: Response, next: NextFunction) => {
+    console.log('[Interaction] POST /confirm called');
+    console.log('[Interaction] Request body:', req.body);
     try {
       const details = await getInteractionDetails(req, res);
+      console.log('[Interaction] Details:', details ? 'found' : 'not found');
       if (!details) {
         return res.status(400).send('Invalid interaction');
       }
@@ -154,19 +158,38 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
       // Generate a grant ID
       const grantId = crypto.randomUUID();
 
+      // session.accountId is now the fiUserRef (external identifier)
+      console.log('[Interaction] Session accountId (fiUserRef):', session?.accountId);
+      console.log('[Interaction] Client ID:', params.client_id);
+      console.log('[Interaction] Requested scopes:', requestedScopes);
+
+      // Look up user by fiUserRef to get internal ID for consent storage
+      const user = await prisma.user.findUnique({
+        where: { fiUserRef: session?.accountId },
+        select: { id: true },
+      });
+
+      if (!user) {
+        console.error('[Interaction] User not found for fiUserRef:', session?.accountId);
+        return res.status(400).send('User not found');
+      }
+
       // Store the consent in our database
+      console.log('[Interaction] Creating consent in database...');
       await prisma.consent.create({
         data: {
           grantId,
-          userId: session?.accountId as string,
+          userId: user.id, // Use internal ID for database relation
           clientId: params.client_id as string,
           scopes: requestedScopes,
           accountIds: Array.isArray(selectedAccounts) ? selectedAccounts : [selectedAccounts].filter(Boolean),
           expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
         },
       });
+      console.log('[Interaction] Consent created successfully');
 
       // Consent granted
+      console.log('[Interaction] Creating OIDC grant...');
       const grant = new provider.Grant({
         accountId: session?.accountId as string,
         clientId: params.client_id as string,
@@ -175,13 +198,17 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
       // Add scopes to grant
       grant.addOIDCScope(requestedScopes.join(' '));
 
-      // Add resource server scopes
+      // Add resource server scopes - must include ALL scopes for the resource indicator
+      // When using resource indicators, oidc-provider expects all requested scopes
+      // to be granted for that resource, not just the FDX-specific ones
       grant.addResourceScope(
         'https://openbanking.banksim.ca',
-        requestedScopes.filter((s) => s.startsWith('fdx:')).join(' ')
+        requestedScopes.join(' ')
       );
 
+      console.log('[Interaction] Saving grant...');
       const savedGrant = await grant.save();
+      console.log('[Interaction] Grant saved:', savedGrant);
 
       const result = {
         consent: {
@@ -189,8 +216,11 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
         },
       };
 
+      console.log('[Interaction] Finishing interaction...');
       await provider.interactionFinished(req, res, result, { mergeWithLastSubmission: true });
+      console.log('[Interaction] Interaction finished successfully');
     } catch (err) {
+      console.error('[Interaction] ERROR:', err);
       next(err);
     }
   });

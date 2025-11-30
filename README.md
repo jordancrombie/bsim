@@ -238,10 +238,13 @@ BSIM includes a complete Open Banking implementation allowing third-party applic
 
 ### Open Banking API Endpoints
 
+- `GET /users/{fi_user_ref}/accounts` - List user's accounts (fi_user_ref must match token sub)
 - `GET /customers/current` - Get authenticated user's profile
 - `GET /accounts` - List accounts the user consented to share
 - `GET /accounts/{accountId}` - Get account details and balance
 - `GET /accounts/{accountId}/transactions` - Get transaction history
+
+**Note:** The `fi_user_ref` is the user's external identifier (UUID) returned as the `sub` claim in both ID tokens and access tokens. Third-party apps should use this value when calling user-specific endpoints.
 
 ### OIDC Discovery
 
