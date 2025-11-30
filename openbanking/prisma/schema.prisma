@@ -147,6 +147,23 @@ model SiteSettings {
   @@map("site_settings")
 }
 
+// Configurable Credit Card Types
+model CreditCardTypeConfig {
+  id              String   @id @default(uuid())
+  code            String   @unique  // e.g., "VISA", "MC", "AMEX"
+  name            String            // Display name, e.g., "VISA", "Mastercard"
+  cardNumberPrefix String           // e.g., "4" for Visa, "51-55" for MC, "34,37" for AMEX
+  cardNumberLength Int     @default(16)  // 16 for most, 15 for AMEX
+  cvvLength       Int     @default(3)    // 3 for most, 4 for AMEX
+  isDebit         Boolean @default(false)
+  isActive        Boolean @default(true)
+  sortOrder       Int     @default(0)    // For display ordering
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("credit_card_type_configs")
+}
+
 // Admin-specific models (separate from end users)
 model AdminUser {
   id          String         @id @default(uuid())
