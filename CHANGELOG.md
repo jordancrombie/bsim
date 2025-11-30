@@ -36,6 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated docker-compose.yml and AWS deployment documentation
 
 ### Added
+- **AWS Admin Management Script** - New script for managing admin users in AWS production
+  - `./scripts/aws-admin.sh reset-admin` - Delete all admin users (triggers first-user setup)
+  - `./scripts/aws-admin.sh delete-passkeys` - Delete all admin passkeys (keeps users)
+  - `./scripts/aws-admin.sh list-admins` - List all admin users with passkey counts
+  - Runs one-off ECS Fargate tasks to execute database operations securely
+
 - **Local Development Domain Configuration** - Separate dev subdomain pattern for local development
   - New `*-dev.banksim.ca` subdomain pattern for local development (compatible with `*.banksim.ca` wildcard cert)
   - Production uses: `banksim.ca`, `admin.banksim.ca`, `auth.banksim.ca`, `openbanking.banksim.ca`, `ssim.banksim.ca`
