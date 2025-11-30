@@ -201,6 +201,20 @@ model CreditCardTypeConfig {
   @@map("credit_card_type_configs")
 }
 
+// Configurable Account Types
+model AccountTypeConfig {
+  id          String   @id @default(uuid())
+  code        String   @unique  // e.g., "CHECKING", "SAVINGS"
+  name        String            // Display name, e.g., "Checking Account"
+  description String?           // Optional description
+  isActive    Boolean @default(true)
+  sortOrder   Int     @default(0)    // For display ordering
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("account_type_configs")
+}
+
 // ============================================
 // Open Banking / OAuth 2.0 / OIDC Models
 // ============================================
