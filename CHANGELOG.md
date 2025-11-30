@@ -16,7 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Credit Card Type Support** - Card network/product categorization
   - New `CreditCardType` enum: VISA, VISA_DEBIT, MC, MC_DEBIT, AMEX
   - `cardType` field on CreditCard model (defaults to VISA)
+  - Card type selector in Create Credit Card modal
+  - Card type-specific card number prefixes (4 for Visa, 51-55 for MC, 34/37 for AMEX)
+  - AMEX cards use 4-digit CVV, others use 3-digit
+  - Visual card type display on credit card list with type-specific gradients
   - Database migration: `20251129_add_credit_card_type`
+- **Credit Card Holder Name Default** - Auto-populate from user account
+  - Card holder name defaults to user's first and last name when not specified
+  - Eliminates generic "Card Holder" placeholder text
 - **Open Banking API Specification** - OpenAPI YAML for user accounts endpoint
   - `openbanking/api/users-accounts.yaml` - Full OpenAPI 3.0.3 spec
   - Documents `/users/{fi_user_ref}/accounts` endpoint

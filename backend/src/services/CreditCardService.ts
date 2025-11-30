@@ -1,6 +1,7 @@
 import { ICreditCardRepository, CreditCardData } from '../repositories/interfaces/ICreditCardRepository';
 import { ICreditCardTransactionRepository } from '../repositories/interfaces/ICreditCardTransactionRepository';
 import { CreditCardTransactionType } from '../models/creditCardTransaction';
+import { CreditCardType } from '@prisma/client';
 
 export interface ChargeDto {
   cardNumber: string;
@@ -26,12 +27,12 @@ export class CreditCardService {
     private creditCardTransactionRepository: ICreditCardTransactionRepository
   ) {}
 
-  async createCreditCard(userId: string, creditLimit: number, cardHolder?: string): Promise<CreditCardData> {
+  async createCreditCard(userId: string, creditLimit: number, cardHolder?: string, cardType?: CreditCardType): Promise<CreditCardData> {
     if (creditLimit <= 0) {
       throw new Error('Credit limit must be positive');
     }
 
-    const creditCard = await this.creditCardRepository.create({ userId, creditLimit, cardHolder });
+    const creditCard = await this.creditCardRepository.create({ userId, creditLimit, cardHolder, cardType });
 
     // Create initial transaction to record the credit limit establishment
     await this.creditCardTransactionRepository.create({

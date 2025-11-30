@@ -2,10 +2,12 @@ import { Response, NextFunction } from 'express';
 import { CreditCardService } from '../services/CreditCardService';
 import { AuthRequest } from '../middleware/auth';
 import { z } from 'zod';
+import { CreditCardType } from '@prisma/client';
 
 const createCreditCardSchema = z.object({
   creditLimit: z.number().positive('Credit limit must be positive'),
   cardHolder: z.string().optional(),
+  cardType: z.nativeEnum(CreditCardType).optional(),
 });
 
 const chargeSchema = z.object({
@@ -40,7 +42,8 @@ export class CreditCardController {
       const creditCard = await this.creditCardService.createCreditCard(
         req.user.userId,
         validatedData.creditLimit,
-        validatedData.cardHolder
+        validatedData.cardHolder,
+        validatedData.cardType
       );
 
       res.status(201).json({ creditCard });
