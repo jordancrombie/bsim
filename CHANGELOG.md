@@ -24,6 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Now preserves firstName, lastName, email, password if already filled in
   - Only generates values for empty fields, always fills step 2 customer info fields
 
+- **Password Manager Credential Detection** - Fixed password manager saving phone number as username
+  - Added proper `autocomplete` attributes to all signup form fields
+  - Added hidden email/password fields in step 2 form for credential association
+  - Browser password managers now correctly identify email as the username
+
 ### Added
 - **Local Development Domain Configuration** - Separate dev subdomain pattern for local development
   - New `*-dev.banksim.ca` subdomain pattern for local development (compatible with `*.banksim.ca` wildcard cert)
