@@ -45,6 +45,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Balance overview showing current balance, available credit, and credit limit
   - Credit utilization bar with color-coded status (green/yellow/red)
   - Full transaction history with merchant details
+- **Account Detail Page** - View individual account details and transactions
+  - New page at `/dashboard/accounts/[accountNumber]` with account overview
+  - Account header showing account number, type badge, and current balance
+  - Deposit and Withdraw functionality with modal dialogs
+  - Full transaction history with type indicators (deposit/withdrawal/transfer)
+  - Color-coded transaction amounts (green for credits, red for debits)
 - **Enhanced Credit Card Transactions** - Merchant and transaction details
   - New fields: `merchantName`, `merchantId`, `mccCode`, `transactionDate`
   - MCC (Merchant Category Code) display with category descriptions
