@@ -37,6 +37,7 @@ export class UserController {
             select: {
               id: true,
               accountNumber: true,
+              accountType: true,
               balance: true,
               createdAt: true,
               updatedAt: true,
@@ -58,7 +59,7 @@ export class UserController {
         accountId: account.id,
         accountNumber: account.accountNumber,
         accountNumberMasked: `****${account.accountNumber.slice(-4)}`,
-        accountType: 'CHECKING',
+        accountType: account.accountType,
         status: 'OPEN',
         currency: 'CAD',
         balance: {

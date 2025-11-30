@@ -1,0 +1,248 @@
+openapi: 3.0.3
+info:
+  title: Open Banking - User Accounts API
+  description: |
+    API endpoint for retrieving user accounts by their Financial Institution User Reference (fi_user_ref).
+
+    The `fi_user_ref` is a stable, unique identifier for the user that is returned as the `sub` claim
+    in both ID tokens and access tokens. Third-party applications should use this value when calling
+    user-specific endpoints.
+
+    **Authorization:** The `fi_user_ref` in the URL must match the `sub` claim in the access token,
+    or the request will be rejected with a 403 Forbidden error.
+  version: 1.0.0
+  contact:
+    name: BankSim API Support
+
+servers:
+  - url: https://openbanking.banksim.ca
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /users/{fi_user_ref}/accounts:
+    get:
+      summary: List user accounts
+      description: |
+        Retrieves all accounts belonging to the specified user.
+
+        The `fi_user_ref` parameter must match the `sub` claim in the Bearer token.
+        This ensures users can only access their own account information.
+      operationId: listUserAccounts
+      tags:
+        - User Accounts
+      parameters:
+        - name: fi_user_ref
+          in: path
+          required: true
+          description: |
+            The Financial Institution User Reference (UUID). This value is returned as the
+            `sub` claim in the ID token and access token during OAuth authentication.
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Successfully retrieved user accounts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAccountsResponse'
+              example:
+                fiUserRef: "550e8400-e29b-41d4-a716-446655440000"
+                accountHolder:
+                  name: "John Doe"
+                accounts:
+                  - accountId: "acct-123456"
+                    accountNumber: "1234567890"
+                    accountNumberMasked: "****7890"
+                    accountType: "CHECKING"
+                    status: "OPEN"
+                    currency: "CAD"
+                    balance:
+                      current: 5000.50
+                      available: 5000.50
+                      asOf: "2025-11-29T10:30:00.000Z"
+                    openedDate: "2024-01-15"
+                  - accountId: "acct-789012"
+                    accountNumber: "0987654321"
+                    accountNumberMasked: "****4321"
+                    accountType: "CHECKING"
+                    status: "OPEN"
+                    currency: "CAD"
+                    balance:
+                      current: 12500.00
+                      available: 12500.00
+                      asOf: "2025-11-29T10:30:00.000Z"
+                    openedDate: "2024-03-20"
+        '401':
+          description: Unauthorized - Invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "unauthorized"
+                error_description: "Invalid token"
+        '403':
+          description: Forbidden - Token subject does not match requested user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "forbidden"
+                error_description: "Token subject does not match requested user"
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "not_found"
+                error_description: "User not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "server_error"
+                error_description: "Failed to list user accounts"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        OAuth 2.0 Bearer token. Must include the `fdx:accountdetailed:read` scope.
+        The `sub` claim in the token must match the `fi_user_ref` path parameter.
+
+  schemas:
+    UserAccountsResponse:
+      type: object
+      required:
+        - fiUserRef
+        - accountHolder
+        - accounts
+      properties:
+        fiUserRef:
+          type: string
+          format: uuid
+          description: The user's Financial Institution User Reference
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        accountHolder:
+          type: object
+          required:
+            - name
+          properties:
+            name:
+              type: string
+              description: Full name of the account holder
+              example: "John Doe"
+        accounts:
+          type: array
+          description: List of accounts belonging to the user
+          items:
+            $ref: '#/components/schemas/Account'
+
+    Account:
+      type: object
+      required:
+        - accountId
+        - accountNumber
+        - accountNumberMasked
+        - accountType
+        - status
+        - currency
+        - balance
+        - openedDate
+      properties:
+        accountId:
+          type: string
+          description: Unique identifier for the account
+          example: "acct-123456"
+        accountNumber:
+          type: string
+          description: Full account number
+          example: "1234567890"
+        accountNumberMasked:
+          type: string
+          description: Masked account number showing only last 4 digits
+          example: "****7890"
+        accountType:
+          type: string
+          enum:
+            - CHECKING
+            - SAVINGS
+          description: Type of account
+          example: "CHECKING"
+        status:
+          type: string
+          enum:
+            - OPEN
+            - CLOSED
+            - PENDING
+          description: Current status of the account
+          example: "OPEN"
+        currency:
+          type: string
+          description: ISO 4217 currency code
+          example: "CAD"
+        balance:
+          $ref: '#/components/schemas/Balance'
+        openedDate:
+          type: string
+          format: date
+          description: Date when the account was opened
+          example: "2024-01-15"
+
+    Balance:
+      type: object
+      required:
+        - current
+        - available
+        - asOf
+      properties:
+        current:
+          type: number
+          format: double
+          description: Current balance
+          example: 5000.50
+        available:
+          type: number
+          format: double
+          description: Available balance
+          example: 5000.50
+        asOf:
+          type: string
+          format: date-time
+          description: Timestamp when the balance was last updated
+          example: "2025-11-29T10:30:00.000Z"
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - error_description
+      properties:
+        error:
+          type: string
+          description: Error code
+          enum:
+            - unauthorized
+            - forbidden
+            - not_found
+            - server_error
+          example: "unauthorized"
+        error_description:
+          type: string
+          description: Human-readable error description
+          example: "Invalid token"
