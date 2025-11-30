@@ -183,6 +183,17 @@ bsim/
 - `POST /api/credit-card-transactions/payment` - Make payment (protected)
 - `POST /api/credit-card-transactions/refund` - Process refund (protected)
 
+**Charge Request Fields:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `cardNumber` | string | Credit card number (required) |
+| `amount` | number | Charge amount (required) |
+| `description` | string | Transaction description |
+| `merchantName` | string | Name of the merchant |
+| `merchantId` | string | Merchant identifier |
+| `mccCode` | string | Merchant Category Code (e.g., "5411" for grocery) |
+| `transactionDate` | string | ISO 8601 datetime of transaction |
+
 ### Site Settings
 - `GET /api/settings` - Get site settings (logo URL, site name)
 

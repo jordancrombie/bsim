@@ -100,14 +100,20 @@ model CreditCard {
 }
 
 model CreditCardTransaction {
-  id           String                     @id @default(uuid())
-  type         CreditCardTransactionType
-  amount       Decimal                    @db.Decimal(15, 2)
-  availableAfter Decimal                  @db.Decimal(15, 2)
-  description  String?
-  creditCardId String
-  creditCard   CreditCard                 @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
-  createdAt    DateTime                   @default(now())
+  id              String                     @id @default(uuid())
+  type            CreditCardTransactionType
+  amount          Decimal                    @db.Decimal(15, 2)
+  availableAfter  Decimal                    @db.Decimal(15, 2)
+  description     String?
+  // Merchant details
+  merchantName    String?
+  merchantId      String?                    // Merchant identifier
+  mccCode         String?                    // Merchant Category Code (e.g., "5411" for grocery stores)
+  // Transaction timing
+  transactionDate DateTime                   @default(now()) @map("transaction_date")
+  creditCardId    String
+  creditCard      CreditCard                 @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
+  createdAt       DateTime                   @default(now())
 
   @@map("credit_card_transactions")
 }

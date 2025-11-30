@@ -7,6 +7,10 @@ export interface ChargeDto {
   cardNumber: string;
   amount: number;
   description?: string;
+  merchantName?: string;
+  merchantId?: string;
+  mccCode?: string;
+  transactionDate?: Date;
 }
 
 export interface PaymentDto {
@@ -76,6 +80,10 @@ export class CreditCardService {
       amount: data.amount,
       availableAfter: newAvailableCredit,
       description: data.description,
+      merchantName: data.merchantName,
+      merchantId: data.merchantId,
+      mccCode: data.mccCode,
+      transactionDate: data.transactionDate,
       creditCardId: creditCard.id,
     });
 
