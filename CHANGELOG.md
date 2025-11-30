@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Unit Test Suite** - Comprehensive Jest test coverage for backend services (208 tests)
+- **Unit Test Suite** - Comprehensive Jest test coverage for backend services (229 tests)
   - Jest test framework with ts-jest for TypeScript support
   - Mock repositories for isolated testing without database dependencies
   - **AuthService tests** (12 tests): registration, login, JWT tokens, password hashing
@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **CreditCardController tests** (34 tests): HTTP handlers, authentication, ownership validation, transactions
   - **NotificationService tests** (24 tests): CRUD operations, unread count, mark as read, transfer notifications
   - **NotificationController tests** (16 tests): HTTP handlers, authentication, query parameters
+  - **PasskeyService tests** (21 tests): registration options, verification, authentication, passkey management
   - Test commands: `npm test`, `npm run test:watch`, `npm run test:coverage`
   - Mock implementations: MockUserRepository, MockAccountRepository, MockTransactionRepository, MockCreditCardRepository, MockCreditCardTransactionRepository, MockNotificationRepository
 - **Account Type Support** - Proper account categorization in database

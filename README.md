@@ -398,6 +398,14 @@ The test suite covers:
 - Ownership validation (403 Forbidden)
 - Transaction history with merchant details
 
+**Passkey/WebAuthn (PasskeyService)**
+- Registration options generation
+- Registration verification and passkey storage
+- Authentication options generation
+- Authentication verification
+- Passkey CRUD operations (list, delete)
+- Challenge management
+
 ### Test Architecture
 
 Tests use mock repositories that store data in memory, allowing fast isolated tests without database dependencies:
@@ -416,7 +424,8 @@ src/__tests__/
 │   ├── AuthService.test.ts
 │   ├── AccountService.test.ts
 │   ├── CreditCardService.test.ts
-│   └── NotificationService.test.ts
+│   ├── NotificationService.test.ts
+│   └── PasskeyService.test.ts
 └── controllers/
     ├── AuthController.test.ts
     ├── AccountController.test.ts
