@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import type { CreditCard } from '@/types';
+import { CreditCardType } from '@/types';
 
 export default function CreditCardsPage() {
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
@@ -60,6 +61,38 @@ export default function CreditCardsPage() {
     return cardNumber.replace(/(\d{4})/g, '$1 ').trim();
   };
 
+  const getCardTypeDisplay = (cardType: CreditCardType) => {
+    switch (cardType) {
+      case CreditCardType.VISA:
+        return { name: 'VISA', color: 'text-white' };
+      case CreditCardType.VISA_DEBIT:
+        return { name: 'VISA DEBIT', color: 'text-white' };
+      case CreditCardType.MC:
+        return { name: 'Mastercard', color: 'text-white' };
+      case CreditCardType.MC_DEBIT:
+        return { name: 'MC Debit', color: 'text-white' };
+      case CreditCardType.AMEX:
+        return { name: 'AMEX', color: 'text-white' };
+      default:
+        return { name: cardType, color: 'text-white' };
+    }
+  };
+
+  const getCardGradient = (cardType: CreditCardType) => {
+    switch (cardType) {
+      case CreditCardType.VISA:
+      case CreditCardType.VISA_DEBIT:
+        return 'from-blue-600 to-blue-800';
+      case CreditCardType.MC:
+      case CreditCardType.MC_DEBIT:
+        return 'from-red-600 to-orange-600';
+      case CreditCardType.AMEX:
+        return 'from-slate-600 to-slate-800';
+      default:
+        return 'from-indigo-600 to-purple-700';
+    }
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
@@ -95,60 +128,71 @@ export default function CreditCardsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {creditCards.map((card) => (
-            <Link
-              key={card.id}
-              href={`/dashboard/credit-cards/${card.cardNumber}`}
-              className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow text-white relative overflow-hidden"
-            >
-              {/* Card background pattern */}
-              <div className="absolute top-0 right-0 opacity-10">
-                <svg className="w-32 h-32" viewBox="0 0 100 100" fill="currentColor">
-                  <circle cx="50" cy="50" r="40" />
-                </svg>
-              </div>
-
-              {/* Card chip */}
-              <div className="w-12 h-10 bg-gradient-to-br from-yellow-200 to-yellow-400 rounded mb-6 opacity-80"></div>
-
-              {/* Card number */}
-              <p className="font-mono text-xl tracking-wider mb-6">
-                {formatCardNumber(card.cardNumber)}
-              </p>
-
-              {/* Card holder and expiry */}
-              <div className="flex justify-between items-end">
-                <div>
-                  <p className="text-xs opacity-70 mb-1">CARD HOLDER</p>
-                  <p className="font-medium text-sm">{card.cardHolder}</p>
+          {creditCards.map((card) => {
+            const cardTypeInfo = getCardTypeDisplay(card.cardType);
+            const gradient = getCardGradient(card.cardType);
+            return (
+              <Link
+                key={card.id}
+                href={`/dashboard/credit-cards/${card.cardNumber}`}
+                className={`bg-gradient-to-br ${gradient} rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow text-white relative overflow-hidden`}
+              >
+                {/* Card background pattern */}
+                <div className="absolute top-0 right-0 opacity-10">
+                  <svg className="w-32 h-32" viewBox="0 0 100 100" fill="currentColor">
+                    <circle cx="50" cy="50" r="40" />
+                  </svg>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs opacity-70 mb-1">EXPIRES</p>
-                  <p className="font-medium text-sm">
-                    {String(card.expiryMonth).padStart(2, '0')}/{String(card.expiryYear).slice(-2)}
-                  </p>
-                </div>
-              </div>
 
-              {/* Available credit */}
-              <div className="mt-6 pt-4 border-t border-white border-opacity-20">
-                <div className="flex justify-between items-center">
+                {/* Card type badge in top right */}
+                <div className="absolute top-4 right-4">
+                  <span className={`font-bold text-lg tracking-wide ${cardTypeInfo.color}`}>
+                    {cardTypeInfo.name}
+                  </span>
+                </div>
+
+                {/* Card chip */}
+                <div className="w-12 h-10 bg-gradient-to-br from-yellow-200 to-yellow-400 rounded mb-6 opacity-80"></div>
+
+                {/* Card number */}
+                <p className="font-mono text-xl tracking-wider mb-6">
+                  {formatCardNumber(card.cardNumber)}
+                </p>
+
+                {/* Card holder and expiry */}
+                <div className="flex justify-between items-end">
                   <div>
-                    <p className="text-xs opacity-70 mb-1">AVAILABLE CREDIT</p>
-                    <p className="text-2xl font-bold">
-                      ${card.availableCredit.toFixed(2)}
-                    </p>
+                    <p className="text-xs opacity-70 mb-1">CARD HOLDER</p>
+                    <p className="font-medium text-sm">{card.cardHolder}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs opacity-70 mb-1">LIMIT</p>
-                    <p className="text-sm font-medium">
-                      ${card.creditLimit.toFixed(2)}
+                    <p className="text-xs opacity-70 mb-1">EXPIRES</p>
+                    <p className="font-medium text-sm">
+                      {String(card.expiryMonth).padStart(2, '0')}/{String(card.expiryYear).slice(-2)}
                     </p>
                   </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+
+                {/* Available credit */}
+                <div className="mt-6 pt-4 border-t border-white border-opacity-20">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-xs opacity-70 mb-1">AVAILABLE CREDIT</p>
+                      <p className="text-2xl font-bold">
+                        ${card.availableCredit.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs opacity-70 mb-1">LIMIT</p>
+                      <p className="text-sm font-medium">
+                        ${card.creditLimit.toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       )}
 

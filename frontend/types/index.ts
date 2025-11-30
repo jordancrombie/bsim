@@ -17,9 +17,17 @@ export interface User {
 }
 
 // Account types
+export enum AccountType {
+  CHECKING = 'CHECKING',
+  SAVINGS = 'SAVINGS',
+  MONEY_MARKET = 'MONEY_MARKET',
+  CERTIFICATE_OF_DEPOSIT = 'CERTIFICATE_OF_DEPOSIT',
+}
+
 export interface Account {
   id: string;
   accountNumber: string;
+  accountType: AccountType;
   balance: number;
   userId: string;
   createdAt: string;
@@ -110,9 +118,18 @@ export interface ErrorResponse {
 }
 
 // Credit Card types
+export enum CreditCardType {
+  VISA = 'VISA',
+  VISA_DEBIT = 'VISA_DEBIT',
+  MC = 'MC',
+  MC_DEBIT = 'MC_DEBIT',
+  AMEX = 'AMEX',
+}
+
 export interface CreditCard {
   id: string;
   cardNumber: string;
+  cardType: CreditCardType;
   cardHolder: string;
   expiryMonth: number;
   expiryYear: number;
