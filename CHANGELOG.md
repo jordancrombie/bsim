@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Resource Indicators for JWT Access Tokens** - OAuth 2.0 RFC 8707 support
+  - Authorization server now properly issues JWT access tokens when `resource` parameter is provided
+  - `getResourceServerInfo` validates and returns JWT configuration for `https://openbanking.banksim.ca`
+  - `useGrantedResource` enabled to preserve resource indicator through token exchange
+  - Access tokens include proper `aud` (audience) claim for resource server validation
+  - Enables third-party apps like SSIM to obtain JWT tokens for Open Banking API access
 - **Open Banking User Accounts Endpoint** - New endpoint for third-party access
   - `GET /users/{fi_user_ref}/accounts` - List user's accounts by fi_user_ref
   - Token subject validation ensures fi_user_ref matches JWT sub claim
