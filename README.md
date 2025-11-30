@@ -583,7 +583,8 @@ See [DOCKER_README.md](DOCKER_README.md) for Docker containerization details.
 - [x] Open Banking platform (OAuth 2.0/OIDC, FDX-inspired API)
 - [x] OAuth client administration interface
 - [x] OIDC auto-discovery (`.well-known/openid-configuration`)
-- [x] Unit test suite (Jest) for authentication, accounts, and credit cards
+- [x] Unit test suite (Jest) - 434 tests across backend, open banking, auth-server, and admin
+- [ ] Frontend tests (React Testing Library or Cypress/Playwright for E2E)
 - [ ] CI/CD pipeline setup
 - [ ] Mobile app support
 - [ ] Client credentials grant for server-to-server
