@@ -1,24 +1,35 @@
 import { AccountService } from '../../services/AccountService';
 import { MockAccountRepository } from '../mocks/MockAccountRepository';
 import { MockTransactionRepository } from '../mocks/MockTransactionRepository';
+import { MockUserRepository } from '../mocks/MockUserRepository';
+import { MockNotificationRepository } from '../mocks/MockNotificationRepository';
+import { NotificationService } from '../../services/NotificationService';
 import { TransactionType } from '../../models/transaction';
+import { NotificationType } from '../../repositories/interfaces/INotificationRepository';
 
 describe('AccountService', () => {
   let accountService: AccountService;
   let mockAccountRepository: MockAccountRepository;
   let mockTransactionRepository: MockTransactionRepository;
+  let mockUserRepository: MockUserRepository;
 
   const testUserId = 'user-123';
 
   beforeEach(() => {
     mockAccountRepository = new MockAccountRepository();
     mockTransactionRepository = new MockTransactionRepository();
-    accountService = new AccountService(mockAccountRepository, mockTransactionRepository);
+    mockUserRepository = new MockUserRepository();
+    accountService = new AccountService(
+      mockAccountRepository,
+      mockTransactionRepository,
+      mockUserRepository
+    );
   });
 
   afterEach(() => {
     mockAccountRepository.clear();
     mockTransactionRepository.clear();
+    mockUserRepository.clear();
   });
 
   describe('createAccount', () => {
@@ -371,6 +382,332 @@ describe('AccountService', () => {
           amount: 100,
         })
       ).rejects.toThrow('Either destination account number or recipient email is required');
+    });
+
+    it('should allow transferring exact balance', async () => {
+      const fromAccount = await accountService.createAccount(testUserId, 500);
+      const toAccount = await accountService.createAccount('other-user', 100);
+
+      const result = await accountService.transfer({
+        fromAccountNumber: fromAccount.accountNumber,
+        toAccountNumber: toAccount.accountNumber,
+        amount: 500,
+      });
+
+      const updatedFrom = await accountService.getAccountByNumber(fromAccount.accountNumber);
+      expect(updatedFrom!.balance).toBe(0);
+    });
+
+    it('should include description in transaction records', async () => {
+      const fromAccount = await accountService.createAccount(testUserId, 500);
+      const toAccount = await accountService.createAccount('other-user', 100);
+      mockTransactionRepository.clear();
+
+      await accountService.transfer({
+        fromAccountNumber: fromAccount.accountNumber,
+        toAccountNumber: toAccount.accountNumber,
+        amount: 200,
+        description: 'Payment for services',
+      });
+
+      const transactions = mockTransactionRepository.getAllTransactions();
+      const fromTxn = transactions.find((t) => t.accountId === fromAccount.id);
+      const toTxn = transactions.find((t) => t.accountId === toAccount.id);
+
+      expect(fromTxn!.description).toContain('Transfer to');
+      expect(fromTxn!.description).toContain('Payment for services');
+      expect(toTxn!.description).toContain('Transfer from');
+      expect(toTxn!.description).toContain('Payment for services');
+    });
+  });
+
+  describe('transfer by email', () => {
+    it('should transfer money to recipient by email address', async () => {
+      // Create sender with account
+      const senderUser = await mockUserRepository.create({
+        email: 'sender@example.com',
+        password: 'hashedpassword',
+        firstName: 'Sender',
+        lastName: 'User',
+      });
+      const senderAccount = await accountService.createAccount(senderUser.id, 1000);
+
+      // Create recipient with account
+      const recipientUser = await mockUserRepository.create({
+        email: 'recipient@example.com',
+        password: 'hashedpassword',
+        firstName: 'Recipient',
+        lastName: 'User',
+      });
+      const recipientAccount = await accountService.createAccount(recipientUser.id, 500);
+
+      // Transfer by email
+      const result = await accountService.transfer({
+        fromAccountNumber: senderAccount.accountNumber,
+        toEmail: 'recipient@example.com',
+        amount: 300,
+      });
+
+      expect(result.recipientEmail).toBe('recipient@example.com');
+      expect(result.recipientAccountNumber).toBe(recipientAccount.accountNumber);
+
+      // Verify balances
+      const updatedSender = await accountService.getAccountByNumber(senderAccount.accountNumber);
+      const updatedRecipient = await accountService.getAccountByNumber(recipientAccount.accountNumber);
+
+      expect(updatedSender!.balance).toBe(700);
+      expect(updatedRecipient!.balance).toBe(800);
+    });
+
+    it('should use recipient primary account when transferring by email', async () => {
+      // Create sender
+      const senderUser = await mockUserRepository.create({
+        email: 'sender@example.com',
+        password: 'hashedpassword',
+        firstName: 'Sender',
+        lastName: 'User',
+      });
+      const senderAccount = await accountService.createAccount(senderUser.id, 1000);
+
+      // Create recipient with multiple accounts
+      const recipientUser = await mockUserRepository.create({
+        email: 'recipient@example.com',
+        password: 'hashedpassword',
+        firstName: 'Recipient',
+        lastName: 'User',
+      });
+      const recipientAccount1 = await accountService.createAccount(recipientUser.id, 100);
+      await accountService.createAccount(recipientUser.id, 200); // Second account
+
+      // Transfer by email should use first account
+      const result = await accountService.transfer({
+        fromAccountNumber: senderAccount.accountNumber,
+        toEmail: 'recipient@example.com',
+        amount: 250,
+      });
+
+      expect(result.recipientAccountNumber).toBe(recipientAccount1.accountNumber);
+
+      const updatedRecipient = await accountService.getAccountByNumber(recipientAccount1.accountNumber);
+      expect(updatedRecipient!.balance).toBe(350);
+    });
+
+    it('should throw error when recipient email not found', async () => {
+      const senderUser = await mockUserRepository.create({
+        email: 'sender@example.com',
+        password: 'hashedpassword',
+        firstName: 'Sender',
+        lastName: 'User',
+      });
+      const senderAccount = await accountService.createAccount(senderUser.id, 1000);
+
+      await expect(
+        accountService.transfer({
+          fromAccountNumber: senderAccount.accountNumber,
+          toEmail: 'nonexistent@example.com',
+          amount: 100,
+        })
+      ).rejects.toThrow('Recipient not found');
+    });
+
+    it('should throw error when recipient has no accounts', async () => {
+      const senderUser = await mockUserRepository.create({
+        email: 'sender@example.com',
+        password: 'hashedpassword',
+        firstName: 'Sender',
+        lastName: 'User',
+      });
+      const senderAccount = await accountService.createAccount(senderUser.id, 1000);
+
+      // Create recipient without any accounts
+      await mockUserRepository.create({
+        email: 'recipient@example.com',
+        password: 'hashedpassword',
+        firstName: 'Recipient',
+        lastName: 'User',
+      });
+
+      await expect(
+        accountService.transfer({
+          fromAccountNumber: senderAccount.accountNumber,
+          toEmail: 'recipient@example.com',
+          amount: 100,
+        })
+      ).rejects.toThrow('Recipient has no accounts');
+    });
+
+    it('should include email in transaction description when transferring by email', async () => {
+      const senderUser = await mockUserRepository.create({
+        email: 'sender@example.com',
+        password: 'hashedpassword',
+        firstName: 'Sender',
+        lastName: 'User',
+      });
+      const senderAccount = await accountService.createAccount(senderUser.id, 1000);
+
+      const recipientUser = await mockUserRepository.create({
+        email: 'recipient@example.com',
+        password: 'hashedpassword',
+        firstName: 'Recipient',
+        lastName: 'User',
+      });
+      await accountService.createAccount(recipientUser.id, 500);
+
+      mockTransactionRepository.clear();
+
+      await accountService.transfer({
+        fromAccountNumber: senderAccount.accountNumber,
+        toEmail: 'recipient@example.com',
+        amount: 200,
+        description: 'Birthday gift',
+      });
+
+      const transactions = mockTransactionRepository.getAllTransactions();
+      const senderTxn = transactions.find((t) => t.accountId === senderAccount.id);
+
+      expect(senderTxn!.description).toContain('recipient@example.com');
+      expect(senderTxn!.description).toContain('Birthday gift');
+    });
+
+    it('should prevent transferring to own account via email', async () => {
+      const user = await mockUserRepository.create({
+        email: 'user@example.com',
+        password: 'hashedpassword',
+        firstName: 'Test',
+        lastName: 'User',
+      });
+      const account = await accountService.createAccount(user.id, 1000);
+
+      await expect(
+        accountService.transfer({
+          fromAccountNumber: account.accountNumber,
+          toEmail: 'user@example.com',
+          amount: 100,
+        })
+      ).rejects.toThrow('Cannot transfer to the same account');
+    });
+  });
+
+  describe('transfer with notifications', () => {
+    let mockNotificationRepository: MockNotificationRepository;
+    let notificationService: NotificationService;
+    let accountServiceWithNotifications: AccountService;
+
+    beforeEach(() => {
+      mockNotificationRepository = new MockNotificationRepository();
+      notificationService = new NotificationService(mockNotificationRepository);
+      accountServiceWithNotifications = new AccountService(
+        mockAccountRepository,
+        mockTransactionRepository,
+        mockUserRepository,
+        notificationService
+      );
+    });
+
+    afterEach(() => {
+      mockNotificationRepository.clear();
+    });
+
+    it('should send notification to recipient when transfer is received', async () => {
+      const senderUser = await mockUserRepository.create({
+        email: 'sender@example.com',
+        password: 'hashedpassword',
+        firstName: 'Sender',
+        lastName: 'User',
+      });
+      const senderAccount = await accountServiceWithNotifications.createAccount(senderUser.id, 1000);
+
+      const recipientUser = await mockUserRepository.create({
+        email: 'recipient@example.com',
+        password: 'hashedpassword',
+        firstName: 'Recipient',
+        lastName: 'User',
+      });
+      await accountServiceWithNotifications.createAccount(recipientUser.id, 500);
+
+      await accountServiceWithNotifications.transfer({
+        fromAccountNumber: senderAccount.accountNumber,
+        toEmail: 'recipient@example.com',
+        amount: 250,
+        senderEmail: 'sender@example.com',
+      });
+
+      const notifications = mockNotificationRepository.getAllNotifications();
+      const recipientNotification = notifications.find(
+        (n) => n.userId === recipientUser.id && n.type === NotificationType.TRANSFER_RECEIVED
+      );
+
+      expect(recipientNotification).toBeDefined();
+      expect(recipientNotification!.title).toContain('Received');
+      expect(recipientNotification!.message).toContain('250');
+    });
+
+    it('should send notification to sender when transfer is sent', async () => {
+      const senderUser = await mockUserRepository.create({
+        email: 'sender@example.com',
+        password: 'hashedpassword',
+        firstName: 'Sender',
+        lastName: 'User',
+      });
+      const senderAccount = await accountServiceWithNotifications.createAccount(senderUser.id, 1000);
+
+      const recipientUser = await mockUserRepository.create({
+        email: 'recipient@example.com',
+        password: 'hashedpassword',
+        firstName: 'Recipient',
+        lastName: 'User',
+      });
+      await accountServiceWithNotifications.createAccount(recipientUser.id, 500);
+
+      await accountServiceWithNotifications.transfer({
+        fromAccountNumber: senderAccount.accountNumber,
+        toEmail: 'recipient@example.com',
+        amount: 250,
+        senderUserId: senderUser.id,
+        senderEmail: 'sender@example.com',
+      });
+
+      const notifications = mockNotificationRepository.getAllNotifications();
+      const senderNotification = notifications.find(
+        (n) => n.userId === senderUser.id && n.type === NotificationType.TRANSFER_SENT
+      );
+
+      expect(senderNotification).toBeDefined();
+      expect(senderNotification!.title).toContain('Sent');
+      expect(senderNotification!.message).toContain('250');
+    });
+
+    it('should send notifications to both parties on successful transfer', async () => {
+      const senderUser = await mockUserRepository.create({
+        email: 'sender@example.com',
+        password: 'hashedpassword',
+        firstName: 'Sender',
+        lastName: 'User',
+      });
+      const senderAccount = await accountServiceWithNotifications.createAccount(senderUser.id, 1000);
+
+      const recipientUser = await mockUserRepository.create({
+        email: 'recipient@example.com',
+        password: 'hashedpassword',
+        firstName: 'Recipient',
+        lastName: 'User',
+      });
+      await accountServiceWithNotifications.createAccount(recipientUser.id, 500);
+
+      await accountServiceWithNotifications.transfer({
+        fromAccountNumber: senderAccount.accountNumber,
+        toEmail: 'recipient@example.com',
+        amount: 100,
+        senderUserId: senderUser.id,
+        senderEmail: 'sender@example.com',
+      });
+
+      const notifications = mockNotificationRepository.getAllNotifications();
+      expect(notifications.length).toBe(2);
+
+      const types = notifications.map((n) => n.type);
+      expect(types).toContain(NotificationType.TRANSFER_RECEIVED);
+      expect(types).toContain(NotificationType.TRANSFER_SENT);
     });
   });
 
