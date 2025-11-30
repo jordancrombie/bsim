@@ -67,12 +67,37 @@ export interface MockConsentData {
   updatedAt: Date;
 }
 
+export interface MockAdminUserData {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  createdAt: Date;
+  updatedAt: Date;
+  passkeys?: MockAdminPasskeyData[];
+}
+
+export interface MockAdminPasskeyData {
+  id: string;
+  adminUserId: string;
+  credentialId: string;
+  credentialPublicKey: Buffer;
+  counter: bigint;
+  transports: string[];
+  createdAt: Date;
+  lastUsedAt: Date | null;
+  adminUser?: MockAdminUserData;
+}
+
 export function createMockPrismaClient() {
   // In-memory storage
   const oidcPayloads: MockOidcPayloadData[] = [];
   const oauthClients: MockOAuthClientData[] = [];
   const users: MockUserData[] = [];
   const consents: MockConsentData[] = [];
+  const adminUsers: MockAdminUserData[] = [];
+  const adminPasskeys: MockAdminPasskeyData[] = [];
 
   const mockPrisma = {
     oidcPayload: {
@@ -249,6 +274,75 @@ export function createMockPrismaClient() {
       }),
     },
 
+    adminUser: {
+      findUnique: jest.fn().mockImplementation(async (args: any) => {
+        const { where, include, select } = args;
+        let admin = adminUsers.find((a) => {
+          if (where.id && a.id !== where.id) return false;
+          if (where.email && a.email !== where.email) return false;
+          return true;
+        });
+
+        if (!admin) return null;
+
+        // Handle include for passkeys
+        if (include?.passkeys) {
+          const userPasskeys = adminPasskeys.filter((p) => p.adminUserId === admin!.id);
+          if (include.passkeys.select) {
+            const selectedPasskeys = userPasskeys.map((p) => {
+              const selected: any = {};
+              Object.keys(include.passkeys.select).forEach((key) => {
+                if (include.passkeys.select[key]) selected[key] = (p as any)[key];
+              });
+              return selected;
+            });
+            return { ...admin, passkeys: selectedPasskeys };
+          }
+          return { ...admin, passkeys: userPasskeys };
+        }
+
+        // Handle select
+        if (select) {
+          const result: any = {};
+          Object.keys(select).forEach((key) => {
+            if (select[key]) result[key] = (admin as any)[key];
+          });
+          return result;
+        }
+
+        return admin;
+      }),
+    },
+
+    adminPasskey: {
+      findUnique: jest.fn().mockImplementation(async (args: any) => {
+        const { where, include } = args;
+        let passkey = adminPasskeys.find((p) => {
+          if (where.id && p.id !== where.id) return false;
+          if (where.credentialId && p.credentialId !== where.credentialId) return false;
+          return true;
+        });
+
+        if (!passkey) return null;
+
+        // Handle include for adminUser
+        if (include?.adminUser) {
+          const admin = adminUsers.find((a) => a.id === passkey!.adminUserId);
+          return { ...passkey, adminUser: admin };
+        }
+
+        return passkey;
+      }),
+
+      update: jest.fn().mockImplementation(async (args: any) => {
+        const { where, data } = args;
+        const index = adminPasskeys.findIndex((p) => p.id === where.id);
+        if (index < 0) throw new Error('Not found');
+        adminPasskeys[index] = { ...adminPasskeys[index], ...data };
+        return adminPasskeys[index];
+      }),
+    },
+
     // Helper methods for test setup
     _addOidcPayload: (payload: MockOidcPayloadData) => {
       oidcPayloads.push(payload);
@@ -262,15 +356,25 @@ export function createMockPrismaClient() {
     _addConsent: (consent: MockConsentData) => {
       consents.push(consent);
     },
+    _addAdminUser: (admin: MockAdminUserData) => {
+      adminUsers.push(admin);
+    },
+    _addAdminPasskey: (passkey: MockAdminPasskeyData) => {
+      adminPasskeys.push(passkey);
+    },
     _clear: () => {
       oidcPayloads.length = 0;
       oauthClients.length = 0;
       users.length = 0;
       consents.length = 0;
+      adminUsers.length = 0;
+      adminPasskeys.length = 0;
     },
     _getOidcPayloads: () => oidcPayloads,
     _getOAuthClients: () => oauthClients,
     _getConsents: () => consents,
+    _getAdminUsers: () => adminUsers,
+    _getAdminPasskeys: () => adminPasskeys,
   };
 
   return mockPrisma;

@@ -28,6 +28,14 @@ describe('Admin Routes', () => {
     updatedAt: new Date(),
   };
 
+  const testAdmin = {
+    id: 'admin-123',
+    email: 'admin@banksim.ca',
+    firstName: 'Test',
+    lastName: 'Admin',
+    role: 'admin',
+  };
+
   beforeEach(() => {
     mockPrisma = createMockPrismaClient();
 
@@ -35,7 +43,8 @@ describe('Admin Routes', () => {
       params: {},
       query: {},
       body: {},
-    };
+      admin: testAdmin, // Set by auth middleware
+    } as any;
 
     mockResponse = {
       render: jest.fn(),
@@ -67,6 +76,7 @@ describe('Admin Routes', () => {
         clients: expect.arrayContaining([
           expect.objectContaining({ clientId: 'test-client' }),
         ]),
+        admin: testAdmin,
         message: undefined,
         error: undefined,
       });
@@ -120,6 +130,7 @@ describe('Admin Routes', () => {
 
       expect(mockResponse.render).toHaveBeenCalledWith('admin/client-form', {
         client: null,
+        admin: testAdmin,
         isNew: true,
         error: null,
       });
@@ -203,6 +214,7 @@ describe('Admin Routes', () => {
 
       expect(mockResponse.render).toHaveBeenCalledWith('admin/client-form', {
         client: mockRequest.body,
+        admin: testAdmin,
         isNew: true,
         error: 'A client with this ID already exists',
       });
@@ -244,6 +256,7 @@ describe('Admin Routes', () => {
 
       expect(mockResponse.render).toHaveBeenCalledWith('admin/client-form', {
         client: expect.objectContaining({ clientId: 'test-client' }),
+        admin: testAdmin,
         isNew: false,
         error: null,
       });
