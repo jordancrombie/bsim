@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Unit Test Suite** - Comprehensive Jest test coverage for all modules (365 tests total)
+- **Unit Test Suite** - Comprehensive Jest test coverage for all modules (434 tests total)
   - Jest test framework with ts-jest for TypeScript support
   - Mock repositories for isolated testing without database dependencies
   - **Backend Tests** (229 tests):
@@ -32,8 +32,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **verifyUserPassword tests** (7 tests): credential validation, password verification, user lookup
     - **Admin routes tests** (16 tests): OAuth client CRUD, secret generation, duplicate handling, client management
     - **Interaction routes tests** (15 tests): login flow, consent flow, abort handling, account selection
+  - **Admin Module Tests** (69 tests):
+    - **Auth library tests** (10 tests): JWT token creation, verification, session management
+    - **Passkey library tests** (17 tests): registration options, registration verification, authentication options, authentication verification
+    - **Credit Card Types API tests** (20 tests): CRUD operations, authentication, validation, duplicate handling
+    - **Account Types API tests** (16 tests): CRUD operations, authentication, validation, duplicate handling
+    - **Users API tests** (6 tests): user listing, ordering, count aggregation
   - Test commands: `npm test`, `npm run test:watch`, `npm run test:coverage`
-  - Mock implementations: MockUserRepository, MockAccountRepository, MockTransactionRepository, MockCreditCardRepository, MockCreditCardTransactionRepository, MockNotificationRepository, MockPrismaClient (openbanking, auth-server)
+  - Mock implementations: MockUserRepository, MockAccountRepository, MockTransactionRepository, MockCreditCardRepository, MockCreditCardTransactionRepository, MockNotificationRepository, MockPrismaClient (openbanking, auth-server, admin)
 - **Account Type Support** - Proper account categorization in database
   - New `AccountType` enum: CHECKING, SAVINGS, MONEY_MARKET, CERTIFICATE_OF_DEPOSIT
   - `accountType` field on Account model (defaults to CHECKING)
