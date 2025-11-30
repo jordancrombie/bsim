@@ -31,7 +31,8 @@ services:
   # Admin Interface - dev domain configuration
   admin:
     environment:
-      ADMIN_RP_ID: admin-dev.banksim.ca
+      # Use parent domain for cross-subdomain passkey sharing (admin-dev + auth-dev)
+      RP_ID: banksim.ca
       ADMIN_ORIGIN: https://admin-dev.banksim.ca
 
   # Authorization Server - dev domain configuration
@@ -40,6 +41,9 @@ services:
       ISSUER: https://auth-dev.banksim.ca
       CORS_ORIGIN: https://dev.banksim.ca,https://auth-dev.banksim.ca,https://openbanking-dev.banksim.ca,http://localhost:3005,https://ssim-dev.banksim.ca
       OPENBANKING_AUDIENCE: https://openbanking-dev.banksim.ca
+      # Use parent domain for cross-subdomain passkey sharing (admin-dev + auth-dev)
+      RP_ID: banksim.ca
+      AUTH_ORIGIN: https://auth-dev.banksim.ca
 
   # Open Banking - dev domain configuration
   openbanking:
