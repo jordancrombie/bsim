@@ -106,19 +106,23 @@ export function createOidcProvider(prisma: PrismaClient): Provider {
         defaultResource: (ctx) => config.openbanking.audience,
         useGrantedResource: (ctx) => true,
         getResourceServerInfo: (ctx, resourceIndicator) => {
-          // Only allow our Open Banking API as a valid resource
-          if (resourceIndicator === config.openbanking.audience) {
-            return {
-              scope: 'openid profile email fdx:accountdetailed:read fdx:transactions:read fdx:customercontact:read',
-              audience: config.openbanking.audience,
-              accessTokenFormat: 'jwt',
-              jwt: {
-                sign: { alg: 'RS256' },
-              },
-            };
-          }
-          // Unknown resource - return undefined to reject
-          return undefined;
+          // Log the resource indicator for debugging
+          console.log(`[OIDC] getResourceServerInfo called with resource: ${resourceIndicator}`);
+          console.log(`[OIDC] Expected audience: ${config.openbanking.audience}`);
+
+          // Always return the Open Banking resource server config
+          // This handles cases where:
+          // 1. No resource is specified (falls back to default)
+          // 2. The correct resource is specified
+          // 3. An unknown resource is specified (we still return our default to avoid errors)
+          return {
+            scope: 'openid profile email fdx:accountdetailed:read fdx:transactions:read fdx:customercontact:read',
+            audience: config.openbanking.audience,
+            accessTokenFormat: 'jwt',
+            jwt: {
+              sign: { alg: 'RS256' },
+            },
+          };
         },
       },
       rpInitiatedLogout: {

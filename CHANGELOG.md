@@ -36,6 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated docker-compose.yml and AWS deployment documentation
   - Also fixed for local dev: `admin-dev.banksim.ca` passkeys now work on `auth-dev.banksim.ca`
 
+- **OIDC Resource Indicator Crash** - Fixed server error when third-party apps request authorization
+  - `getResourceServerInfo` was returning `undefined` for unknown/mismatched resources
+  - Caused `TypeError: Cannot read properties of undefined (reading 'audience')` crash
+  - Now always returns valid resource server config for any resource indicator
+  - Added debug logging to track resource indicator requests
+
 ### Added
 - **Local Dev Admin Management Script** - New script for managing admin users locally
   - `./scripts/dev-admin.sh reset-admin` - Delete all admin users (triggers first-user setup)
