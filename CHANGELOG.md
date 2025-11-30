@@ -24,6 +24,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Credit Card Holder Name Default** - Auto-populate from user account
   - Card holder name defaults to user's first and last name when not specified
   - Eliminates generic "Card Holder" placeholder text
+- **Credit Card Type Administration** - Admin interface for managing card types
+  - New `CreditCardTypeConfig` database model for configurable card types
+  - Admin UI page at `/card-types` for listing and managing card types
+  - CRUD operations: create, edit, delete, toggle active/inactive
+  - Configurable properties: code, display name, card number prefix(es), card length, CVV length, debit flag, sort order
+  - Default card types seeded: VISA, VISA Debit, Mastercard, Mastercard Debit, American Express
+  - API routes: `GET/POST /api/credit-card-types`, `GET/PUT/DELETE /api/credit-card-types/[id]`
+  - Database migration: `20251129_add_credit_card_type_config`
 - **Open Banking API Specification** - OpenAPI YAML for user accounts endpoint
   - `openbanking/api/users-accounts.yaml` - Full OpenAPI 3.0.3 spec
   - Documents `/users/{fi_user_ref}/accounts` endpoint
