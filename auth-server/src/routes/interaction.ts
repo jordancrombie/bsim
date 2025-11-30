@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { Provider, interactionFinished } from 'oidc-provider';
 import { PrismaClient } from '@prisma/client';
 import { verifyUserPassword } from '../config/oidc';
+import { config } from '../config/env';
 import crypto from 'crypto';
 
 export function createInteractionRoutes(provider: Provider, prisma: PrismaClient): Router {
@@ -202,7 +203,7 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
       // When using resource indicators, oidc-provider expects all requested scopes
       // to be granted for that resource, not just the FDX-specific ones
       grant.addResourceScope(
-        'https://openbanking.banksim.ca',
+        config.openbanking.audience,
         requestedScopes.join(' ')
       );
 

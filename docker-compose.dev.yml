@@ -1,0 +1,54 @@
+# Docker Compose override for local development
+# Uses *-dev.banksim.ca subdomain pattern (compatible with *.banksim.ca wildcard cert)
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+#
+# Required DNS/hosts entries:
+#   127.0.0.1 dev.banksim.ca
+#   127.0.0.1 admin-dev.banksim.ca
+#   127.0.0.1 auth-dev.banksim.ca
+#   127.0.0.1 openbanking-dev.banksim.ca
+#   127.0.0.1 ssim-dev.banksim.ca
+
+services:
+  # Backend API - dev domain configuration
+  backend:
+    environment:
+      DOMAIN: dev.banksim.ca
+      CORS_ORIGIN: https://localhost,https://dev.banksim.ca,https://admin-dev.banksim.ca,https://auth-dev.banksim.ca,https://openbanking-dev.banksim.ca,https://ssim-dev.banksim.ca,http://frontend:3000
+      RP_ID: dev.banksim.ca
+      ORIGIN: https://dev.banksim.ca
+
+  # Frontend - dev domain configuration
+  frontend:
+    build:
+      args:
+        NEXT_PUBLIC_API_URL: https://dev.banksim.ca/api
+        NEXT_PUBLIC_DOMAIN: dev.banksim.ca
+        NEXT_PUBLIC_BACKEND_PORT: 443
+
+  # Admin Interface - dev domain configuration
+  admin:
+    environment:
+      ADMIN_RP_ID: admin-dev.banksim.ca
+      ADMIN_ORIGIN: https://admin-dev.banksim.ca
+
+  # Authorization Server - dev domain configuration
+  auth-server:
+    environment:
+      ISSUER: https://auth-dev.banksim.ca
+      CORS_ORIGIN: https://dev.banksim.ca,https://auth-dev.banksim.ca,https://openbanking-dev.banksim.ca,http://localhost:3005,https://ssim-dev.banksim.ca
+      OPENBANKING_AUDIENCE: https://openbanking-dev.banksim.ca
+
+  # Open Banking - dev domain configuration
+  openbanking:
+    environment:
+      AUTH_SERVER_ISSUER: https://auth-dev.banksim.ca
+      AUDIENCE: https://openbanking-dev.banksim.ca
+
+  # Nginx - use dev configuration
+  nginx:
+    volumes:
+      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro

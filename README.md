@@ -22,12 +22,44 @@ A full-stack banking simulator application with passwordless authentication (Web
 
 ## Quick Start
 
-### Option 1: Docker Compose (Recommended)
+### Option 1: Docker Compose - Local Development (Recommended)
 
-The fastest way to run the entire stack locally:
+The fastest way to run the entire stack locally with dev subdomains:
 
 ```bash
-# Start all services (database, backend, frontend)
+# Configure local DNS or add to /etc/hosts:
+# 127.0.0.1 dev.banksim.ca admin-dev.banksim.ca auth-dev.banksim.ca openbanking-dev.banksim.ca ssim-dev.banksim.ca
+
+# Build and start all services with dev configuration
+make dev-build
+
+# Or start without rebuilding
+make dev-up
+
+# View logs
+make dev-logs
+
+# Stop all services
+make dev-down
+
+# Show required DNS entries
+make dev-hosts
+```
+
+Access the application (local development):
+- **Frontend**: https://dev.banksim.ca
+- **Admin Interface**: https://admin-dev.banksim.ca
+- **Authorization Server**: https://auth-dev.banksim.ca
+- **Open Banking API**: https://openbanking-dev.banksim.ca
+- **Store Simulator**: https://ssim-dev.banksim.ca
+- **Database**: localhost:5432
+
+### Option 2: Docker Compose - Production
+
+For production deployment (uses root domain):
+
+```bash
+# Start all services with production configuration
 docker compose up -d
 
 # View logs
@@ -37,18 +69,16 @@ docker compose logs -f
 docker compose down
 ```
 
-Access the application:
-- **Frontend (HTTPS)**: https://localhost (or https://banksim.ca with DNS)
-- **Admin Interface**: https://admin.banksim.ca (requires DNS setup)
+Access the application (production):
+- **Frontend (HTTPS)**: https://banksim.ca
+- **Admin Interface**: https://admin.banksim.ca
 - **Authorization Server**: https://auth.banksim.ca (OIDC Provider)
 - **Open Banking API**: https://openbanking.banksim.ca (FDX-style API)
-- **Backend API (HTTPS)**: https://localhost/api/health
-- **HTTP**: http://localhost (redirects to HTTPS)
-- **Database**: localhost:5432
+- **Backend API (HTTPS)**: https://banksim.ca/api/health
 
 Note: The application runs with SSL/HTTPS using nginx as a reverse proxy. See [DOCKER_SSL_SETUP.md](DOCKER_SSL_SETUP.md) for details.
 
-### Option 2: Local Development
+### Option 3: Local Development (Without Docker)
 
 #### Prerequisites
 - Node.js 18+

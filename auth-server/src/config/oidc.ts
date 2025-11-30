@@ -103,14 +103,14 @@ export function createOidcProvider(prisma: PrismaClient): Provider {
       devInteractions: { enabled: false }, // We provide our own UI
       resourceIndicators: {
         enabled: true,
-        defaultResource: (ctx) => 'https://openbanking.banksim.ca',
+        defaultResource: (ctx) => config.openbanking.audience,
         useGrantedResource: (ctx) => true,
         getResourceServerInfo: (ctx, resourceIndicator) => {
           // Only allow our Open Banking API as a valid resource
-          if (resourceIndicator === 'https://openbanking.banksim.ca') {
+          if (resourceIndicator === config.openbanking.audience) {
             return {
               scope: 'openid profile email fdx:accountdetailed:read fdx:transactions:read fdx:customercontact:read',
-              audience: 'https://openbanking.banksim.ca',
+              audience: config.openbanking.audience,
               accessTokenFormat: 'jwt',
               jwt: {
                 sign: { alg: 'RS256' },
