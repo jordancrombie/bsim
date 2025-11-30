@@ -32,19 +32,34 @@ export function createOidcProvider(prisma: PrismaClient): Provider {
     clients: [], // Clients loaded from database
 
     // Enable dynamic client lookup from database
+    // Note: The 'id' parameter can be either the internal user ID (during login)
+    // or the fiUserRef (when looking up account for token generation)
+    // We use fiUserRef as the accountId/sub for all external tokens
     async findAccount(ctx, id) {
-      const user = await prisma.user.findUnique({
+      // Try to find user by internal ID first (used during login flow)
+      let user = await prisma.user.findUnique({
         where: { id },
         include: { accounts: true },
       });
 
+      // If not found, try by fiUserRef (used when generating tokens)
+      if (!user) {
+        user = await prisma.user.findUnique({
+          where: { fiUserRef: id },
+          include: { accounts: true },
+        });
+      }
+
       if (!user) return undefined;
 
       return {
-        accountId: user.id,
+        // Use fiUserRef as the accountId - this becomes the 'sub' claim in access tokens
+        accountId: user.fiUserRef,
         async claims(use, scope) {
+          // Use fiUserRef as the subject identifier for external consumers
+          // This provides a stable, external-facing identifier for Open Banking
           const claims: Record<string, any> = {
-            sub: user.id,
+            sub: user.fiUserRef,
           };
 
           if (scope.includes('profile')) {
@@ -88,21 +103,31 @@ export function createOidcProvider(prisma: PrismaClient): Provider {
       devInteractions: { enabled: false }, // We provide our own UI
       resourceIndicators: {
         enabled: true,
-        defaultResource: () => 'https://openbanking.banksim.ca',
-        getResourceServerInfo: () => ({
-          scope: 'fdx:accountdetailed:read fdx:transactions:read fdx:customercontact:read',
-          accessTokenFormat: 'jwt',
-          jwt: {
-            sign: { alg: 'RS256' },
-          },
-        }),
+        defaultResource: (ctx) => 'https://openbanking.banksim.ca',
+        useGrantedResource: (ctx) => true,
+        getResourceServerInfo: (ctx, resourceIndicator) => {
+          // Only allow our Open Banking API as a valid resource
+          if (resourceIndicator === 'https://openbanking.banksim.ca') {
+            return {
+              scope: 'openid profile email fdx:accountdetailed:read fdx:transactions:read fdx:customercontact:read',
+              audience: 'https://openbanking.banksim.ca',
+              accessTokenFormat: 'jwt',
+              jwt: {
+                sign: { alg: 'RS256' },
+              },
+            };
+          }
+          // Unknown resource - return undefined to reject
+          return undefined;
+        },
       },
       rpInitiatedLogout: {
         enabled: true,
       },
     },
 
-    // Token formats
+    // Token formats - always use JWT for access tokens
+    // The resourceIndicators feature handles JWT format for resource-bound tokens
     formats: {
       AccessToken: 'jwt',
     },
@@ -225,6 +250,7 @@ export function createOidcProvider(prisma: PrismaClient): Provider {
       }
 
       console.log(`[OIDC] Found client in database: ${dbClient.clientName}`);
+      console.log(`[OIDC] Client redirect_uris from DB:`, dbClient.redirectUris);
 
       // Create the client instance by adding it to the provider's store
       // Note: oidc-provider expects snake_case and converts to camelCase internally
@@ -261,11 +287,12 @@ export async function verifyUserPassword(
   prisma: PrismaClient,
   email: string,
   password: string
-): Promise<{ id: string; email: string; firstName: string; lastName: string } | null> {
+): Promise<{ id: string; fiUserRef: string; email: string; firstName: string; lastName: string } | null> {
   const user = await prisma.user.findUnique({
     where: { email },
     select: {
       id: true,
+      fiUserRef: true,
       email: true,
       password: true,
       firstName: true,
@@ -280,6 +307,7 @@ export async function verifyUserPassword(
 
   return {
     id: user.id,
+    fiUserRef: user.fiUserRef,
     email: user.email,
     firstName: user.firstName,
     lastName: user.lastName,

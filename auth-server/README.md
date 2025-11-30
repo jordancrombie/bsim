@@ -56,11 +56,43 @@ GET https://auth.banksim.ca/.well-known/jwks.json
 | `POST /administration/clients/:id` | Update client |
 | `POST /administration/clients/:id/delete` | Delete client |
 
+## Subject Identifier (fiUserRef)
+
+The Authorization Server uses the `fiUserRef` (Financial Institution User Reference) as the subject identifier (`sub` claim) in all tokens. This provides:
+
+- **Stable external identity**: The `sub` claim is a UUID that remains constant, separate from internal database IDs
+- **Consistent across tokens**: Both ID tokens and access tokens use `fiUserRef` as the subject
+- **Open Banking compatibility**: Third-party apps receive a predictable identifier for user-to-account mapping
+
+When calling the Open Banking API endpoint `/users/{fi_user_ref}/accounts`, the `fi_user_ref` in the URL must match the `sub` claim in the access token.
+
+### Token Claims Example
+
+**ID Token:**
+```json
+{
+  "sub": "3d3504db-8132-4b47-a6c3-f6179fb47681",
+  "name": "Bob Smith",
+  "email": "bob@example.com",
+  ...
+}
+```
+
+**Access Token (JWT):**
+```json
+{
+  "sub": "3d3504db-8132-4b47-a6c3-f6179fb47681",
+  "aud": "https://openbanking.banksim.ca",
+  "scope": "openid profile email fdx:accountdetailed:read",
+  ...
+}
+```
+
 ## Supported Scopes
 
 | Scope | Description | Claims |
 |-------|-------------|--------|
-| `openid` | OpenID Connect authentication | `sub` |
+| `openid` | OpenID Connect authentication | `sub` (fiUserRef) |
 | `profile` | User profile information | `name`, `given_name`, `family_name`, `birthdate` |
 | `email` | Email address | `email`, `email_verified` |
 | `fdx:accountdetailed:read` | Read account details and balances | - |
@@ -182,12 +214,19 @@ curl -X POST https://auth.banksim.ca/token \
 
 ### 4. Access Protected Resources
 
-Use the access token to call the Open Banking API:
+Use the access token to call the Open Banking API. The `sub` claim from the ID token is the user's `fi_user_ref`:
 
 ```bash
-curl https://openbanking.banksim.ca/accounts \
+# Get user's accounts using their fi_user_ref (from ID token sub claim)
+curl https://openbanking.banksim.ca/users/{fi_user_ref}/accounts \
+  -H "Authorization: Bearer ACCESS_TOKEN"
+
+# Example with actual fi_user_ref
+curl https://openbanking.banksim.ca/users/3d3504db-8132-4b47-a6c3-f6179fb47681/accounts \
   -H "Authorization: Bearer ACCESS_TOKEN"
 ```
+
+**Important:** The `fi_user_ref` in the URL must match the `sub` claim in the access token, or the request will be rejected with a 403 Forbidden error.
 
 ## Token Lifetimes
 

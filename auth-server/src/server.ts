@@ -55,6 +55,7 @@ oidc.on('grant.error', (ctx, err) => {
 
 oidc.on('authorization.error', (ctx, err) => {
   console.error('[OIDC Authorization Error]:', err);
+  console.error('[OIDC Authorization Error] Request redirect_uri:', ctx.oidc?.params?.redirect_uri);
 });
 
 // Interaction routes (login/consent UI)

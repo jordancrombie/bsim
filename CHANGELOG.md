@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Open Banking User Accounts Endpoint** - New endpoint for third-party access
+  - `GET /users/{fi_user_ref}/accounts` - List user's accounts by fi_user_ref
+  - Token subject validation ensures fi_user_ref matches JWT sub claim
+  - Returns FDX-compliant account data structure
 - **FI User Reference Number** - Unique identifier for Open Banking integrations
   - New `fi_user_ref` field on User model (UUID, auto-generated)
   - Database migration to add field and populate existing users
@@ -125,6 +129,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Relative API URLs for cross-subdomain compatibility
 
 ### Changed
+- **Authorization Server Subject Identifier** - Consistent fiUserRef across all tokens
+  - Access tokens now use `fiUserRef` as the `sub` claim (previously used internal ID)
+  - ID tokens and access tokens are now consistent for third-party API calls
+  - Login flow updated to use fiUserRef as accountId throughout OIDC flows
+  - Consent flow updated to handle fiUserRef-based session lookups
 - nginx configuration updated with auth.banksim.ca and openbanking.banksim.ca routing
 - Docker Compose now includes auth-server and openbanking services
 - Admin dashboard cards now clickable with hover effects
@@ -141,6 +150,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Backend CORS configured with dynamic subdomain validation
 
 ### Fixed
+- **Token Subject Mismatch** - Fixed "Token subject does not match requested user" error
+  - Access token `sub` claim now matches ID token `sub` claim (both use fiUserRef)
+  - Third-party apps can now successfully call `/users/{fi_user_ref}/accounts`
 - Docker volume permissions for logo uploads in admin container
 - Next.js Image component issues with dynamic sources (switched to standard img tags)
 - TypeScript compilation errors in production Docker builds
