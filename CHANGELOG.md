@@ -51,6 +51,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Deposit and Withdraw functionality with modal dialogs
   - Full transaction history with type indicators (deposit/withdrawal/transfer)
   - Color-coded transaction amounts (green for credits, red for debits)
+- **Email-Based Money Transfers** - Send money to users by email address
+  - New transfer page at `/dashboard/transfer` for sending money to other users
+  - Transfer by recipient email instead of account number
+  - Backend validates recipient exists and has at least one account
+  - Funds are deposited to recipient's primary (first) account
+  - Transfer API now accepts `toEmail` as alternative to `toAccountNumber`
+  - Response includes recipient email and account number for confirmation
+  - Added Credit Cards link to dashboard sidebar navigation
 - **Enhanced Credit Card Transactions** - Merchant and transaction details
   - New fields: `merchantName`, `merchantId`, `mccCode`, `transactionDate`
   - MCC (Merchant Category Code) display with category descriptions

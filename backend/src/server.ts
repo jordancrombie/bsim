@@ -84,7 +84,7 @@ const creditCardTransactionRepository = new PrismaCreditCardTransactionRepositor
 
 // Services
 const authService = new AuthService(userRepository);
-const accountService = new AccountService(accountRepository, transactionRepository);
+const accountService = new AccountService(accountRepository, transactionRepository, userRepository);
 const passkeyService = new PasskeyService(userRepository, prisma);
 const creditCardService = new CreditCardService(creditCardRepository, creditCardTransactionRepository);
 

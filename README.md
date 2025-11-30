@@ -172,7 +172,18 @@ bsim/
 ### Transactions
 - `POST /api/transactions/deposit` - Deposit money (protected)
 - `POST /api/transactions/withdraw` - Withdraw money (protected)
-- `POST /api/transactions/transfer` - Transfer between accounts (protected)
+- `POST /api/transactions/transfer` - Transfer money (protected)
+
+**Transfer Request Fields:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `fromAccountNumber` | string | Source account number (required) |
+| `toAccountNumber` | string | Destination account number (optional*) |
+| `toEmail` | string | Recipient email address (optional*) |
+| `amount` | number | Transfer amount (required) |
+| `description` | string | Transaction description |
+
+*Either `toAccountNumber` or `toEmail` is required. Using `toEmail` sends funds to the recipient's primary account.
 
 ### Credit Cards
 - `POST /api/credit-cards` - Create new credit card (protected)

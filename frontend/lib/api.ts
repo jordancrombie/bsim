@@ -11,6 +11,7 @@ import type {
   DepositRequest,
   WithdrawRequest,
   TransferRequest,
+  TransferResponse,
   CreditCard,
   CreditCardResponse,
   CreditCardsResponse,
@@ -156,8 +157,8 @@ class ApiClient {
     return response.data;
   }
 
-  async transfer(data: TransferRequest): Promise<{ message: string }> {
-    const response = await this.client.post<{ message: string }>('/transactions/transfer', data);
+  async transfer(data: TransferRequest): Promise<TransferResponse> {
+    const response = await this.client.post<TransferResponse>('/transactions/transfer', data);
     return response.data;
   }
 

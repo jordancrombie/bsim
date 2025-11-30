@@ -1,5 +1,6 @@
 import { IAccountRepository, AccountData } from '../repositories/interfaces/IAccountRepository';
 import { ITransactionRepository } from '../repositories/interfaces/ITransactionRepository';
+import { IUserRepository } from '../repositories/interfaces/IUserRepository';
 import { TransactionType } from '../models/transaction';
 
 export interface DepositDto {
@@ -16,7 +17,8 @@ export interface WithdrawDto {
 
 export interface TransferDto {
   fromAccountNumber: string;
-  toAccountNumber: string;
+  toAccountNumber?: string;
+  toEmail?: string;
   amount: number;
   description?: string;
 }
@@ -24,7 +26,8 @@ export interface TransferDto {
 export class AccountService {
   constructor(
     private accountRepository: IAccountRepository,
-    private transactionRepository: ITransactionRepository
+    private transactionRepository: ITransactionRepository,
+    private userRepository?: IUserRepository
   ) {}
 
   async createAccount(userId: string, initialBalance: number = 0): Promise<AccountData> {
@@ -108,9 +111,13 @@ export class AccountService {
     return { ...account, balance: newBalance };
   }
 
-  async transfer(data: TransferDto): Promise<void> {
+  async transfer(data: TransferDto): Promise<{ recipientEmail: string; recipientAccountNumber: string }> {
     if (data.amount <= 0) {
       throw new Error('Transfer amount must be positive');
+    }
+
+    if (!data.toAccountNumber && !data.toEmail) {
+      throw new Error('Either destination account number or recipient email is required');
     }
 
     const fromAccount = await this.accountRepository.findByAccountNumber(data.fromAccountNumber);
@@ -118,9 +125,43 @@ export class AccountService {
       throw new Error('Source account not found');
     }
 
-    const toAccount = await this.accountRepository.findByAccountNumber(data.toAccountNumber);
+    let toAccount: AccountData | null = null;
+    let recipientEmail = '';
+
+    if (data.toEmail) {
+      // Look up recipient by email
+      if (!this.userRepository) {
+        throw new Error('User repository not configured for email-based transfers');
+      }
+
+      const recipient = await this.userRepository.findByEmail(data.toEmail);
+      if (!recipient) {
+        throw new Error('Recipient not found');
+      }
+
+      recipientEmail = recipient.email;
+
+      // Get recipient's accounts and use the first one
+      const recipientAccounts = await this.accountRepository.findByUserId(recipient.id);
+      if (recipientAccounts.length === 0) {
+        throw new Error('Recipient has no accounts');
+      }
+
+      toAccount = recipientAccounts[0];
+    } else if (data.toAccountNumber) {
+      toAccount = await this.accountRepository.findByAccountNumber(data.toAccountNumber);
+      if (!toAccount) {
+        throw new Error('Destination account not found');
+      }
+    }
+
     if (!toAccount) {
-      throw new Error('Destination account not found');
+      throw new Error('Could not determine destination account');
+    }
+
+    // Prevent transferring to the same account
+    if (fromAccount.id === toAccount.id) {
+      throw new Error('Cannot transfer to the same account');
     }
 
     if (data.amount > fromAccount.balance) {
@@ -134,7 +175,9 @@ export class AccountService {
       type: TransactionType.TRANSFER,
       amount: data.amount,
       balanceAfter: fromNewBalance,
-      description: `Transfer to ${data.toAccountNumber}: ${data.description || ''}`,
+      description: data.toEmail
+        ? `Transfer to ${data.toEmail}: ${data.description || ''}`
+        : `Transfer to ${toAccount.accountNumber}: ${data.description || ''}`,
       accountId: fromAccount.id,
     });
 
@@ -148,6 +191,11 @@ export class AccountService {
       description: `Transfer from ${data.fromAccountNumber}: ${data.description || ''}`,
       accountId: toAccount.id,
     });
+
+    return {
+      recipientEmail: recipientEmail || data.toEmail || '',
+      recipientAccountNumber: toAccount.accountNumber,
+    };
   }
 
   async getTransactionHistory(accountNumber: string) {
