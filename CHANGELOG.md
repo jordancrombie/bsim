@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Passkey Registration BigInt Serialization** - Fixed "Failed to verify passkey registration" error in production
+  - The passkey `counter` field (BigInt) was causing JSON serialization to fail when returning the response
+  - Passkeys were being saved correctly but the API response threw an error, confusing users
+  - Now returns only safe, serializable fields (id, createdAt, deviceType, backedUp) in the response
+
+- **Frontend API URL for AWS Production** - Fixed 404 errors on signup/login API calls in production
+  - Frontend was always using relative `/api` path in the browser, ignoring `NEXT_PUBLIC_API_URL`
+  - In AWS, the backend is on `api.banksim.ca` while frontend is on `banksim.ca`
+  - Updated `frontend/lib/api.ts` to properly use `NEXT_PUBLIC_API_URL` when set (baked in at build time)
+  - Frontend now correctly calls `https://api.banksim.ca/api` in production
+
 ### Added
 - **Local Development Domain Configuration** - Separate dev subdomain pattern for local development
   - New `*-dev.banksim.ca` subdomain pattern for local development (compatible with `*.banksim.ca` wildcard cert)
