@@ -36,6 +36,7 @@ export class AccountController {
         select: {
           id: true,
           accountNumber: true,
+          accountType: true,
           balance: true,
           createdAt: true,
           user: {
@@ -55,7 +56,7 @@ export class AccountController {
         accountId: account.id,
         accountNumber: `****${account.accountNumber.slice(-4)}`, // Masked
         accountNumberDisplay: `****${account.accountNumber.slice(-4)}`,
-        accountType: 'CHECKING', // In a real system, this would be stored
+        accountType: account.accountType,
         status: 'OPEN',
         currency: {
           currencyCode: 'CAD',
@@ -113,6 +114,7 @@ export class AccountController {
         select: {
           id: true,
           accountNumber: true,
+          accountType: true,
           balance: true,
           createdAt: true,
           updatedAt: true,
@@ -138,7 +140,7 @@ export class AccountController {
         accountId: account.id,
         accountNumber: `****${account.accountNumber.slice(-4)}`,
         accountNumberDisplay: `****${account.accountNumber.slice(-4)}`,
-        accountType: 'CHECKING',
+        accountType: account.accountType,
         status: 'OPEN',
         currency: {
           currencyCode: 'CAD',

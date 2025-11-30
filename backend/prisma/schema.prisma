@@ -38,6 +38,7 @@ model User {
 model Account {
   id            String        @id @default(uuid())
   accountNumber String        @unique
+  accountType   AccountType   @default(CHECKING) @map("account_type")
   balance       Decimal       @default(0) @db.Decimal(15, 2)
   userId        String
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -78,19 +79,20 @@ model Passkey {
 }
 
 model CreditCard {
-  id            String               @id @default(uuid())
-  cardNumber    String               @unique
-  cardHolder    String
-  expiryMonth   Int
-  expiryYear    Int
-  cvv           String
-  creditLimit   Decimal              @db.Decimal(15, 2)
-  availableCredit Decimal            @db.Decimal(15, 2)
-  userId        String
-  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
-  transactions  CreditCardTransaction[]
+  id              String               @id @default(uuid())
+  cardNumber      String               @unique
+  cardType        CreditCardType       @default(VISA) @map("card_type")
+  cardHolder      String
+  expiryMonth     Int
+  expiryYear      Int
+  cvv             String
+  creditLimit     Decimal              @db.Decimal(15, 2)
+  availableCredit Decimal              @db.Decimal(15, 2)
+  userId          String
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  transactions    CreditCardTransaction[]
 
   @@map("credit_cards")
 }
@@ -114,10 +116,25 @@ enum TransactionType {
   TRANSFER
 }
 
+enum AccountType {
+  CHECKING
+  SAVINGS
+  MONEY_MARKET
+  CERTIFICATE_OF_DEPOSIT
+}
+
 enum CreditCardTransactionType {
   CHARGE
   PAYMENT
   REFUND
+}
+
+enum CreditCardType {
+  VISA
+  VISA_DEBIT
+  MC
+  MC_DEBIT
+  AMEX
 }
 
 model SiteSettings {

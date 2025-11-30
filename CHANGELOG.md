@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Account Type Support** - Proper account categorization in database
+  - New `AccountType` enum: CHECKING, SAVINGS, MONEY_MARKET, CERTIFICATE_OF_DEPOSIT
+  - `accountType` field on Account model (defaults to CHECKING)
+  - Open Banking API endpoints now return stored account type instead of hardcoded value
+  - Database migration: `20251129_add_account_type`
+- **Credit Card Type Support** - Card network/product categorization
+  - New `CreditCardType` enum: VISA, VISA_DEBIT, MC, MC_DEBIT, AMEX
+  - `cardType` field on CreditCard model (defaults to VISA)
+  - Database migration: `20251129_add_credit_card_type`
+- **Open Banking API Specification** - OpenAPI YAML for user accounts endpoint
+  - `openbanking/api/users-accounts.yaml` - Full OpenAPI 3.0.3 spec
+  - Documents `/users/{fi_user_ref}/accounts` endpoint
+  - Includes request/response schemas, error responses, and security requirements
 - **Resource Indicators for JWT Access Tokens** - OAuth 2.0 RFC 8707 support
   - Authorization server now properly issues JWT access tokens when `resource` parameter is provided
   - `getResourceServerInfo` validates and returns JWT configuration for `https://openbanking.banksim.ca`
