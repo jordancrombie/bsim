@@ -1,7 +1,14 @@
-.PHONY: help db-start db-stop db-reset db-migrate backend-dev backend-build frontend-dev install
+.PHONY: help db-start db-stop db-reset db-migrate backend-dev backend-build frontend-dev install dev-up dev-down dev-build dev-logs
 
 help:
 	@echo "BSIM Development Commands"
+	@echo ""
+	@echo "Docker (Local Dev - dev.banksim.ca):"
+	@echo "  make dev-up        - Start all services with dev.banksim.ca domains"
+	@echo "  make dev-down      - Stop all dev services"
+	@echo "  make dev-build     - Rebuild and start dev services"
+	@echo "  make dev-logs      - View logs from all dev services"
+	@echo "  make dev-hosts     - Show /etc/hosts entries needed"
 	@echo ""
 	@echo "Database:"
 	@echo "  make db-start      - Start PostgreSQL container"
@@ -49,3 +56,29 @@ setup: db-start
 	cd backend && npm install && npm run prisma:generate && npm run prisma:migrate
 	@echo ""
 	@echo "✅ Setup complete! Run 'make backend-dev' to start the server"
+
+# Docker dev commands (uses *-dev.banksim.ca subdomain pattern)
+dev-up:
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+dev-down:
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml down
+
+dev-build:
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
+
+dev-logs:
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml logs -f
+
+dev-hosts:
+	@echo ""
+	@echo "Add these entries to /etc/hosts or local DNS for development:"
+	@echo ""
+	@echo "127.0.0.1 dev.banksim.ca"
+	@echo "127.0.0.1 admin-dev.banksim.ca"
+	@echo "127.0.0.1 auth-dev.banksim.ca"
+	@echo "127.0.0.1 openbanking-dev.banksim.ca"
+	@echo "127.0.0.1 ssim-dev.banksim.ca"
+	@echo ""
+	@echo "All domains use *.banksim.ca wildcard certificate"
+	@echo ""

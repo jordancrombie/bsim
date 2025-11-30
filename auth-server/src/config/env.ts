@@ -14,4 +14,8 @@ export const config = {
   cors: {
     origin: process.env.CORS_ORIGIN || 'https://banksim.ca,https://auth.banksim.ca,https://openbanking.banksim.ca,http://localhost:3005',
   },
+  // Open Banking resource server configuration
+  openbanking: {
+    audience: process.env.OPENBANKING_AUDIENCE || 'https://openbanking.banksim.ca',
+  },
 };

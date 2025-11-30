@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Local Development Domain Configuration** - Separate dev subdomain pattern for local development
+  - New `*-dev.banksim.ca` subdomain pattern for local development (compatible with `*.banksim.ca` wildcard cert)
+  - Production uses: `banksim.ca`, `admin.banksim.ca`, `auth.banksim.ca`, `openbanking.banksim.ca`, `ssim.banksim.ca`
+  - Local dev uses: `dev.banksim.ca`, `admin-dev.banksim.ca`, `auth-dev.banksim.ca`, `openbanking-dev.banksim.ca`, `ssim-dev.banksim.ca`
+  - New `docker-compose.dev.yml` override file for local development configuration
+  - New `nginx/nginx.dev.conf` with dev subdomain routing
+  - Makefile targets: `make dev-up`, `make dev-down`, `make dev-build`, `make dev-logs`, `make dev-hosts`
+  - Auth server now uses configurable `OPENBANKING_AUDIENCE` env var for resource indicator
+  - All hardcoded domain references replaced with environment variable configuration
 - **Unit Test Suite** - Comprehensive Jest test coverage for all modules (462 tests total)
   - Jest test framework with ts-jest for TypeScript support
   - Mock repositories for isolated testing without database dependencies
