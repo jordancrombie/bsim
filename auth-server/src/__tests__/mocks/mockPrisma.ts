@@ -156,6 +156,19 @@ export function createMockPrismaClient() {
         });
         return { count: initialCount - oidcPayloads.length };
       }),
+
+      count: jest.fn().mockImplementation(async (args?: any) => {
+        if (!args?.where) return oidcPayloads.length;
+
+        const { where } = args;
+        return oidcPayloads.filter((p) => {
+          if (where.grantId && p.grantId !== where.grantId) return false;
+          if (where.expiresAt?.gt && p.expiresAt) {
+            if (new Date(p.expiresAt) <= where.expiresAt.gt) return false;
+          }
+          return true;
+        }).length;
+      }),
     },
 
     oAuthClient: {
@@ -271,6 +284,120 @@ export function createMockPrismaClient() {
         };
         consents.push(newConsent);
         return newConsent;
+      }),
+
+      findMany: jest.fn().mockImplementation(async (args?: any) => {
+        let result = [...consents];
+
+        // Filter by where clause
+        if (args?.where) {
+          result = result.filter((c) => {
+            if (args.where.revokedAt === null && c.revokedAt !== null) return false;
+            if (args.where.userId && c.userId !== args.where.userId) return false;
+            return true;
+          });
+        }
+
+        // Sort by createdAt desc
+        if (args?.orderBy?.createdAt === 'desc') {
+          result.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        }
+
+        // Handle include for user and client
+        if (args?.include) {
+          result = result.map((consent) => {
+            const enriched: any = { ...consent };
+            if (args.include.user) {
+              const user = users.find((u) => u.id === consent.userId);
+              if (args.include.user.select && user) {
+                const selected: any = {};
+                Object.keys(args.include.user.select).forEach((key) => {
+                  if (args.include.user.select[key]) selected[key] = (user as any)[key];
+                });
+                enriched.user = selected;
+              } else {
+                enriched.user = user;
+              }
+            }
+            if (args.include.client) {
+              const client = oauthClients.find((cl) => cl.clientId === consent.clientId);
+              if (args.include.client.select && client) {
+                const selected: any = {};
+                Object.keys(args.include.client.select).forEach((key) => {
+                  if (args.include.client.select[key]) selected[key] = (client as any)[key];
+                });
+                enriched.client = selected;
+              } else {
+                enriched.client = client;
+              }
+            }
+            return enriched;
+          });
+        }
+
+        return result;
+      }),
+
+      findUnique: jest.fn().mockImplementation(async (args: any) => {
+        const { where, include } = args;
+        let consent = consents.find((c) => c.id === where.id);
+
+        if (!consent) return null;
+
+        // Handle include
+        if (include) {
+          const enriched: any = { ...consent };
+          if (include.user) {
+            const user = users.find((u) => u.id === consent!.userId);
+            if (include.user.select && user) {
+              const selected: any = {};
+              Object.keys(include.user.select).forEach((key) => {
+                if (include.user.select[key]) selected[key] = (user as any)[key];
+              });
+              enriched.user = selected;
+            } else {
+              enriched.user = user;
+            }
+          }
+          if (include.client) {
+            const client = oauthClients.find((cl) => cl.clientId === consent!.clientId);
+            if (include.client.select && client) {
+              const selected: any = {};
+              Object.keys(include.client.select).forEach((key) => {
+                if (include.client.select[key]) selected[key] = (client as any)[key];
+              });
+              enriched.client = selected;
+            } else {
+              enriched.client = client;
+            }
+          }
+          return enriched;
+        }
+
+        return consent;
+      }),
+
+      update: jest.fn().mockImplementation(async (args: any) => {
+        const { where, data } = args;
+        const index = consents.findIndex((c) => c.id === where.id);
+        if (index < 0) throw new Error('Not found');
+        consents[index] = { ...consents[index], ...data, updatedAt: new Date() };
+        return consents[index];
+      }),
+
+      updateMany: jest.fn().mockImplementation(async (args: any) => {
+        const { where, data } = args;
+        let count = 0;
+        consents.forEach((consent, index) => {
+          let matches = true;
+          if (where.userId && consent.userId !== where.userId) matches = false;
+          if (where.revokedAt === null && consent.revokedAt !== null) matches = false;
+          if (matches) {
+            consents[index] = { ...consent, ...data, updatedAt: new Date() };
+            count++;
+          }
+        });
+        return { count };
       }),
     },
 

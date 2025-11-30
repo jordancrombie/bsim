@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Unit Test Suite** - Comprehensive Jest test coverage for all modules (455 tests total)
+- **Unit Test Suite** - Comprehensive Jest test coverage for all modules (462 tests total)
   - Jest test framework with ts-jest for TypeScript support
   - Mock repositories for isolated testing without database dependencies
   - **Backend Tests** (229 tests):
@@ -27,10 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **AccountController tests** (22 tests): FDX-style account listing, details, transactions, pagination
     - **CustomerController tests** (11 tests): scope-based profile data (profile, email, contact info)
     - **UserController tests** (10 tests): fi_user_ref based account lookup, authorization checks
-  - **Auth Server Tests** (83 tests):
+  - **Auth Server Tests** (90 tests):
     - **PrismaAdapter tests** (24 tests): OIDC token storage, upsert, find by ID/userCode/uid, consume, destroy, revoke by grantId
     - **verifyUserPassword tests** (7 tests): credential validation, password verification, user lookup
-    - **Admin routes tests** (16 tests): OAuth client CRUD, secret generation, duplicate handling, client management
+    - **Admin routes tests** (23 tests): OAuth client CRUD, secret generation, duplicate handling, session management
     - **Interaction routes tests** (15 tests): login flow, consent flow, abort handling, account selection
     - **Admin Auth middleware tests** (11 tests): JWT token creation/verification, auth middleware, cookie management
     - **Admin Auth routes tests** (10 tests): login page, passkey authentication options, logout handlers
@@ -144,6 +144,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Passkey authentication** - Same AdminUser/AdminPasskey-based auth as admin.banksim.ca
   - Login page with WebAuthn/passkey support
   - JWT session management with secure cookies
+  - **Session Management** - View and revoke active OAuth/OIDC sessions
+    - Sessions tab showing all active consents with user/client details
+    - Dashboard stats: active sessions, unique users, active token counts
+    - Revoke individual sessions (deletes all associated OIDC tokens)
+    - Revoke all sessions for a specific user
+    - Navigation tabs between Clients and Sessions views
   - Logout functionality
 - **SSIM nginx Proxy Configuration** - Added `ssim.banksim.ca` subdomain routing
   - Routes to SSIM running on host machine (localhost:3005)
