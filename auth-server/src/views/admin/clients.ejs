@@ -203,7 +203,13 @@
       <h1>BSIM Auth Administration</h1>
       <p class="header-subtitle">OAuth 2.0 / OpenID Connect Client Management</p>
     </div>
-    <a href="/administration/clients/new" class="btn btn-primary">+ New Client</a>
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <% if (admin) { %>
+        <span style="font-size: 14px; opacity: 0.9;"><%= admin.email %></span>
+      <% } %>
+      <a href="/administration/clients/new" class="btn btn-primary">+ New Client</a>
+      <a href="/administration/logout" class="btn btn-secondary" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white;">Logout</a>
+    </div>
   </div>
 
   <div class="container">

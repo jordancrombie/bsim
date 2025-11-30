@@ -7,6 +7,8 @@ import { getPrismaClient, disconnectPrisma } from './config/database';
 import { createOidcProvider } from './config/oidc';
 import { createInteractionRoutes } from './routes/interaction';
 import { createAdminRoutes } from './routes/admin';
+import { createAdminAuthRoutes } from './routes/adminAuth';
+import { createAdminAuthMiddleware } from './middleware/adminAuth';
 
 const app = express();
 
@@ -61,8 +63,12 @@ oidc.on('authorization.error', (ctx, err) => {
 // Interaction routes (login/consent UI)
 app.use('/interaction', createInteractionRoutes(oidc, prisma));
 
-// Admin routes (OAuth client management)
-app.use('/administration', createAdminRoutes(prisma));
+// Admin authentication routes (login/logout - public)
+app.use('/administration', createAdminAuthRoutes(prisma));
+
+// Admin routes (OAuth client management - protected)
+const requireAdminAuth = createAdminAuthMiddleware(prisma);
+app.use('/administration', requireAdminAuth, createAdminRoutes(prisma));
 
 // Health check
 app.get('/health', (req, res) => {

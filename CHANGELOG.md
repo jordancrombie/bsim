@@ -139,6 +139,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enable/disable clients without deletion
   - Delete clients with confirmation dialog
   - Professional admin UI with consistent styling
+  - **Passkey authentication** - Same AdminUser/AdminPasskey-based auth as admin.banksim.ca
+  - Login page with WebAuthn/passkey support
+  - JWT session management with secure cookies
+  - Logout functionality
 - **SSIM nginx Proxy Configuration** - Added `ssim.banksim.ca` subdomain routing
   - Routes to SSIM running on host machine (localhost:3005)
   - Uses same wildcard SSL certificate as other services
