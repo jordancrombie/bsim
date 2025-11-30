@@ -8,20 +8,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Unit Test Suite** - Comprehensive Jest test coverage for backend services (229 tests)
+- **Unit Test Suite** - Comprehensive Jest test coverage for backend services (303 tests total)
   - Jest test framework with ts-jest for TypeScript support
   - Mock repositories for isolated testing without database dependencies
-  - **AuthService tests** (12 tests): registration, login, JWT tokens, password hashing
-  - **AuthController tests** (15 tests): HTTP handlers, validation, error responses
-  - **AccountService tests** (42 tests): account creation, deposits, withdrawals, transfers, email-based transfers, notification integration
-  - **AccountController tests** (31 tests): HTTP handlers, authentication, ownership validation, transfers
-  - **CreditCardService tests** (33 tests): card creation, charges, payments, refunds
-  - **CreditCardController tests** (34 tests): HTTP handlers, authentication, ownership validation, transactions
-  - **NotificationService tests** (24 tests): CRUD operations, unread count, mark as read, transfer notifications
-  - **NotificationController tests** (16 tests): HTTP handlers, authentication, query parameters
-  - **PasskeyService tests** (21 tests): registration options, verification, authentication, passkey management
+  - **Backend Tests** (229 tests):
+    - **AuthService tests** (12 tests): registration, login, JWT tokens, password hashing
+    - **AuthController tests** (15 tests): HTTP handlers, validation, error responses
+    - **AccountService tests** (42 tests): account creation, deposits, withdrawals, transfers, email-based transfers, notification integration
+    - **AccountController tests** (31 tests): HTTP handlers, authentication, ownership validation, transfers
+    - **CreditCardService tests** (33 tests): card creation, charges, payments, refunds
+    - **CreditCardController tests** (34 tests): HTTP handlers, authentication, ownership validation, transactions
+    - **NotificationService tests** (24 tests): CRUD operations, unread count, mark as read, transfer notifications
+    - **NotificationController tests** (16 tests): HTTP handlers, authentication, query parameters
+    - **PasskeyService tests** (21 tests): registration options, verification, authentication, passkey management
+  - **Open Banking Tests** (74 tests):
+    - **ConsentService tests** (16 tests): consent management, account filtering, scope verification, expiration handling
+    - **tokenValidator middleware tests** (15 tests): JWT validation, scope checking, JWKS integration, error handling
+    - **AccountController tests** (22 tests): FDX-style account listing, details, transactions, pagination
+    - **CustomerController tests** (11 tests): scope-based profile data (profile, email, contact info)
+    - **UserController tests** (10 tests): fi_user_ref based account lookup, authorization checks
   - Test commands: `npm test`, `npm run test:watch`, `npm run test:coverage`
-  - Mock implementations: MockUserRepository, MockAccountRepository, MockTransactionRepository, MockCreditCardRepository, MockCreditCardTransactionRepository, MockNotificationRepository
+  - Mock implementations: MockUserRepository, MockAccountRepository, MockTransactionRepository, MockCreditCardRepository, MockCreditCardTransactionRepository, MockNotificationRepository, MockPrismaClient (openbanking)
 - **Account Type Support** - Proper account categorization in database
   - New `AccountType` enum: CHECKING, SAVINGS, MONEY_MARKET, CERTIFICATE_OF_DEPOSIT
   - `accountType` field on Account model (defaults to CHECKING)
