@@ -13,17 +13,20 @@ import { PrismaAccountRepository } from './repositories/postgres/PrismaAccountRe
 import { PrismaTransactionRepository } from './repositories/postgres/PrismaTransactionRepository';
 import { PrismaCreditCardRepository } from './repositories/postgres/PrismaCreditCardRepository';
 import { PrismaCreditCardTransactionRepository } from './repositories/postgres/PrismaCreditCardTransactionRepository';
+import { PrismaNotificationRepository } from './repositories/postgres/PrismaNotificationRepository';
 
 // Services
 import { AuthService } from './services/AuthService';
 import { AccountService } from './services/AccountService';
 import { PasskeyService } from './services/PasskeyService';
 import { CreditCardService } from './services/CreditCardService';
+import { NotificationService } from './services/NotificationService';
 
 // Controllers
 import { AuthController } from './controllers/authController';
 import { AccountController } from './controllers/accountController';
 import { CreditCardController } from './controllers/creditCardController';
+import { NotificationController } from './controllers/notificationController';
 
 // Routes
 import { createAuthRoutes } from './routes/authRoutes';
@@ -32,6 +35,7 @@ import { createTransactionRoutes } from './routes/transactionRoutes';
 import { createCreditCardRoutes } from './routes/creditCardRoutes';
 import { createCreditCardTransactionRoutes } from './routes/creditCardTransactionRoutes';
 import { createSettingsRoutes } from './routes/settingsRoutes';
+import { createNotificationRoutes } from './routes/notificationRoutes';
 
 const app = express();
 
@@ -81,10 +85,12 @@ const accountRepository = new PrismaAccountRepository(prisma);
 const transactionRepository = new PrismaTransactionRepository(prisma);
 const creditCardRepository = new PrismaCreditCardRepository(prisma);
 const creditCardTransactionRepository = new PrismaCreditCardTransactionRepository(prisma);
+const notificationRepository = new PrismaNotificationRepository(prisma);
 
 // Services
 const authService = new AuthService(userRepository);
-const accountService = new AccountService(accountRepository, transactionRepository, userRepository);
+const notificationService = new NotificationService(notificationRepository);
+const accountService = new AccountService(accountRepository, transactionRepository, userRepository, notificationService);
 const passkeyService = new PasskeyService(userRepository, prisma);
 const creditCardService = new CreditCardService(creditCardRepository, creditCardTransactionRepository);
 
@@ -92,6 +98,7 @@ const creditCardService = new CreditCardService(creditCardRepository, creditCard
 const authController = new AuthController(authService, passkeyService);
 const accountController = new AccountController(accountService);
 const creditCardController = new CreditCardController(creditCardService);
+const notificationController = new NotificationController(notificationService);
 
 // Routes
 app.use('/api/auth', createAuthRoutes(authController));
@@ -100,6 +107,7 @@ app.use('/api/transactions', createTransactionRoutes(accountController));
 app.use('/api/credit-cards', createCreditCardRoutes(creditCardController));
 app.use('/api/credit-card-transactions', createCreditCardTransactionRoutes(creditCardController));
 app.use('/api/settings', createSettingsRoutes(prisma));
+app.use('/api/notifications', createNotificationRoutes(notificationController));
 
 // Health check
 app.get('/health', (req, res) => {

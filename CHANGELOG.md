@@ -51,6 +51,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Deposit and Withdraw functionality with modal dialogs
   - Full transaction history with type indicators (deposit/withdrawal/transfer)
   - Color-coded transaction amounts (green for credits, red for debits)
+- **Notification System** - Real-time notification center for user activity
+  - Notification bell icon in dashboard header with unread count badge
+  - Dropdown notification panel with full notification history
+  - Notification types: TRANSFER_RECEIVED, TRANSFER_SENT, ACCOUNT_CREATED, CREDIT_CARD_CREATED, PAYMENT_DUE, SYSTEM
+  - Auto-generated notifications when sending or receiving transfers
+  - Mark individual notifications as read or mark all as read
+  - 30-second polling for new notification updates
+  - Visual indicators for unread notifications (blue dot, highlighted background)
+  - Time-ago formatting (e.g., "5m ago", "2h ago")
+  - Database migration: `20251130_add_notifications`
+  - Backend: NotificationService, NotificationController, PrismaNotificationRepository
+  - API endpoints: GET /api/notifications, GET /api/notifications/unread-count, PATCH /api/notifications/:id/read, PATCH /api/notifications/read-all, DELETE /api/notifications/:id
 - **Email-Based Money Transfers** - Send money to users by email address
   - New transfer page at `/dashboard/transfer` for sending money to other users
   - Transfer by recipient email instead of account number

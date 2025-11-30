@@ -212,3 +212,32 @@ export interface CreditCardsResponse {
 export interface CreditCardTransactionsResponse {
   transactions: CreditCardTransaction[];
 }
+
+// Notification types
+export enum NotificationType {
+  TRANSFER_RECEIVED = 'TRANSFER_RECEIVED',
+  TRANSFER_SENT = 'TRANSFER_SENT',
+  ACCOUNT_CREATED = 'ACCOUNT_CREATED',
+  CREDIT_CARD_CREATED = 'CREDIT_CARD_CREATED',
+  PAYMENT_DUE = 'PAYMENT_DUE',
+  SYSTEM = 'SYSTEM',
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  data?: Record<string, unknown>;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface NotificationsResponse {
+  notifications: Notification[];
+}
+
+export interface UnreadCountResponse {
+  unreadCount: number;
+}

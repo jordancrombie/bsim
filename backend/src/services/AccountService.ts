@@ -2,6 +2,7 @@ import { IAccountRepository, AccountData } from '../repositories/interfaces/IAcc
 import { ITransactionRepository } from '../repositories/interfaces/ITransactionRepository';
 import { IUserRepository } from '../repositories/interfaces/IUserRepository';
 import { TransactionType } from '../models/transaction';
+import { NotificationService } from './NotificationService';
 
 export interface DepositDto {
   accountNumber: string;
@@ -21,13 +22,16 @@ export interface TransferDto {
   toEmail?: string;
   amount: number;
   description?: string;
+  senderUserId?: string;
+  senderEmail?: string;
 }
 
 export class AccountService {
   constructor(
     private accountRepository: IAccountRepository,
     private transactionRepository: ITransactionRepository,
-    private userRepository?: IUserRepository
+    private userRepository?: IUserRepository,
+    private notificationService?: NotificationService
   ) {}
 
   async createAccount(userId: string, initialBalance: number = 0): Promise<AccountData> {
@@ -191,6 +195,27 @@ export class AccountService {
       description: `Transfer from ${data.fromAccountNumber}: ${data.description || ''}`,
       accountId: toAccount.id,
     });
+
+    // Send notifications
+    if (this.notificationService) {
+      // Notify recipient of received funds
+      await this.notificationService.notifyTransferReceived(
+        toAccount.userId,
+        data.senderEmail || data.fromAccountNumber,
+        data.amount,
+        toAccount.accountNumber
+      );
+
+      // Notify sender of successful transfer
+      if (data.senderUserId) {
+        await this.notificationService.notifyTransferSent(
+          data.senderUserId,
+          recipientEmail || toAccount.accountNumber,
+          data.amount,
+          data.fromAccountNumber
+        );
+      }
+    }
 
     return {
       recipientEmail: recipientEmail || data.toEmail || '',

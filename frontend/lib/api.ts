@@ -20,6 +20,8 @@ import type {
   ChargeRequest,
   PaymentRequest,
   RefundRequest,
+  NotificationsResponse,
+  UnreadCountResponse,
 } from '@/types';
 
 // Use relative URL so it works with any subdomain
@@ -211,6 +213,30 @@ class ApiClient {
   async getSiteSettings(): Promise<{ logoUrl: string | null; siteName: string }> {
     const response = await this.client.get<{ logoUrl: string | null; siteName: string }>('/settings');
     return response.data;
+  }
+
+  // Notification endpoints
+  async getNotifications(limit?: number): Promise<NotificationsResponse> {
+    const params = limit ? `?limit=${limit}` : '';
+    const response = await this.client.get<NotificationsResponse>(`/notifications${params}`);
+    return response.data;
+  }
+
+  async getUnreadCount(): Promise<UnreadCountResponse> {
+    const response = await this.client.get<UnreadCountResponse>('/notifications/unread-count');
+    return response.data;
+  }
+
+  async markNotificationAsRead(notificationId: string): Promise<void> {
+    await this.client.patch(`/notifications/${notificationId}/read`);
+  }
+
+  async markAllNotificationsAsRead(): Promise<void> {
+    await this.client.post('/notifications/mark-all-read');
+  }
+
+  async deleteNotification(notificationId: string): Promise<void> {
+    await this.client.delete(`/notifications/${notificationId}`);
   }
 }
 

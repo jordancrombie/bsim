@@ -158,7 +158,12 @@ export class AccountController {
         return;
       }
 
-      const result = await this.accountService.transfer(validatedData);
+      // Pass sender info for notifications
+      const result = await this.accountService.transfer({
+        ...validatedData,
+        senderUserId: req.user?.userId,
+        senderEmail: req.user?.email,
+      });
       res.status(200).json({
         message: 'Transfer successful',
         recipientEmail: result.recipientEmail,
