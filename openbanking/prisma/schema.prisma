@@ -31,6 +31,7 @@ model User {
   passkeys    Passkey[]
   creditCards CreditCard[]
   consents    Consent[]
+  notifications Notification[]
 
   @@map("users")
 }
@@ -281,4 +282,33 @@ model OidcPayload {
   @@index([userCode])
   @@index([uid])
   @@map("oidc_payloads")
+}
+
+// ============================================
+// Notification System
+// ============================================
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?            // Additional data (e.g., amount, sender email)
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  TRANSFER_RECEIVED
+  TRANSFER_SENT
+  ACCOUNT_CREATED
+  CREDIT_CARD_CREATED
+  PAYMENT_DUE
+  SYSTEM
 }
