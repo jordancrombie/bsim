@@ -299,6 +299,7 @@ export default function SignupPage() {
                   id="firstName"
                   name="firstName"
                   type="text"
+                  autoComplete="given-name"
                   required
                   value={formData.firstName}
                   onChange={handleChange}
@@ -314,6 +315,7 @@ export default function SignupPage() {
                   id="lastName"
                   name="lastName"
                   type="text"
+                  autoComplete="family-name"
                   required
                   value={formData.lastName}
                   onChange={handleChange}
@@ -331,6 +333,7 @@ export default function SignupPage() {
                 id="email"
                 name="email"
                 type="email"
+                autoComplete="username"
                 required
                 value={formData.email}
                 onChange={handleChange}
@@ -347,6 +350,7 @@ export default function SignupPage() {
                 id="password"
                 name="password"
                 type="password"
+                autoComplete="new-password"
                 required
                 value={formData.password}
                 onChange={handleChange}
@@ -364,6 +368,7 @@ export default function SignupPage() {
                 id="confirmPassword"
                 name="confirmPassword"
                 type="password"
+                autoComplete="new-password"
                 required
                 value={formData.confirmPassword}
                 onChange={handleChange}
@@ -381,6 +386,25 @@ export default function SignupPage() {
           </form>
         ) : (
           <form onSubmit={handleFinalSubmit} className="space-y-4">
+            {/* Hidden fields for password manager to correctly identify credentials */}
+            <input
+              type="email"
+              name="email"
+              autoComplete="username"
+              value={formData.email}
+              readOnly
+              className="hidden"
+              aria-hidden="true"
+            />
+            <input
+              type="password"
+              name="password"
+              autoComplete="new-password"
+              value={formData.password}
+              readOnly
+              className="hidden"
+              aria-hidden="true"
+            />
             <div>
               <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
                 Phone Number
@@ -389,6 +413,7 @@ export default function SignupPage() {
                 id="phone"
                 name="phone"
                 type="tel"
+                autoComplete="tel"
                 value={formData.phone}
                 onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
@@ -404,6 +429,7 @@ export default function SignupPage() {
                 id="dateOfBirth"
                 name="dateOfBirth"
                 type="date"
+                autoComplete="bday"
                 value={formData.dateOfBirth}
                 onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
@@ -418,6 +444,7 @@ export default function SignupPage() {
                 id="address"
                 name="address"
                 type="text"
+                autoComplete="street-address"
                 value={formData.address}
                 onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
@@ -434,6 +461,7 @@ export default function SignupPage() {
                   id="city"
                   name="city"
                   type="text"
+                  autoComplete="address-level2"
                   value={formData.city}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
@@ -447,6 +475,7 @@ export default function SignupPage() {
                 <select
                   id="state"
                   name="state"
+                  autoComplete="address-level1"
                   value={formData.state}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
@@ -470,6 +499,7 @@ export default function SignupPage() {
                   id="postalCode"
                   name="postalCode"
                   type="text"
+                  autoComplete="postal-code"
                   value={formData.postalCode}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
@@ -484,6 +514,7 @@ export default function SignupPage() {
                   id="country"
                   name="country"
                   type="text"
+                  autoComplete="country-name"
                   value={formData.country}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-gray-50"
