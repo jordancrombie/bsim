@@ -376,6 +376,13 @@ The test suite covers:
 - Refund handling
 - Credit limit validation
 
+**Notification System (NotificationService & NotificationController)**
+- Notification CRUD operations
+- Unread count and mark as read
+- Mark all as read
+- Transfer received/sent notifications
+- Authentication and authorization checks
+
 ### Test Architecture
 
 Tests use mock repositories that store data in memory, allowing fast isolated tests without database dependencies:
@@ -388,13 +395,16 @@ src/__tests__/
 │   ├── MockAccountRepository.ts
 │   ├── MockTransactionRepository.ts
 │   ├── MockCreditCardRepository.ts
-│   └── MockCreditCardTransactionRepository.ts
+│   ├── MockCreditCardTransactionRepository.ts
+│   └── MockNotificationRepository.ts
 ├── services/
 │   ├── AuthService.test.ts
 │   ├── AccountService.test.ts
-│   └── CreditCardService.test.ts
+│   ├── CreditCardService.test.ts
+│   └── NotificationService.test.ts
 └── controllers/
-    └── AuthController.test.ts
+    ├── AuthController.test.ts
+    └── NotificationController.test.ts
 ```
 
 ## Development
