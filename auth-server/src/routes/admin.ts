@@ -24,6 +24,7 @@ export function createAdminRoutes(prisma: PrismaClient): Router {
 
       res.render('admin/clients', {
         clients,
+        admin: (req as any).admin,
         message: req.query.message,
         error: req.query.error,
       });
@@ -36,6 +37,7 @@ export function createAdminRoutes(prisma: PrismaClient): Router {
   router.get('/clients/new', async (req: Request, res: Response) => {
     res.render('admin/client-form', {
       client: null,
+      admin: (req as any).admin,
       isNew: true,
       error: null,
     });
@@ -91,6 +93,7 @@ export function createAdminRoutes(prisma: PrismaClient): Router {
       if (err.code === 'P2002') {
         res.render('admin/client-form', {
           client: req.body,
+          admin: (req as any).admin,
           isNew: true,
           error: 'A client with this ID already exists',
         });
@@ -113,6 +116,7 @@ export function createAdminRoutes(prisma: PrismaClient): Router {
 
       res.render('admin/client-form', {
         client,
+        admin: (req as any).admin,
         isNew: false,
         error: null,
       });
