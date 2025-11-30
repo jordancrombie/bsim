@@ -88,6 +88,9 @@ services:
       PORT: 3002
       DATABASE_URL: postgresql://bsim:bsim_dev_password@db:5432/bsim
       UPLOAD_DIR: /app/uploads
+      # Passkey configuration - use parent domain for cross-subdomain passkey sharing
+      RP_ID: banksim.ca
+      ADMIN_ORIGIN: https://admin.banksim.ca
       # Storage configuration (default: local)
       # Set STORAGE_TYPE=s3 and configure S3_* vars for production
       STORAGE_TYPE: ${STORAGE_TYPE:-local}
@@ -124,6 +127,9 @@ services:
       COOKIE_KEYS: ${COOKIE_KEYS:-dev-cookie-key-1-32chars-long,dev-cookie-key-2-32chars-long}
       JWKS_SECRET: ${JWKS_SECRET:-dev-jwks-secret-key-change-in-production}
       CORS_ORIGIN: https://banksim.ca,https://auth.banksim.ca,https://openbanking.banksim.ca,http://localhost:3005
+      # Passkey configuration - use parent domain for cross-subdomain passkey sharing
+      RP_ID: banksim.ca
+      AUTH_ORIGIN: https://auth.banksim.ca
     depends_on:
       db:
         condition: service_healthy

@@ -29,6 +29,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added hidden email/password fields in step 2 form for credential association
   - Browser password managers now correctly identify email as the username
 
+- **Cross-Subdomain Passkey Authentication** - Fixed passkeys not working across subdomains
+  - Passkeys registered on `admin.banksim.ca` were not usable on `auth.banksim.ca`
+  - Auth server had `RP_ID=auth.banksim.ca` instead of the parent domain `banksim.ca`
+  - All services (admin, auth-server) now use `RP_ID=banksim.ca` for cross-subdomain passkey sharing
+  - Updated docker-compose.yml and AWS deployment documentation
+
 ### Added
 - **Local Development Domain Configuration** - Separate dev subdomain pattern for local development
   - New `*-dev.banksim.ca` subdomain pattern for local development (compatible with `*.banksim.ca` wildcard cert)
