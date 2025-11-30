@@ -34,8 +34,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Auth server had `RP_ID=auth.banksim.ca` instead of the parent domain `banksim.ca`
   - All services (admin, auth-server) now use `RP_ID=banksim.ca` for cross-subdomain passkey sharing
   - Updated docker-compose.yml and AWS deployment documentation
+  - Also fixed for local dev: `admin-dev.banksim.ca` passkeys now work on `auth-dev.banksim.ca`
 
 ### Added
+- **Local Dev Admin Management Script** - New script for managing admin users locally
+  - `./scripts/dev-admin.sh reset-admin` - Delete all admin users (triggers first-user setup)
+  - `./scripts/dev-admin.sh delete-passkeys` - Delete all admin passkeys (keeps users)
+  - `./scripts/dev-admin.sh list-admins` - List all admin users with passkey counts
+  - Supports `-y/--yes` flag to skip confirmation prompts
+
 - **AWS Admin Management Script** - New script for managing admin users in AWS production
   - `./scripts/aws-admin.sh reset-admin` - Delete all admin users (triggers first-user setup)
   - `./scripts/aws-admin.sh delete-passkeys` - Delete all admin passkeys (keeps users)
