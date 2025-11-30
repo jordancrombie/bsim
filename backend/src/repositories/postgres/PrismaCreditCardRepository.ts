@@ -1,18 +1,30 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, CreditCardType } from '@prisma/client';
 import { ICreditCardRepository, CreateCreditCardDto, CreditCardData } from '../interfaces/ICreditCardRepository';
 
 export class PrismaCreditCardRepository implements ICreditCardRepository {
   constructor(private prisma: PrismaClient) {}
 
   async create(data: CreateCreditCardDto): Promise<CreditCardData> {
-    const cardNumber = this.generateCardNumber();
-    const cvv = this.generateCVV();
+    const cardType = data.cardType || CreditCardType.VISA;
+    const cardNumber = this.generateCardNumber(cardType);
+    const cvv = this.generateCVV(cardType);
     const expiryDate = this.generateExpiryDate();
+
+    // Get card holder name from user if not provided
+    let cardHolder = data.cardHolder;
+    if (!cardHolder) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: data.userId },
+        select: { firstName: true, lastName: true },
+      });
+      cardHolder = user ? `${user.firstName} ${user.lastName}` : 'Card Holder';
+    }
 
     const creditCard = await this.prisma.creditCard.create({
       data: {
         cardNumber,
-        cardHolder: data.cardHolder || 'Card Holder',
+        cardType,
+        cardHolder,
         expiryMonth: expiryDate.month,
         expiryYear: expiryDate.year,
         cvv,
@@ -25,6 +37,7 @@ export class PrismaCreditCardRepository implements ICreditCardRepository {
     return {
       id: creditCard.id,
       cardNumber: creditCard.cardNumber,
+      cardType: creditCard.cardType,
       cardHolder: creditCard.cardHolder,
       expiryMonth: creditCard.expiryMonth,
       expiryYear: creditCard.expiryYear,
@@ -47,6 +60,7 @@ export class PrismaCreditCardRepository implements ICreditCardRepository {
     return {
       id: creditCard.id,
       cardNumber: creditCard.cardNumber,
+      cardType: creditCard.cardType,
       cardHolder: creditCard.cardHolder,
       expiryMonth: creditCard.expiryMonth,
       expiryYear: creditCard.expiryYear,
@@ -68,6 +82,7 @@ export class PrismaCreditCardRepository implements ICreditCardRepository {
     return creditCards.map((creditCard) => ({
       id: creditCard.id,
       cardNumber: creditCard.cardNumber,
+      cardType: creditCard.cardType,
       cardHolder: creditCard.cardHolder,
       expiryMonth: creditCard.expiryMonth,
       expiryYear: creditCard.expiryYear,
@@ -90,6 +105,7 @@ export class PrismaCreditCardRepository implements ICreditCardRepository {
     return {
       id: creditCard.id,
       cardNumber: creditCard.cardNumber,
+      cardType: creditCard.cardType,
       cardHolder: creditCard.cardHolder,
       expiryMonth: creditCard.expiryMonth,
       expiryYear: creditCard.expiryYear,
@@ -109,14 +125,46 @@ export class PrismaCreditCardRepository implements ICreditCardRepository {
     });
   }
 
-  private generateCardNumber(): string {
-    // Generate a 16-digit card number (starting with 4 for Visa)
-    const prefix = '4';
-    const digits = Array.from({ length: 15 }, () => Math.floor(Math.random() * 10)).join('');
+  private generateCardNumber(cardType: CreditCardType): string {
+    // Generate card number based on card type
+    // VISA: starts with 4 (16 digits)
+    // Mastercard: starts with 51-55 or 2221-2720 (16 digits)
+    // AMEX: starts with 34 or 37 (15 digits)
+    let prefix: string;
+    let length: number;
+
+    switch (cardType) {
+      case CreditCardType.VISA:
+      case CreditCardType.VISA_DEBIT:
+        prefix = '4';
+        length = 16;
+        break;
+      case CreditCardType.MC:
+      case CreditCardType.MC_DEBIT:
+        // Use 51-55 range for Mastercard
+        prefix = '5' + Math.floor(1 + Math.random() * 5).toString();
+        length = 16;
+        break;
+      case CreditCardType.AMEX:
+        // AMEX uses 34 or 37
+        prefix = Math.random() < 0.5 ? '34' : '37';
+        length = 15;
+        break;
+      default:
+        prefix = '4';
+        length = 16;
+    }
+
+    const remainingDigits = length - prefix.length;
+    const digits = Array.from({ length: remainingDigits }, () => Math.floor(Math.random() * 10)).join('');
     return prefix + digits;
   }
 
-  private generateCVV(): string {
+  private generateCVV(cardType: CreditCardType): string {
+    // AMEX uses 4-digit CVV, others use 3-digit
+    if (cardType === CreditCardType.AMEX) {
+      return Math.floor(1000 + Math.random() * 9000).toString();
+    }
     return Math.floor(100 + Math.random() * 900).toString();
   }
 

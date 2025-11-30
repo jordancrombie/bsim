@@ -1,12 +1,16 @@
+import { CreditCardType } from '@prisma/client';
+
 export interface CreateCreditCardDto {
   userId: string;
   creditLimit: number;
   cardHolder?: string;
+  cardType?: CreditCardType;
 }
 
 export interface CreditCardData {
   id: string;
   cardNumber: string;
+  cardType: CreditCardType;
   cardHolder: string;
   expiryMonth: number;
   expiryYear: number;

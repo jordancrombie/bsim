@@ -162,6 +162,7 @@ export interface CreditCardTransaction {
 export interface CreateCreditCardRequest {
   creditLimit: number;
   cardHolder?: string;
+  cardType?: CreditCardType;
 }
 
 export interface ChargeRequest {

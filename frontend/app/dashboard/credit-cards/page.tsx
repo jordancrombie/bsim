@@ -13,6 +13,7 @@ export default function CreditCardsPage() {
   const [showModal, setShowModal] = useState(false);
   const [creditLimit, setCreditLimit] = useState('5000');
   const [cardHolder, setCardHolder] = useState('');
+  const [cardType, setCardType] = useState<CreditCardType>(CreditCardType.VISA);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -44,11 +45,13 @@ export default function CreditCardsPage() {
 
       await api.createCreditCard({
         creditLimit: limit,
-        cardHolder: cardHolder || undefined
+        cardHolder: cardHolder || undefined,
+        cardType: cardType
       });
       setShowModal(false);
       setCreditLimit('5000');
       setCardHolder('');
+      setCardType(CreditCardType.VISA);
       await loadCreditCards();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to create credit card');
@@ -230,7 +233,7 @@ export default function CreditCardsPage() {
               </p>
             </div>
 
-            <div className="mb-6">
+            <div className="mb-4">
               <label htmlFor="cardHolder" className="block text-sm font-medium text-gray-700 mb-2">
                 Card Holder Name (Optional)
               </label>
@@ -247,6 +250,24 @@ export default function CreditCardsPage() {
               </p>
             </div>
 
+            <div className="mb-6">
+              <label htmlFor="cardType" className="block text-sm font-medium text-gray-700 mb-2">
+                Card Type
+              </label>
+              <select
+                id="cardType"
+                value={cardType}
+                onChange={(e) => setCardType(e.target.value as CreditCardType)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
+              >
+                <option value={CreditCardType.VISA}>VISA</option>
+                <option value={CreditCardType.VISA_DEBIT}>VISA Debit</option>
+                <option value={CreditCardType.MC}>Mastercard</option>
+                <option value={CreditCardType.MC_DEBIT}>Mastercard Debit</option>
+                <option value={CreditCardType.AMEX}>American Express</option>
+              </select>
+            </div>
+
             <div className="flex gap-3">
               <button
                 onClick={() => {
@@ -254,6 +275,7 @@ export default function CreditCardsPage() {
                   setError('');
                   setCreditLimit('5000');
                   setCardHolder('');
+                  setCardType(CreditCardType.VISA);
                 }}
                 className="flex-1 bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
               >
