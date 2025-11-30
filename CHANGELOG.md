@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated `frontend/lib/api.ts` to properly use `NEXT_PUBLIC_API_URL` when set (baked in at build time)
   - Frontend now correctly calls `https://api.banksim.ca/api` in production
 
+- **Signup Auto-Generate Preserves User Input** - Fixed auto-generate overwriting user-provided data
+  - Auto-generate test data button was overwriting email and other step 1 fields
+  - Now preserves firstName, lastName, email, password if already filled in
+  - Only generates values for empty fields, always fills step 2 customer info fields
+
 ### Added
 - **Local Development Domain Configuration** - Separate dev subdomain pattern for local development
   - New `*-dev.banksim.ca` subdomain pattern for local development (compatible with `*.banksim.ca` wildcard cert)

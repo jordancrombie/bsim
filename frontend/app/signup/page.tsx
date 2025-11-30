@@ -103,9 +103,20 @@ export default function SignupPage() {
     const randomData = generateRandomData();
     setFormData({
       ...formData,
-      ...randomData,
-      password: 'password123',
-      confirmPassword: 'password123',
+      // Only use generated data for fields that are empty
+      firstName: formData.firstName || randomData.firstName,
+      lastName: formData.lastName || randomData.lastName,
+      email: formData.email || randomData.email,
+      password: formData.password || 'password123',
+      confirmPassword: formData.confirmPassword || 'password123',
+      // Always fill in step 2 fields (customer info)
+      phone: randomData.phone,
+      address: randomData.address,
+      city: randomData.city,
+      state: randomData.state,
+      postalCode: randomData.postalCode,
+      country: randomData.country,
+      dateOfBirth: randomData.dateOfBirth,
     });
   };
 
