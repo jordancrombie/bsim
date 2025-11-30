@@ -154,6 +154,12 @@ export interface CreditCardTransaction {
   amount: number;
   availableAfter: number;
   description?: string;
+  // Merchant details
+  merchantName?: string;
+  merchantId?: string;
+  mccCode?: string;
+  // Transaction timing
+  transactionDate: string;
   creditCardId: string;
   createdAt: string;
 }
@@ -169,6 +175,10 @@ export interface ChargeRequest {
   cardNumber: string;
   amount: number;
   description?: string;
+  merchantName?: string;
+  merchantId?: string;
+  mccCode?: string;
+  transactionDate?: string;
 }
 
 export interface PaymentRequest {

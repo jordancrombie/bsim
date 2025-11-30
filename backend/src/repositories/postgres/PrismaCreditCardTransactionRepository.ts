@@ -16,6 +16,10 @@ export class PrismaCreditCardTransactionRepository implements ICreditCardTransac
         amount: data.amount,
         availableAfter: data.availableAfter,
         description: data.description,
+        merchantName: data.merchantName,
+        merchantId: data.merchantId,
+        mccCode: data.mccCode,
+        transactionDate: data.transactionDate || new Date(),
         creditCardId: data.creditCardId,
       },
     });
@@ -26,6 +30,10 @@ export class PrismaCreditCardTransactionRepository implements ICreditCardTransac
       amount: Number(transaction.amount),
       availableAfter: Number(transaction.availableAfter),
       description: transaction.description || undefined,
+      merchantName: transaction.merchantName,
+      merchantId: transaction.merchantId,
+      mccCode: transaction.mccCode,
+      transactionDate: transaction.transactionDate,
       creditCardId: transaction.creditCardId,
       createdAt: transaction.createdAt,
     };
@@ -34,7 +42,7 @@ export class PrismaCreditCardTransactionRepository implements ICreditCardTransac
   async findByCreditCardId(creditCardId: string): Promise<CreditCardTransactionData[]> {
     const transactions = await this.prisma.creditCardTransaction.findMany({
       where: { creditCardId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { transactionDate: 'desc' },
     });
 
     return transactions.map((transaction) => ({
@@ -43,6 +51,10 @@ export class PrismaCreditCardTransactionRepository implements ICreditCardTransac
       amount: Number(transaction.amount),
       availableAfter: Number(transaction.availableAfter),
       description: transaction.description || undefined,
+      merchantName: transaction.merchantName,
+      merchantId: transaction.merchantId,
+      mccCode: transaction.mccCode,
+      transactionDate: transaction.transactionDate,
       creditCardId: transaction.creditCardId,
       createdAt: transaction.createdAt,
     }));
@@ -61,6 +73,10 @@ export class PrismaCreditCardTransactionRepository implements ICreditCardTransac
       amount: Number(transaction.amount),
       availableAfter: Number(transaction.availableAfter),
       description: transaction.description || undefined,
+      merchantName: transaction.merchantName,
+      merchantId: transaction.merchantId,
+      mccCode: transaction.mccCode,
+      transactionDate: transaction.transactionDate,
       creditCardId: transaction.creditCardId,
       createdAt: transaction.createdAt,
     };

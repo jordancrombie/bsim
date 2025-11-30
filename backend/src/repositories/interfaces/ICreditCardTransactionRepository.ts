@@ -5,6 +5,11 @@ export interface CreateCreditCardTransactionDto {
   amount: number;
   availableAfter: number;
   description?: string;
+  // Merchant details
+  merchantName?: string;
+  merchantId?: string;
+  mccCode?: string;
+  transactionDate?: Date;
   creditCardId: string;
 }
 
@@ -14,6 +19,11 @@ export interface CreditCardTransactionData {
   amount: number;
   availableAfter: number;
   description?: string;
+  // Merchant details
+  merchantName?: string | null;
+  merchantId?: string | null;
+  mccCode?: string | null;
+  transactionDate: Date;
   creditCardId: string;
   createdAt: Date;
 }

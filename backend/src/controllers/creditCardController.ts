@@ -14,6 +14,10 @@ const chargeSchema = z.object({
   cardNumber: z.string().min(1),
   amount: z.number().positive('Amount must be positive'),
   description: z.string().optional(),
+  merchantName: z.string().optional(),
+  merchantId: z.string().optional(),
+  mccCode: z.string().optional(),
+  transactionDate: z.string().datetime().optional().transform(val => val ? new Date(val) : undefined),
 });
 
 const paymentSchema = z.object({

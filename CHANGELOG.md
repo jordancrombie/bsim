@@ -40,6 +40,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Default account types seeded: Checking Account, Savings Account, Money Market Account, Certificate of Deposit
   - API routes: `GET/POST /api/account-types`, `GET/PUT/DELETE /api/account-types/[id]`
   - Database migration: `20251129_add_account_type_config`
+- **Credit Card Detail Page** - View individual credit card details and transactions
+  - New page at `/dashboard/credit-cards/[cardNumber]` with card visualization
+  - Balance overview showing current balance, available credit, and credit limit
+  - Credit utilization bar with color-coded status (green/yellow/red)
+  - Full transaction history with merchant details
+- **Enhanced Credit Card Transactions** - Merchant and transaction details
+  - New fields: `merchantName`, `merchantId`, `mccCode`, `transactionDate`
+  - MCC (Merchant Category Code) display with category descriptions
+  - Transaction date separate from record creation timestamp
+  - Charge API now accepts merchant details for realistic transaction simulation
+  - Database migration: `20251129_enhance_credit_card_transactions`
 - **Open Banking API Specification** - OpenAPI YAML for user accounts endpoint
   - `openbanking/api/users-accounts.yaml` - Full OpenAPI 3.0.3 spec
   - Documents `/users/{fi_user_ref}/accounts` endpoint
