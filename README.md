@@ -346,6 +346,10 @@ npm test
 cd openbanking
 npm test
 
+# Auth Server tests (62 tests)
+cd auth-server
+npm test
+
 # Run tests in watch mode
 npm run test:watch
 
@@ -415,6 +419,12 @@ The test suite covers:
 - AccountController: FDX-style account listing, details, transactions
 - CustomerController: scope-based profile data (profile, email, contact info)
 - UserController: fi_user_ref based account lookup
+
+**Auth Server** (62 tests)
+- PrismaAdapter: OIDC token storage, upsert, find, consume, destroy, revoke
+- verifyUserPassword: credential validation, password verification
+- Admin routes: OAuth client CRUD, secret generation, client management
+- Interaction routes: login flow, consent flow, abort handling
 
 ### Test Architecture
 
