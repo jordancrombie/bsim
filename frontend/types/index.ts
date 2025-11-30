@@ -90,9 +90,16 @@ export interface WithdrawRequest {
 
 export interface TransferRequest {
   fromAccountNumber: string;
-  toAccountNumber: string;
+  toAccountNumber?: string;
+  toEmail?: string;
   amount: number;
   description?: string;
+}
+
+export interface TransferResponse {
+  message: string;
+  recipientEmail: string;
+  recipientAccountNumber: string;
 }
 
 // API Response types

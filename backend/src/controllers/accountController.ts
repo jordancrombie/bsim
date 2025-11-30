@@ -21,9 +21,12 @@ const withdrawSchema = z.object({
 
 const transferSchema = z.object({
   fromAccountNumber: z.string().min(1),
-  toAccountNumber: z.string().min(1),
+  toAccountNumber: z.string().min(1).optional(),
+  toEmail: z.string().email('Invalid email address').optional(),
   amount: z.number().positive('Amount must be positive'),
   description: z.string().optional(),
+}).refine(data => data.toAccountNumber || data.toEmail, {
+  message: 'Either destination account number or recipient email is required',
 });
 
 export class AccountController {
@@ -155,8 +158,12 @@ export class AccountController {
         return;
       }
 
-      await this.accountService.transfer(validatedData);
-      res.status(200).json({ message: 'Transfer successful' });
+      const result = await this.accountService.transfer(validatedData);
+      res.status(200).json({
+        message: 'Transfer successful',
+        recipientEmail: result.recipientEmail,
+        recipientAccountNumber: result.recipientAccountNumber,
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: error.errors[0].message });
