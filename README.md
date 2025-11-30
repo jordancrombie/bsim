@@ -383,6 +383,21 @@ The test suite covers:
 - Transfer received/sent notifications
 - Authentication and authorization checks
 
+**Account Controller (AccountController)**
+- Account creation with initial balance
+- Get accounts and account details
+- Deposit and withdrawal operations
+- Transfer by account number or email
+- Ownership validation (403 Forbidden)
+- Transaction history
+
+**Credit Card Controller (CreditCardController)**
+- Credit card creation with card types
+- Get cards and card details
+- Charge, payment, and refund operations
+- Ownership validation (403 Forbidden)
+- Transaction history with merchant details
+
 ### Test Architecture
 
 Tests use mock repositories that store data in memory, allowing fast isolated tests without database dependencies:
@@ -404,6 +419,8 @@ src/__tests__/
 │   └── NotificationService.test.ts
 └── controllers/
     ├── AuthController.test.ts
+    ├── AccountController.test.ts
+    ├── CreditCardController.test.ts
     └── NotificationController.test.ts
 ```
 
