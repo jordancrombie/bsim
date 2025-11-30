@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Unit Test Suite** - Comprehensive Jest test coverage for backend services (303 tests total)
+- **Unit Test Suite** - Comprehensive Jest test coverage for all modules (365 tests total)
   - Jest test framework with ts-jest for TypeScript support
   - Mock repositories for isolated testing without database dependencies
   - **Backend Tests** (229 tests):
@@ -27,8 +27,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **AccountController tests** (22 tests): FDX-style account listing, details, transactions, pagination
     - **CustomerController tests** (11 tests): scope-based profile data (profile, email, contact info)
     - **UserController tests** (10 tests): fi_user_ref based account lookup, authorization checks
+  - **Auth Server Tests** (62 tests):
+    - **PrismaAdapter tests** (24 tests): OIDC token storage, upsert, find by ID/userCode/uid, consume, destroy, revoke by grantId
+    - **verifyUserPassword tests** (7 tests): credential validation, password verification, user lookup
+    - **Admin routes tests** (16 tests): OAuth client CRUD, secret generation, duplicate handling, client management
+    - **Interaction routes tests** (15 tests): login flow, consent flow, abort handling, account selection
   - Test commands: `npm test`, `npm run test:watch`, `npm run test:coverage`
-  - Mock implementations: MockUserRepository, MockAccountRepository, MockTransactionRepository, MockCreditCardRepository, MockCreditCardTransactionRepository, MockNotificationRepository, MockPrismaClient (openbanking)
+  - Mock implementations: MockUserRepository, MockAccountRepository, MockTransactionRepository, MockCreditCardRepository, MockCreditCardTransactionRepository, MockNotificationRepository, MockPrismaClient (openbanking, auth-server)
 - **Account Type Support** - Proper account categorization in database
   - New `AccountType` enum: CHECKING, SAVINGS, MONEY_MARKET, CERTIFICATE_OF_DEPOSIT
   - `accountType` field on Account model (defaults to CHECKING)
