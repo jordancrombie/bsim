@@ -338,9 +338,12 @@ The backend includes a comprehensive unit test suite using Jest.
 ### Running Tests
 
 ```bash
+# Backend tests (229 tests)
 cd backend
+npm test
 
-# Run all tests
+# Open Banking tests (74 tests)
+cd openbanking
 npm test
 
 # Run tests in watch mode
@@ -405,6 +408,13 @@ The test suite covers:
 - Authentication verification
 - Passkey CRUD operations (list, delete)
 - Challenge management
+
+**Open Banking Module** (74 tests)
+- ConsentService: consent management, account filtering, scope verification
+- tokenValidator middleware: JWT validation, scope checking, JWKS integration
+- AccountController: FDX-style account listing, details, transactions
+- CustomerController: scope-based profile data (profile, email, contact info)
+- UserController: fi_user_ref based account lookup
 
 ### Test Architecture
 
