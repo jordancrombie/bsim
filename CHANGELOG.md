@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Unit Test Suite** - Comprehensive Jest test coverage for backend services
+  - Jest test framework with ts-jest for TypeScript support
+  - Mock repositories for isolated testing without database dependencies
+  - **AuthService tests** (12 tests): registration, login, JWT tokens, password hashing
+  - **AuthController tests** (15 tests): HTTP handlers, validation, error responses
+  - **AccountService tests** (31 tests): account creation, deposits, withdrawals, transfers
+  - **CreditCardService tests** (33 tests): card creation, charges, payments, refunds
+  - Test commands: `npm test`, `npm run test:watch`, `npm run test:coverage`
+  - Mock implementations: MockUserRepository, MockAccountRepository, MockTransactionRepository, MockCreditCardRepository, MockCreditCardTransactionRepository
 - **Account Type Support** - Proper account categorization in database
   - New `AccountType` enum: CHECKING, SAVINGS, MONEY_MARKET, CERTIFICATE_OF_DEPOSIT
   - `accountType` field on Account model (defaults to CHECKING)

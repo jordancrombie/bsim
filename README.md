@@ -331,6 +331,72 @@ INSERT INTO oauth_clients (
 |-----------|-------------|-------------|
 | `ssim-client` | SSIM Store Simulator | Demo third-party app for testing OAuth flow |
 
+## Testing
+
+The backend includes a comprehensive unit test suite using Jest.
+
+### Running Tests
+
+```bash
+cd backend
+
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage
+```
+
+### Test Coverage
+
+The test suite covers:
+
+**Authentication (AuthService & AuthController)**
+- User registration with validation
+- Login with email/password
+- JWT token generation and verification
+- Password hashing
+- Get current user
+
+**Account Management (AccountService)**
+- Account creation with initial balance
+- Deposit and withdrawal operations
+- Transfer between accounts
+- Transaction history
+- Balance validation and error handling
+
+**Credit Card System (CreditCardService)**
+- Credit card creation with card types (Visa, Mastercard, AMEX)
+- Card number generation with correct prefixes
+- Charge operations with merchant details
+- Payment processing
+- Refund handling
+- Credit limit validation
+
+### Test Architecture
+
+Tests use mock repositories that store data in memory, allowing fast isolated tests without database dependencies:
+
+```
+src/__tests__/
+├── setup.ts                    # Test environment configuration
+├── mocks/
+│   ├── MockUserRepository.ts
+│   ├── MockAccountRepository.ts
+│   ├── MockTransactionRepository.ts
+│   ├── MockCreditCardRepository.ts
+│   └── MockCreditCardTransactionRepository.ts
+├── services/
+│   ├── AuthService.test.ts
+│   ├── AccountService.test.ts
+│   └── CreditCardService.test.ts
+└── controllers/
+    └── AuthController.test.ts
+```
+
 ## Development
 
 ### Database Management
@@ -461,6 +527,7 @@ See [DOCKER_README.md](DOCKER_README.md) for Docker containerization details.
 - [x] Open Banking platform (OAuth 2.0/OIDC, FDX-inspired API)
 - [x] OAuth client administration interface
 - [x] OIDC auto-discovery (`.well-known/openid-configuration`)
+- [x] Unit test suite (Jest) for authentication, accounts, and credit cards
 - [ ] CI/CD pipeline setup
 - [ ] Mobile app support
 - [ ] Client credentials grant for server-to-server
