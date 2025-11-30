@@ -206,5 +206,142 @@ export function createAdminRoutes(prisma: PrismaClient): Router {
     }
   });
 
+  // GET /administration/sessions - List all active sessions (consents)
+  router.get('/sessions', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const consents = await prisma.consent.findMany({
+        where: {
+          revokedAt: null, // Only active (non-revoked) consents
+        },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          client: {
+            select: {
+              clientId: true,
+              clientName: true,
+              logoUri: true,
+            },
+          },
+        },
+      });
+
+      // For each consent, count active tokens
+      const consentsWithTokenCounts = await Promise.all(
+        consents.map(async (consent) => {
+          const tokenCount = await prisma.oidcPayload.count({
+            where: {
+              grantId: consent.grantId,
+              expiresAt: { gt: new Date() },
+            },
+          });
+          return { ...consent, activeTokenCount: tokenCount };
+        })
+      );
+
+      res.render('admin/sessions', {
+        consents: consentsWithTokenCounts,
+        admin: (req as any).admin,
+        message: req.query.message,
+        error: req.query.error,
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // POST /administration/sessions/:id/revoke - Revoke a session (consent)
+  router.post('/sessions/:id/revoke', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const consent = await prisma.consent.findUnique({
+        where: { id: req.params.id },
+        include: {
+          user: { select: { email: true } },
+          client: { select: { clientName: true } },
+        },
+      });
+
+      if (!consent) {
+        return res.redirect('/administration/sessions?error=Session not found');
+      }
+
+      // Delete all OIDC tokens associated with this grant
+      await prisma.oidcPayload.deleteMany({
+        where: { grantId: consent.grantId },
+      });
+
+      // Mark consent as revoked
+      await prisma.consent.update({
+        where: { id: req.params.id },
+        data: { revokedAt: new Date() },
+      });
+
+      res.redirect(
+        `/administration/sessions?message=${encodeURIComponent(
+          `Session for ${consent.user.email} (${consent.client.clientName}) has been revoked`
+        )}`
+      );
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // POST /administration/sessions/revoke-all - Revoke all sessions for a user
+  router.post('/sessions/revoke-all', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = req.body;
+
+      if (!userId) {
+        return res.redirect('/administration/sessions?error=User ID required');
+      }
+
+      // Find all active consents for this user
+      const consents = await prisma.consent.findMany({
+        where: {
+          userId,
+          revokedAt: null,
+        },
+        include: {
+          user: { select: { email: true } },
+        },
+      });
+
+      if (consents.length === 0) {
+        return res.redirect('/administration/sessions?error=No active sessions found for this user');
+      }
+
+      // Revoke all consents and delete associated tokens
+      for (const consent of consents) {
+        await prisma.oidcPayload.deleteMany({
+          where: { grantId: consent.grantId },
+        });
+      }
+
+      await prisma.consent.updateMany({
+        where: {
+          userId,
+          revokedAt: null,
+        },
+        data: { revokedAt: new Date() },
+      });
+
+      const userEmail = consents[0]?.user?.email || 'Unknown';
+      res.redirect(
+        `/administration/sessions?message=${encodeURIComponent(
+          `All ${consents.length} session(s) for ${userEmail} have been revoked`
+        )}`
+      );
+    } catch (err) {
+      next(err);
+    }
+  });
+
   return router;
 }

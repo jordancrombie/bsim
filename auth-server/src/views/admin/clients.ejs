@@ -68,6 +68,28 @@
       padding: 6px 12px;
       font-size: 12px;
     }
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      margin-right: 24px;
+    }
+    .nav-tab {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      color: rgba(255, 255, 255, 0.8);
+      transition: all 0.2s;
+    }
+    .nav-tab:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+    .nav-tab.active {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
     .container {
       max-width: 1200px;
       margin: 0 auto;
@@ -203,11 +225,15 @@
       <h1>BSIM Auth Administration</h1>
       <p class="header-subtitle">OAuth 2.0 / OpenID Connect Client Management</p>
     </div>
-    <div style="display: flex; align-items: center; gap: 16px;">
+    <div style="display: flex; align-items: center;">
+      <div class="nav-tabs">
+        <a href="/administration" class="nav-tab active">Clients</a>
+        <a href="/administration/sessions" class="nav-tab">Sessions</a>
+      </div>
       <% if (admin) { %>
-        <span style="font-size: 14px; opacity: 0.9;"><%= admin.email %></span>
+        <span style="font-size: 14px; opacity: 0.9; margin-right: 16px;"><%= admin.email %></span>
       <% } %>
-      <a href="/administration/clients/new" class="btn btn-primary">+ New Client</a>
+      <a href="/administration/clients/new" class="btn btn-primary" style="margin-right: 8px;">+ New Client</a>
       <a href="/administration/logout" class="btn btn-secondary" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white;">Logout</a>
     </div>
   </div>

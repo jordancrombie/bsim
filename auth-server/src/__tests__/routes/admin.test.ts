@@ -418,4 +418,253 @@ describe('Admin Routes', () => {
       expect(mockPrisma.oAuthClient.delete).not.toHaveBeenCalled();
     });
   });
+
+  describe('GET /administration/sessions', () => {
+    const testUser = {
+      id: 'user-123',
+      fiUserRef: 'fi-user-123',
+      email: 'user@example.com',
+      password: 'hashed',
+      firstName: 'Test',
+      lastName: 'User',
+      phone: null,
+      address: null,
+      city: null,
+      state: null,
+      postalCode: null,
+      country: null,
+      dateOfBirth: null,
+    };
+
+    const testConsent = {
+      id: 'consent-123',
+      grantId: 'grant-123',
+      userId: 'user-123',
+      clientId: 'test-client',
+      scopes: ['openid', 'profile'],
+      accountIds: ['acc-1'],
+      expiresAt: null,
+      revokedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    it('should render sessions list with active consents', async () => {
+      mockPrisma._addUser(testUser);
+      mockPrisma._addOAuthClient(testClient);
+      mockPrisma._addConsent(testConsent);
+      mockRequest.query = {};
+
+      const router = createAdminRoutes(mockPrisma as unknown as PrismaClient);
+      const handler = router.stack.find(
+        (layer: any) => layer.route?.path === '/sessions' && layer.route?.methods?.get
+      )?.route?.stack[0]?.handle;
+
+      await handler(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockResponse.render).toHaveBeenCalledWith('admin/sessions', {
+        consents: expect.arrayContaining([
+          expect.objectContaining({
+            grantId: 'grant-123',
+            activeTokenCount: expect.any(Number),
+          }),
+        ]),
+        admin: testAdmin,
+        message: undefined,
+        error: undefined,
+      });
+    });
+
+    it('should only show non-revoked consents', async () => {
+      const revokedConsent = {
+        ...testConsent,
+        id: 'consent-revoked',
+        grantId: 'grant-revoked',
+        revokedAt: new Date(),
+      };
+      mockPrisma._addUser(testUser);
+      mockPrisma._addOAuthClient(testClient);
+      mockPrisma._addConsent(testConsent);
+      mockPrisma._addConsent(revokedConsent);
+
+      const router = createAdminRoutes(mockPrisma as unknown as PrismaClient);
+      const handler = router.stack.find(
+        (layer: any) => layer.route?.path === '/sessions' && layer.route?.methods?.get
+      )?.route?.stack[0]?.handle;
+
+      await handler(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockPrisma.consent.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { revokedAt: null },
+        })
+      );
+    });
+  });
+
+  describe('POST /administration/sessions/:id/revoke', () => {
+    const testUser = {
+      id: 'user-123',
+      fiUserRef: 'fi-user-123',
+      email: 'user@example.com',
+      password: 'hashed',
+      firstName: 'Test',
+      lastName: 'User',
+      phone: null,
+      address: null,
+      city: null,
+      state: null,
+      postalCode: null,
+      country: null,
+      dateOfBirth: null,
+    };
+
+    const testConsent = {
+      id: 'consent-123',
+      grantId: 'grant-123',
+      userId: 'user-123',
+      clientId: 'test-client',
+      scopes: ['openid', 'profile'],
+      accountIds: ['acc-1'],
+      expiresAt: null,
+      revokedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    it('should revoke a session and delete associated tokens', async () => {
+      mockPrisma._addUser(testUser);
+      mockPrisma._addOAuthClient(testClient);
+      mockPrisma._addConsent(testConsent);
+      mockRequest.params = { id: 'consent-123' };
+
+      const router = createAdminRoutes(mockPrisma as unknown as PrismaClient);
+      const handler = router.stack.find(
+        (layer: any) => layer.route?.path === '/sessions/:id/revoke' && layer.route?.methods?.post
+      )?.route?.stack[0]?.handle;
+
+      await handler(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockPrisma.oidcPayload.deleteMany).toHaveBeenCalledWith({
+        where: { grantId: 'grant-123' },
+      });
+      expect(mockPrisma.consent.update).toHaveBeenCalledWith({
+        where: { id: 'consent-123' },
+        data: { revokedAt: expect.any(Date) },
+      });
+      expect(mockResponse.redirect).toHaveBeenCalledWith(
+        expect.stringContaining('/administration/sessions?message=')
+      );
+    });
+
+    it('should redirect with error when session not found', async () => {
+      mockRequest.params = { id: 'nonexistent' };
+
+      const router = createAdminRoutes(mockPrisma as unknown as PrismaClient);
+      const handler = router.stack.find(
+        (layer: any) => layer.route?.path === '/sessions/:id/revoke' && layer.route?.methods?.post
+      )?.route?.stack[0]?.handle;
+
+      await handler(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockResponse.redirect).toHaveBeenCalledWith('/administration/sessions?error=Session not found');
+    });
+  });
+
+  describe('POST /administration/sessions/revoke-all', () => {
+    const testUser = {
+      id: 'user-123',
+      fiUserRef: 'fi-user-123',
+      email: 'user@example.com',
+      password: 'hashed',
+      firstName: 'Test',
+      lastName: 'User',
+      phone: null,
+      address: null,
+      city: null,
+      state: null,
+      postalCode: null,
+      country: null,
+      dateOfBirth: null,
+    };
+
+    const testConsent1 = {
+      id: 'consent-1',
+      grantId: 'grant-1',
+      userId: 'user-123',
+      clientId: 'test-client',
+      scopes: ['openid'],
+      accountIds: [],
+      expiresAt: null,
+      revokedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const testConsent2 = {
+      id: 'consent-2',
+      grantId: 'grant-2',
+      userId: 'user-123',
+      clientId: 'test-client',
+      scopes: ['openid', 'profile'],
+      accountIds: [],
+      expiresAt: null,
+      revokedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    it('should revoke all sessions for a user', async () => {
+      mockPrisma._addUser(testUser);
+      mockPrisma._addOAuthClient(testClient);
+      mockPrisma._addConsent(testConsent1);
+      mockPrisma._addConsent(testConsent2);
+      mockRequest.body = { userId: 'user-123' };
+
+      const router = createAdminRoutes(mockPrisma as unknown as PrismaClient);
+      const handler = router.stack.find(
+        (layer: any) => layer.route?.path === '/sessions/revoke-all' && layer.route?.methods?.post
+      )?.route?.stack[0]?.handle;
+
+      await handler(mockRequest as Request, mockResponse as Response, mockNext);
+
+      // Should delete tokens for both consents
+      expect(mockPrisma.oidcPayload.deleteMany).toHaveBeenCalledTimes(2);
+      expect(mockPrisma.consent.updateMany).toHaveBeenCalledWith({
+        where: { userId: 'user-123', revokedAt: null },
+        data: { revokedAt: expect.any(Date) },
+      });
+      expect(mockResponse.redirect).toHaveBeenCalledWith(
+        expect.stringContaining('/administration/sessions?message=')
+      );
+    });
+
+    it('should redirect with error when userId not provided', async () => {
+      mockRequest.body = {};
+
+      const router = createAdminRoutes(mockPrisma as unknown as PrismaClient);
+      const handler = router.stack.find(
+        (layer: any) => layer.route?.path === '/sessions/revoke-all' && layer.route?.methods?.post
+      )?.route?.stack[0]?.handle;
+
+      await handler(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockResponse.redirect).toHaveBeenCalledWith('/administration/sessions?error=User ID required');
+    });
+
+    it('should redirect with error when no active sessions found', async () => {
+      mockRequest.body = { userId: 'user-with-no-sessions' };
+
+      const router = createAdminRoutes(mockPrisma as unknown as PrismaClient);
+      const handler = router.stack.find(
+        (layer: any) => layer.route?.path === '/sessions/revoke-all' && layer.route?.methods?.post
+      )?.route?.stack[0]?.handle;
+
+      await handler(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockResponse.redirect).toHaveBeenCalledWith(
+        '/administration/sessions?error=No active sessions found for this user'
+      );
+    });
+  });
 });
