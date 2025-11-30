@@ -32,6 +32,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Default card types seeded: VISA, VISA Debit, Mastercard, Mastercard Debit, American Express
   - API routes: `GET/POST /api/credit-card-types`, `GET/PUT/DELETE /api/credit-card-types/[id]`
   - Database migration: `20251129_add_credit_card_type_config`
+- **Account Type Administration** - Admin interface for managing account types
+  - New `AccountTypeConfig` database model for configurable account types
+  - Admin UI page at `/account-types` for listing and managing account types
+  - CRUD operations: create, edit, delete, toggle active/inactive
+  - Configurable properties: code, display name, description, sort order
+  - Default account types seeded: Checking Account, Savings Account, Money Market Account, Certificate of Deposit
+  - API routes: `GET/POST /api/account-types`, `GET/PUT/DELETE /api/account-types/[id]`
+  - Database migration: `20251129_add_account_type_config`
 - **Open Banking API Specification** - OpenAPI YAML for user accounts endpoint
   - `openbanking/api/users-accounts.yaml` - Full OpenAPI 3.0.3 spec
   - Documents `/users/{fi_user_ref}/accounts` endpoint

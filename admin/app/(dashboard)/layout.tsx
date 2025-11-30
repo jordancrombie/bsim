@@ -57,6 +57,12 @@ export default async function DashboardLayout({
                 Card Types
               </Link>
               <Link
+                href="/account-types"
+                className="hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium"
+              >
+                Account Types
+              </Link>
+              <Link
                 href="/settings"
                 className="hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium"
               >
