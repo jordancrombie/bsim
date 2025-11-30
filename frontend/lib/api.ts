@@ -24,17 +24,22 @@ import type {
   UnreadCountResponse,
 } from '@/types';
 
-// Use relative URL so it works with any subdomain
-// When accessing from https://banksim.ca, calls https://banksim.ca/api
-// When accessing from https://testing.banksim.ca, calls https://testing.banksim.ca/api
+// Get API URL from environment or use relative path as fallback
+// NEXT_PUBLIC_API_URL is baked into the client bundle at build time
 const getApiUrl = (): string => {
-  // In browser, use relative URL to current domain
+  // Use environment variable if set (works in both browser and SSR)
+  // This is baked in at build time for NEXT_PUBLIC_* vars
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+
+  // Fallback to relative URL for local development with nginx proxy
   if (typeof window !== 'undefined') {
     return '/api';
   }
 
-  // During SSR, use environment variable or fallback
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+  // SSR fallback
+  return 'http://localhost:3001/api';
 };
 
 class ApiClient {

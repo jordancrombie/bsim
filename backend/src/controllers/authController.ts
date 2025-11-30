@@ -124,10 +124,20 @@ export class AuthController {
         return;
       }
 
+      // Transform passkey to avoid BigInt serialization issues
+      const safePasskey = result.passkey
+        ? {
+            id: result.passkey.id,
+            createdAt: result.passkey.createdAt,
+            deviceType: result.passkey.deviceType,
+            backedUp: result.passkey.backedUp,
+          }
+        : undefined;
+
       res.status(201).json({
         verified: true,
         message: 'Passkey registered successfully',
-        passkey: result.passkey,
+        passkey: safePasskey,
       });
     } catch (error) {
       next(error);
