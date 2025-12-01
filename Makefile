@@ -1,4 +1,4 @@
-.PHONY: help db-start db-stop db-reset db-migrate backend-dev backend-build frontend-dev install dev-up dev-down dev-build dev-logs
+.PHONY: help db-start db-stop db-reset db-migrate backend-dev backend-build frontend-dev install dev-up dev-down dev-build dev-logs e2e e2e-headed e2e-ui e2e-install e2e-report e2e-prod
 
 help:
 	@echo "BSIM Development Commands"
@@ -20,6 +20,14 @@ help:
 	@echo "Backend:"
 	@echo "  make backend-dev   - Start backend in dev mode"
 	@echo "  make backend-build - Build backend for production"
+	@echo ""
+	@echo "E2E Testing:"
+	@echo "  make e2e-install   - Install Playwright and browsers"
+	@echo "  make e2e           - Run E2E tests (headless, local dev)"
+	@echo "  make e2e-headed    - Run E2E tests with browser visible"
+	@echo "  make e2e-ui        - Run E2E tests in Playwright UI mode"
+	@echo "  make e2e-report    - Open last test report"
+	@echo "  make e2e-prod      - Run E2E tests against production"
 	@echo ""
 	@echo "Setup:"
 	@echo "  make install       - Install all dependencies"
@@ -82,3 +90,22 @@ dev-hosts:
 	@echo ""
 	@echo "All domains use *.banksim.ca wildcard certificate"
 	@echo ""
+
+# E2E Testing commands
+e2e-install:
+	cd e2e && npm install && npm run install-browsers
+
+e2e:
+	cd e2e && npm test
+
+e2e-headed:
+	cd e2e && npm run test:headed
+
+e2e-ui:
+	cd e2e && npm run test:ui
+
+e2e-report:
+	cd e2e && npm run report
+
+e2e-prod:
+	cd e2e && npm run test:prod
