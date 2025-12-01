@@ -9,6 +9,8 @@
     "test:debug": "playwright test --debug",
     "test:chromium": "playwright test --project=chromium",
     "test:webkit": "playwright test --project=webkit",
+    "test:local": "BASE_URL=https://localhost playwright test --project=chromium",
+    "test:dev": "BASE_URL=https://dev.banksim.ca playwright test",
     "test:prod": "BASE_URL=https://banksim.ca playwright test",
     "report": "playwright show-report",
     "install-browsers": "playwright install chromium webkit"

@@ -31,11 +31,30 @@ e2e/
 │   │   ├── signup.spec.ts    # Signup flow tests
 │   │   ├── login.spec.ts     # Login flow tests
 │   │   └── dashboard.spec.ts # Dashboard verification tests
+│   ├── banking/
+│   │   ├── accounts.spec.ts  # Account management tests
+│   │   ├── credit-cards.spec.ts # Credit card tests
+│   │   └── transfer.spec.ts  # Inter-customer transfer tests
 │   └── fixtures/
 │       └── test-data.ts      # Test user data and helpers
 └── helpers/
     └── auth.helpers.ts       # Authentication helper functions
 ```
+
+## Test Coverage
+
+| Category | Tests | Description |
+|----------|-------|-------------|
+| Auth | 17 | Login, signup, dashboard, session management |
+| Banking | 28 | Account CRUD, deposits, withdrawals, credit cards |
+| Transfer | 8 | Inter-customer transfers via email |
+| **Total** | **67** | |
+
+**Note:** Open Banking/OIDC E2E tests are maintained in the [SSIM repository](https://github.com/jordancrombie/ssim) since they test the SSIM third-party application's integration with BSIM.
+
+### Test Design
+
+Tests are atomic and self-contained. Each test suite creates its own users via `beforeAll` hooks rather than depending on users from other test suites. This ensures tests can run in any order, in parallel, or in isolation.
 
 ## Running Tests
 

@@ -3,8 +3,11 @@ import { AccountService } from '../services/AccountService';
 import { AuthRequest } from '../middleware/auth';
 import { z } from 'zod';
 
+const accountTypeEnum = z.enum(['CHECKING', 'SAVINGS', 'MONEY_MARKET', 'CERTIFICATE_OF_DEPOSIT']);
+
 const createAccountSchema = z.object({
   initialBalance: z.number().min(0).optional().default(0),
+  accountType: accountTypeEnum.optional().default('CHECKING'),
 });
 
 const depositSchema = z.object({
@@ -40,7 +43,7 @@ export class AccountController {
       }
 
       const validatedData = createAccountSchema.parse(req.body);
-      const account = await this.accountService.createAccount(req.user.userId, validatedData.initialBalance);
+      const account = await this.accountService.createAccount(req.user.userId, validatedData.initialBalance, validatedData.accountType);
 
       res.status(201).json({ account });
     } catch (error) {

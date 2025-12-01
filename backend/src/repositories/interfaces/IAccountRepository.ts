@@ -1,11 +1,15 @@
+export type AccountType = 'CHECKING' | 'SAVINGS' | 'MONEY_MARKET' | 'CERTIFICATE_OF_DEPOSIT';
+
 export interface CreateAccountDto {
   userId: string;
   initialBalance?: number;
+  accountType?: AccountType;
 }
 
 export interface AccountData {
   id: string;
   accountNumber: string;
+  accountType: AccountType;
   balance: number;
   userId: string;
   createdAt: Date;
