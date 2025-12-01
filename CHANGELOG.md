@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **Next.js CVE-2025-29927 Middleware Bypass** - Updated Next.js to 16.0.6
+  - Frontend and Admin upgraded from 14.2.18 to 16.0.6
+  - Fixes critical authorization bypass vulnerability (CVSS 9.1)
+  - Attackers could bypass middleware-based auth via `x-middleware-subrequest` header
+  - BSIM was not directly exploitable (no middleware auth) but upgraded as best practice
+
 ### Fixed
 - **Passkey Registration BigInt Serialization** - Fixed "Failed to verify passkey registration" error in production
   - The passkey `counter` field (BigInt) was causing JSON serialization to fail when returning the response
