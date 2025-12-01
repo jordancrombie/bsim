@@ -130,18 +130,54 @@ aws ecr get-login-password --region us-east-1 | \
 # IMPORTANT: ECS Fargate runs linux/amd64 - if building on Apple Silicon (M1/M2/M3),
 # you MUST specify --platform linux/amd64 or tasks will fail with:
 # "CannotPullContainerError: image Manifest does not contain descriptor matching platform"
-for service in backend frontend admin auth-server openbanking; do
+
+# Build backend services (no build args needed)
+for service in backend auth-server openbanking; do
   cd $service
   docker build --platform linux/amd64 -t bsim/$service .
   docker tag bsim/$service:latest ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bsim/$service:latest
   docker push ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bsim/$service:latest
   cd ..
 done
+
+# Build frontend (Next.js - REQUIRES build args!)
+# WARNING: NEXT_PUBLIC_* variables are baked in at BUILD TIME, not runtime!
+# Forgetting these will cause 404 errors when the app tries to reach the API.
+cd frontend
+docker build --platform linux/amd64 \
+  --build-arg NEXT_PUBLIC_API_URL=https://api.banksim.ca/api \
+  --build-arg NEXT_PUBLIC_DOMAIN=banksim.ca \
+  --build-arg NEXT_PUBLIC_BACKEND_PORT=443 \
+  -t bsim/frontend .
+docker tag bsim/frontend:latest ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bsim/frontend:latest
+docker push ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bsim/frontend:latest
+cd ..
+
+# Build admin (Next.js - REQUIRES build args!)
+cd admin
+docker build --platform linux/amd64 \
+  --build-arg NEXT_PUBLIC_API_URL=https://api.banksim.ca/api \
+  --build-arg NEXT_PUBLIC_DOMAIN=banksim.ca \
+  -t bsim/admin .
+docker tag bsim/admin:latest ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bsim/admin:latest
+docker push ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bsim/admin:latest
+cd ..
 ```
 
 > **Architecture Note:**
 > - **AWS/ECS builds**: Always use `--platform linux/amd64` (Fargate runs x86_64)
 > - **Local development**: Use native architecture (ARM64 on Apple Silicon, amd64 on Intel)
+
+> **⚠️ Critical: Next.js Build Arguments**
+>
+> The `frontend` and `admin` services are Next.js apps that require `NEXT_PUBLIC_*` environment variables
+> to be passed as **build arguments**. These values are baked into the JavaScript bundle at build time
+> and cannot be changed at runtime. If you forget these build args:
+> - The app will build successfully
+> - But API calls will fail with 404 errors (hitting wrong endpoints)
+> - The app will appear broken in production
+>
+> Always verify the build args match your production domain before deploying!
 
 ### 3. Create ECS Cluster
 
@@ -717,10 +753,17 @@ aws ecs describe-services \
 ## Updating the Application
 
 ```bash
-# Build and push new images
-docker build -t bsim/backend ./backend
+# Build and push new images (example: backend)
+docker build --platform linux/amd64 -t bsim/backend ./backend
 docker tag bsim/backend:latest ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bsim/backend:latest
 docker push ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bsim/backend:latest
+
+# For frontend/admin, DON'T FORGET the build args!
+docker build --platform linux/amd64 \
+  --build-arg NEXT_PUBLIC_API_URL=https://api.banksim.ca/api \
+  --build-arg NEXT_PUBLIC_DOMAIN=banksim.ca \
+  --build-arg NEXT_PUBLIC_BACKEND_PORT=443 \
+  -t bsim/frontend ./frontend
 
 # Force new deployment
 aws ecs update-service \
