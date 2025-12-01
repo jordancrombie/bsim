@@ -49,6 +49,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Now always returns valid resource server config for any resource indicator
   - Added debug logging to track resource indicator requests
 
+- **Production Database Missing Tables/Columns** - Fixed 500 errors on `/api/settings` endpoint
+  - `site_settings` table was missing from production database (model existed in schema but no migration)
+  - `postLogoutRedirectUris` column was missing from `oauth_clients` table (needed for OIDC logout)
+  - Created and applied migrations via ECS Fargate tasks to sync production DB with Prisma schema
+  - Added migration files: `20251201_add_site_settings/`, `20251201_add_post_logout_redirect_uris/`
+
 ### Changed
 - **AWS Deployment Documentation** - Updated for SSIM service and build architecture
   - Added SSIM (Store Simulator) to architecture diagram and services table
