@@ -67,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Updated both initial build section and "Updating the Application" section with examples
 
 ### Added
-- **Comprehensive E2E Test Suite** - Full Playwright end-to-end test coverage (67 tests)
+- **Comprehensive E2E Test Suite** - Full Playwright end-to-end test coverage (76 tests)
   - **Auth Tests** (17 tests):
     - Login flow: valid credentials, invalid email, incorrect password, empty fields
     - Signup flow: full flow, minimal fields, validation, duplicate email detection
@@ -81,13 +81,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Transfer money between users via email address
     - Verify transfer on both sender and recipient sides
     - Error handling: invalid recipient, insufficient funds, no account
+  - **Open Banking OIDC Flow Tests** (9 tests) - Requires [SSIM](https://github.com/jordancrombie/ssim):
+    - Complete OAuth 2.0/OIDC authorization code flow
+    - User authentication on BSIM auth server
+    - Consent page with account selection
+    - Profile data display after authorization
+    - KENOK Open Banking account fetch via API
+    - Authorization denial and invalid credentials handling
+    - RP-initiated logout through auth server
   - **Test Architecture**:
     - Tests are atomic and self-contained (create own users via beforeAll hooks)
     - Serial execution for dependent tests within suites
     - Parallel execution across workers for independent suites
     - Support for local (`https://localhost`), dev, and production environments
   - Commands: `make e2e`, `make e2e-headed`, `make e2e-ui`, `npm run test:local`
-  - Note: Open Banking/OIDC E2E tests are in the [SSIM repository](https://github.com/jordancrombie/ssim)
 
 - **Local Dev Admin Management Script** - New script for managing admin users locally
   - `./scripts/dev-admin.sh reset-admin` - Delete all admin users (triggers first-user setup)

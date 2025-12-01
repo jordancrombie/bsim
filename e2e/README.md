@@ -35,6 +35,8 @@ e2e/
 │   │   ├── accounts.spec.ts  # Account management tests
 │   │   ├── credit-cards.spec.ts # Credit card tests
 │   │   └── transfer.spec.ts  # Inter-customer transfer tests
+│   ├── openbanking/
+│   │   └── oidc-flow.spec.ts # OIDC/OAuth flow tests (requires SSIM)
 │   └── fixtures/
 │       └── test-data.ts      # Test user data and helpers
 └── helpers/
@@ -48,9 +50,23 @@ e2e/
 | Auth | 17 | Login, signup, dashboard, session management |
 | Banking | 28 | Account CRUD, deposits, withdrawals, credit cards |
 | Transfer | 8 | Inter-customer transfers via email |
-| **Total** | **67** | |
+| Open Banking | 9 | OIDC flow, consent, KENOK account fetch (requires SSIM) |
+| **Total** | **76** | |
 
-**Note:** Open Banking/OIDC E2E tests are maintained in the [SSIM repository](https://github.com/jordancrombie/ssim) since they test the SSIM third-party application's integration with BSIM.
+### Open Banking / OIDC Tests
+
+The Open Banking tests validate BSIM's auth server and Open Banking APIs through the complete OAuth 2.0/OIDC flow:
+- SSIM homepage and login page verification
+- Redirect to BSIM auth server
+- User authentication and consent flow
+- Account selection during authorization
+- Profile data display after authorization
+- KENOK Open Banking account fetch via API
+- Authorization denial handling
+- Invalid credentials handling
+- RP-initiated logout through auth server
+
+**Important:** These tests require [SSIM](https://github.com/jordancrombie/ssim) (or another OIDC client) to be running. They validate BSIM's OAuth/OIDC implementation from the perspective of a third-party application.
 
 ### Test Design
 
