@@ -55,6 +55,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added note about SSIM being from separate repository (https://github.com/jordancrombie/ssim)
   - Added `--platform linux/amd64` to Docker build commands for Apple Silicon compatibility
   - Added architecture note: AWS/ECS requires amd64, local dev uses native (ARM64 on Apple Silicon)
+  - **Added critical warning about Next.js build arguments** - frontend/admin require `--build-arg` flags
+    - `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_DOMAIN`, `NEXT_PUBLIC_BACKEND_PORT` must be passed at build time
+    - These are baked into the JS bundle; forgetting them causes 404 errors in production
+    - Updated both initial build section and "Updating the Application" section with examples
 
 ### Added
 - **Local Dev Admin Management Script** - New script for managing admin users locally
