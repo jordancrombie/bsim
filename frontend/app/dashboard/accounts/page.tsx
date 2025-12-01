@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import type { Account } from '@/types';
+import { AccountType } from '@/types';
 
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -11,7 +12,23 @@ export default function AccountsPage() {
   const [creating, setCreating] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [initialBalance, setInitialBalance] = useState('0');
+  const [accountType, setAccountType] = useState<AccountType>(AccountType.CHECKING);
   const [error, setError] = useState('');
+
+  const getAccountTypeDisplay = (type: AccountType): string => {
+    switch (type) {
+      case AccountType.CHECKING:
+        return 'Checking';
+      case AccountType.SAVINGS:
+        return 'Savings';
+      case AccountType.MONEY_MARKET:
+        return 'Money Market';
+      case AccountType.CERTIFICATE_OF_DEPOSIT:
+        return 'Certificate of Deposit';
+      default:
+        return type;
+    }
+  };
 
   useEffect(() => {
     loadAccounts();
@@ -34,9 +51,10 @@ export default function AccountsPage() {
 
     try {
       const balance = parseFloat(initialBalance) || 0;
-      await api.createAccount({ initialBalance: balance });
+      await api.createAccount({ initialBalance: balance, accountType });
       setShowModal(false);
       setInitialBalance('0');
+      setAccountType(AccountType.CHECKING);
       await loadAccounts();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to create account');
@@ -97,7 +115,12 @@ export default function AccountsPage() {
                 </span>
               </div>
 
-              <p className="font-mono text-sm text-gray-600 mb-2">{account.accountNumber}</p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-mono text-sm text-gray-600">{account.accountNumber}</p>
+                <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full font-medium">
+                  {getAccountTypeDisplay(account.accountType)}
+                </span>
+              </div>
 
               <p className="text-3xl font-bold text-gray-900">${account.balance.toFixed(2)}</p>
 
@@ -122,6 +145,23 @@ export default function AccountsPage() {
                 {error}
               </div>
             )}
+
+            <div className="mb-4">
+              <label htmlFor="accountType" className="block text-sm font-medium text-gray-700 mb-2">
+                Account Type
+              </label>
+              <select
+                id="accountType"
+                value={accountType}
+                onChange={(e) => setAccountType(e.target.value as AccountType)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
+              >
+                <option value={AccountType.CHECKING}>Checking</option>
+                <option value={AccountType.SAVINGS}>Savings</option>
+                <option value={AccountType.MONEY_MARKET}>Money Market</option>
+                <option value={AccountType.CERTIFICATE_OF_DEPOSIT}>Certificate of Deposit</option>
+              </select>
+            </div>
 
             <div className="mb-6">
               <label htmlFor="balance" className="block text-sm font-medium text-gray-700 mb-2">
@@ -151,6 +191,7 @@ export default function AccountsPage() {
                   setShowModal(false);
                   setError('');
                   setInitialBalance('0');
+                  setAccountType(AccountType.CHECKING);
                 }}
                 className="flex-1 bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
               >

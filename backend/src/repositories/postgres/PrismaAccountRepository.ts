@@ -10,6 +10,7 @@ export class PrismaAccountRepository implements IAccountRepository {
     const account = await this.prisma.account.create({
       data: {
         accountNumber,
+        accountType: data.accountType || 'CHECKING',
         balance: data.initialBalance || 0,
         userId: data.userId,
       },
@@ -18,6 +19,7 @@ export class PrismaAccountRepository implements IAccountRepository {
     return {
       id: account.id,
       accountNumber: account.accountNumber,
+      accountType: account.accountType,
       balance: Number(account.balance),
       userId: account.userId,
       createdAt: account.createdAt,
@@ -35,6 +37,7 @@ export class PrismaAccountRepository implements IAccountRepository {
     return {
       id: account.id,
       accountNumber: account.accountNumber,
+      accountType: account.accountType,
       balance: Number(account.balance),
       userId: account.userId,
       createdAt: account.createdAt,
@@ -51,6 +54,7 @@ export class PrismaAccountRepository implements IAccountRepository {
     return accounts.map((account) => ({
       id: account.id,
       accountNumber: account.accountNumber,
+      accountType: account.accountType,
       balance: Number(account.balance),
       userId: account.userId,
       createdAt: account.createdAt,
@@ -68,6 +72,7 @@ export class PrismaAccountRepository implements IAccountRepository {
     return {
       id: account.id,
       accountNumber: account.accountNumber,
+      accountType: account.accountType,
       balance: Number(account.balance),
       userId: account.userId,
       createdAt: account.createdAt,

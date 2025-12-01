@@ -1,4 +1,4 @@
-import { IAccountRepository, AccountData } from '../repositories/interfaces/IAccountRepository';
+import { IAccountRepository, AccountData, AccountType } from '../repositories/interfaces/IAccountRepository';
 import { ITransactionRepository } from '../repositories/interfaces/ITransactionRepository';
 import { IUserRepository } from '../repositories/interfaces/IUserRepository';
 import { TransactionType } from '../models/transaction';
@@ -34,12 +34,12 @@ export class AccountService {
     private notificationService?: NotificationService
   ) {}
 
-  async createAccount(userId: string, initialBalance: number = 0): Promise<AccountData> {
+  async createAccount(userId: string, initialBalance: number = 0, accountType: AccountType = 'CHECKING'): Promise<AccountData> {
     if (initialBalance < 0) {
       throw new Error('Initial balance cannot be negative');
     }
 
-    const account = await this.accountRepository.create({ userId, initialBalance });
+    const account = await this.accountRepository.create({ userId, initialBalance, accountType });
 
     // Create initial deposit transaction if balance > 0
     if (initialBalance > 0) {

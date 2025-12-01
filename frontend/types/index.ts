@@ -74,6 +74,7 @@ export interface LoginRequest {
 
 export interface CreateAccountRequest {
   initialBalance?: number;
+  accountType?: AccountType;
 }
 
 export interface DepositRequest {

@@ -67,6 +67,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Updated both initial build section and "Updating the Application" section with examples
 
 ### Added
+- **Comprehensive E2E Test Suite** - Full Playwright end-to-end test coverage (67 tests)
+  - **Auth Tests** (17 tests):
+    - Login flow: valid credentials, invalid email, incorrect password, empty fields
+    - Signup flow: full flow, minimal fields, validation, duplicate email detection
+    - Dashboard: navigation, session persistence, logout, protected routes
+  - **Banking Tests** (28 tests):
+    - Account management: create all account types (checking, savings, money market, CD)
+    - Account operations: deposits, withdrawals, balance verification
+    - Credit card management: create all card types (Visa, Mastercard, AMEX, debit variants)
+    - Credit card transactions: payments, card details display
+  - **Inter-Customer Transfer Tests** (8 tests):
+    - Transfer money between users via email address
+    - Verify transfer on both sender and recipient sides
+    - Error handling: invalid recipient, insufficient funds, no account
+  - **Test Architecture**:
+    - Tests are atomic and self-contained (create own users via beforeAll hooks)
+    - Serial execution for dependent tests within suites
+    - Parallel execution across workers for independent suites
+    - Support for local (`https://localhost`), dev, and production environments
+  - Commands: `make e2e`, `make e2e-headed`, `make e2e-ui`, `npm run test:local`
+  - Note: Open Banking/OIDC E2E tests are in the [SSIM repository](https://github.com/jordancrombie/ssim)
+
 - **Local Dev Admin Management Script** - New script for managing admin users locally
   - `./scripts/dev-admin.sh reset-admin` - Delete all admin users (triggers first-user setup)
   - `./scripts/dev-admin.sh delete-passkeys` - Delete all admin passkeys (keeps users)

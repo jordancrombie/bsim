@@ -98,6 +98,9 @@ e2e-install:
 e2e:
 	cd e2e && npm test
 
+e2e-local:
+	cd e2e && npm run test:local
+
 e2e-headed:
 	cd e2e && npm run test:headed
 
@@ -106,6 +109,9 @@ e2e-ui:
 
 e2e-report:
 	cd e2e && npm run report
+
+e2e-dev:
+	cd e2e && npm run test:dev
 
 e2e-prod:
 	cd e2e && npm run test:prod

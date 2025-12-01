@@ -32,6 +32,7 @@ export class MockAccountRepository implements IAccountRepository {
     const account: AccountData = {
       id,
       accountNumber,
+      accountType: data.accountType || 'CHECKING',
       balance: data.initialBalance || 0,
       userId: data.userId,
       createdAt: now,
