@@ -5,28 +5,28 @@ This guide walks you through deploying BSIM to AWS using ECS Fargate, RDS Postgr
 ## Architecture Overview
 
 ```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                                AWS Cloud                                      │
-│                                                                               │
-│  ┌────────────────────────────────────────────────────────────────────────┐  │
-│  │                 Application Load Balancer (ALB)                        │  │
-│  │                   with AWS Certificate Manager                         │  │
-│  │   Routes: banksim.ca, admin.*, auth.*, openbanking.*, api.*           │  │
-│  └────┬──────────┬──────────────┬───────────────┬───────────────┬────────┘  │
-│       │          │              │               │               │            │
-│  ┌────▼────┐ ┌───▼────┐  ┌─────▼─────┐  ┌─────▼─────┐  ┌──────▼──────┐     │
-│  │Frontend │ │ Admin  │  │Auth Server│  │OpenBanking│  │  Backend    │     │
-│  │Next.js  │ │Next.js │  │  OIDC     │  │ FDX API   │  │  Express    │     │
-│  │ :3000   │ │ :3002  │  │  :3003    │  │  :3004    │  │   :3001     │     │
-│  └────┬────┘ └───┬────┘  └─────┬─────┘  └─────┬─────┘  └──────┬──────┘     │
-│       │          │             │               │               │            │
-│       └──────────┴─────────────┴───────────────┴───────────────┘            │
-│                                       │                                      │
-│                            ┌──────────▼───────────┐                          │
-│                            │   RDS PostgreSQL     │                          │
-│                            │    (Managed DB)      │                          │
-│                            └──────────────────────┘                          │
-└──────────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────────┐
+│                                   AWS Cloud                                         │
+│                                                                                     │
+│  ┌──────────────────────────────────────────────────────────────────────────────┐  │
+│  │                    Application Load Balancer (ALB)                            │  │
+│  │                      with AWS Certificate Manager                             │  │
+│  │   Routes: banksim.ca, admin.*, auth.*, openbanking.*, api.*, ssim.*          │  │
+│  └───┬────────┬──────────┬───────────────┬──────────────┬──────────────┬────────┘  │
+│      │        │          │               │              │              │            │
+│  ┌───▼───┐ ┌──▼───┐ ┌────▼────┐  ┌──────▼──────┐ ┌─────▼─────┐ ┌──────▼──────┐    │
+│  │Frontend│ │Admin │ │Auth Srv │  │ OpenBanking │ │  Backend  │ │    SSIM     │    │
+│  │Next.js │ │Next.js│ │  OIDC  │  │  FDX API    │ │  Express  │ │  Next.js    │    │
+│  │ :3000  │ │ :3002│ │  :3003 │  │    :3004    │ │   :3001   │ │   :3005     │    │
+│  └───┬────┘ └──┬───┘ └────┬────┘  └──────┬──────┘ └─────┬─────┘ └──────┬──────┘    │
+│      │         │          │              │              │              │            │
+│      └─────────┴──────────┴──────────────┴──────────────┴──────────────┘            │
+│                                          │                                          │
+│                               ┌──────────▼───────────┐                              │
+│                               │   RDS PostgreSQL     │                              │
+│                               │    (Managed DB)      │                              │
+│                               └──────────────────────┘                              │
+└────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Services Overview
@@ -38,6 +38,9 @@ This guide walks you through deploying BSIM to AWS using ECS Fargate, RDS Postgr
 | Auth Server | auth.banksim.ca | 3003 | OIDC Authorization Server |
 | Open Banking | openbanking.banksim.ca | 3004 | FDX-inspired resource API |
 | Backend | api.banksim.ca | 3001 | Core banking API |
+| SSIM | ssim.banksim.ca | 3005 | Store Simulator (third-party demo) |
+
+> **Note:** SSIM (Store Simulator) is maintained in a separate repository at https://github.com/jordancrombie/ssim but is deployed as part of the BSIM AWS infrastructure. It demonstrates OAuth/OIDC integration with the Open Banking API. See the SSIM repository for its source code and deployment details.
 
 ## Prerequisites
 
@@ -124,14 +127,21 @@ aws ecr get-login-password --region us-east-1 | \
   docker login --username AWS --password-stdin ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com
 
 # Build and push all services
+# IMPORTANT: ECS Fargate runs linux/amd64 - if building on Apple Silicon (M1/M2/M3),
+# you MUST specify --platform linux/amd64 or tasks will fail with:
+# "CannotPullContainerError: image Manifest does not contain descriptor matching platform"
 for service in backend frontend admin auth-server openbanking; do
   cd $service
-  docker build -t bsim/$service .
+  docker build --platform linux/amd64 -t bsim/$service .
   docker tag bsim/$service:latest ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bsim/$service:latest
   docker push ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bsim/$service:latest
   cd ..
 done
 ```
+
+> **Architecture Note:**
+> - **AWS/ECS builds**: Always use `--platform linux/amd64` (Fargate runs x86_64)
+> - **Local development**: Use native architecture (ARM64 on Apple Silicon, amd64 on Intel)
 
 ### 3. Create ECS Cluster
 
