@@ -141,6 +141,18 @@ Visit http://localhost:3000 and try:
 - **[DOCKER_SSL_SETUP.md](DOCKER_SSL_SETUP.md)** - SSL/HTTPS configuration for local and AWS
 - **[AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md)** - Deploy to AWS ECS Fargate
 
+## Related Repositories
+
+### SSIM - Store Simulator
+
+SSIM is a third-party demo application that demonstrates the BSIM Open Banking integration. It allows users to authenticate via BSIM's OAuth/OIDC provider and access their account data through the Open Banking API.
+
+- **Repository:** https://github.com/jordancrombie/ssim
+- **Production URL:** https://ssim.banksim.ca
+- **Purpose:** Demo third-party app for testing OAuth flow and Open Banking API
+
+**Note:** SSIM is maintained in a separate repository but deployed as part of the BSIM AWS infrastructure. It shares the same ALB and runs as an ECS Fargate service alongside the BSIM services. See the SSIM repository's `AWS_DEPLOYMENT.md` for deployment details.
+
 ## Project Structure
 
 ```
