@@ -42,6 +42,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Now always returns valid resource server config for any resource indicator
   - Added debug logging to track resource indicator requests
 
+### Changed
+- **AWS Deployment Documentation** - Updated for SSIM service and build architecture
+  - Added SSIM (Store Simulator) to architecture diagram and services table
+  - Added note about SSIM being from separate repository (https://github.com/jordancrombie/ssim)
+  - Added `--platform linux/amd64` to Docker build commands for Apple Silicon compatibility
+  - Added architecture note: AWS/ECS requires amd64, local dev uses native (ARM64 on Apple Silicon)
+
 ### Added
 - **Local Dev Admin Management Script** - New script for managing admin users locally
   - `./scripts/dev-admin.sh reset-admin` - Delete all admin users (triggers first-user setup)
