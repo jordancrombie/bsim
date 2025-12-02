@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Admin E2E Test Support** - Test endpoints for admin passkey testing without Super Admin credentials
+  - Created `/api/test/admin-invites` endpoint for E2E tests to create admin invites
+  - Created `/api/test/admins` endpoint for E2E tests to clean up test admins
+  - Protected by `X-Test-Admin-Key` header (separate from cleanup key)
+  - Only allows `@testadmin.banksim.ca` emails (test admin domain)
+  - Only allows ADMIN role (never SUPER_ADMIN) for security
+  - Test invites expire in 5 minutes
+  - Added `TEST_ADMIN_KEY` environment variable to docker-compose.yml
+  - Updated global teardown to clean up test admins after E2E runs
+  - Created `e2e/docs/ADMIN_E2E_TESTING_PLAN.md` with full implementation plan
+
 - **E2E Test User Cleanup** - Automatic cleanup of test users after E2E test runs
   - Created `/api/test-cleanup/users` endpoint protected by `X-Test-Cleanup-Key` header
   - Deletes only users with `@testuser.banksim.ca` email domain (E2E test users)
