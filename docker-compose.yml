@@ -101,6 +101,8 @@ services:
       S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-}
       S3_ENDPOINT: ${S3_ENDPOINT:-}
       CLOUDFRONT_URL: ${CLOUDFRONT_URL:-}
+      # Test admin key for E2E testing (do NOT set in production)
+      TEST_ADMIN_KEY: ${TEST_ADMIN_KEY:-bsim-test-admin-secret-key}
     volumes:
       - uploads_data:/app/uploads
     depends_on:
