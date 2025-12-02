@@ -69,7 +69,7 @@ export async function verifyAdminRegistration(
   const verification = await verifyRegistrationResponse({
     response,
     expectedChallenge: challenge,
-    expectedOrigin: [ORIGIN, 'https://localhost', `https://${RP_ID}`],
+    expectedOrigin: [ORIGIN, 'https://localhost', `https://${RP_ID}`, 'https://admin-dev.banksim.ca'],
     expectedRPID: RP_ID,
   });
 
@@ -160,7 +160,7 @@ export async function verifyAdminAuthentication(
   const verification = await verifyAuthenticationResponse({
     response,
     expectedChallenge: challenge,
-    expectedOrigin: [ORIGIN, 'https://localhost', `https://${RP_ID}`],
+    expectedOrigin: [ORIGIN, 'https://localhost', `https://${RP_ID}`, 'https://admin-dev.banksim.ca'],
     expectedRPID: RP_ID,
     authenticator: {
       credentialID: isoBase64URL.toBuffer(passkey.credentialId),
