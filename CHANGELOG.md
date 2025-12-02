@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Admin Passkey E2E Tests** - Full end-to-end testing for admin passkey authentication
+  - Created `e2e/tests/admin/passkey.spec.ts` with 7 comprehensive tests:
+    - Admin invite signup with passkey registration
+    - Admin passkey login after registration
+    - Passkey button visibility on login page
+    - Invalid invite code rejection
+    - Missing fields validation
+    - Dashboard access after login
+    - Unauthenticated redirect to login
+  - Created `e2e/helpers/admin.helpers.ts` with test admin management utilities
+  - Added `admin-dev.banksim.ca` to passkey expected origins for local/dev testing
+  - Updated nginx to route `admin-dev.banksim.ca` and `auth-dev.banksim.ca` subdomains locally
+
 - **Admin E2E Test Support** - Test endpoints for admin passkey testing without Super Admin credentials
   - Created `/api/test/admin-invites` endpoint for E2E tests to create admin invites
   - Created `/api/test/admins` endpoint for E2E tests to clean up test admins
