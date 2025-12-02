@@ -16,6 +16,9 @@ const baseURL = process.env.BASE_URL || 'https://dev.banksim.ca';
 export default defineConfig({
   testDir: './tests',
 
+  // Global teardown to clean up test users after all tests
+  globalTeardown: './global-teardown.ts',
+
   // Run tests in parallel
   fullyParallel: true,
 

@@ -41,6 +41,7 @@ services:
       RP_ID: banksim.ca
       ORIGIN: https://banksim.ca
       UPLOAD_DIR: /app/uploads
+      TEST_CLEANUP_KEY: ${TEST_CLEANUP_KEY:-bsim-test-cleanup-secret-key}
     volumes:
       - uploads_data:/app/uploads
     # No exposed ports - nginx will proxy to backend:3001
