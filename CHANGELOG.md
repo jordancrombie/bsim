@@ -15,6 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - BSIM was not directly exploitable (no middleware auth) but upgraded as best practice
 
 ### Fixed
+- **E2E OIDC Tests Environment Mismatch** - Fixed tests failing when run against production
+  - SSIM URL was hardcoded to `ssim-dev.banksim.ca`, causing tests to create users on production BSIM but authenticate via dev SSIM/auth-server
+  - Added `getSsimUrl()` function to derive SSIM URL from `BASE_URL`:
+    - Production (`BASE_URL=https://banksim.ca`) → `https://ssim.banksim.ca`
+    - Dev (default) → `https://ssim-dev.banksim.ca`
+  - All 76 E2E tests now pass against production
+  - CI/CD-ready: tests work correctly in any environment with proper `BASE_URL`
+
 - **Passkey Registration BigInt Serialization** - Fixed "Failed to verify passkey registration" error in production
   - The passkey `counter` field (BigInt) was causing JSON serialization to fail when returning the response
   - Passkeys were being saved correctly but the API response threw an error, confusing users

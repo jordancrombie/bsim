@@ -631,7 +631,7 @@ See [DOCKER_README.md](DOCKER_README.md) for Docker containerization details.
 - [x] OIDC auto-discovery (`.well-known/openid-configuration`)
 - [x] Unit test suite (Jest) - 462 tests across backend, open banking, auth-server, and admin
 - [x] Session management (view/revoke active OAuth sessions)
-- [x] E2E test suite (Playwright) - 76 tests for auth, banking, transfers, and OIDC flows
+- [x] E2E test suite (Playwright) - 76 tests for auth, banking, transfers, and OIDC flows (CI/CD-ready)
 - [ ] E2E tests for admin interface
 - [ ] E2E tests for auth server (passkey flows)
 - [ ] CI/CD pipeline setup

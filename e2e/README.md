@@ -122,7 +122,16 @@ This ensures:
 
 Environment variables:
 - `BASE_URL` - Override the target URL (default: `https://dev.banksim.ca`)
+- `SSIM_URL` - Override the SSIM URL (auto-derived from BASE_URL if not set)
 - `CI` - Set by CI systems, enables retries and disables parallel execution
+
+### Environment-Aware SSIM URL
+
+The OIDC tests automatically derive the correct SSIM URL based on `BASE_URL`:
+- Production (`BASE_URL=https://banksim.ca`) → `https://ssim.banksim.ca`
+- Dev (default) → `https://ssim-dev.banksim.ca`
+
+This ensures tests always use the matching SSIM/auth-server environment, preventing failures where users are created on one environment but authentication is attempted on another.
 
 ## Browsers
 
