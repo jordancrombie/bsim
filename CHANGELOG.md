@@ -32,6 +32,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - BSIM was not directly exploitable (no middleware auth) but upgraded as best practice
 
 ### Fixed
+- **Admin Detail Pages Not Loading** - Fixed "View Details" error on admin and user pages
+  - Next.js 16 changed `params` prop to be async (Promise) that must be awaited
+  - Updated `/admins/[id]` and `/users/[id]` pages to properly await params
+  - Both admin and user detail pages now load correctly
+
 - **E2E OIDC Tests Environment Mismatch** - Fixed tests failing when run against production
   - SSIM URL was hardcoded to `ssim-dev.banksim.ca`, causing tests to create users on production BSIM but authenticate via dev SSIM/auth-server
   - Added `getSsimUrl()` function to derive SSIM URL from `BASE_URL`:

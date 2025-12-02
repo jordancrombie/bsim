@@ -19,9 +19,10 @@ async function getAdminUser(id: string) {
 export default async function AdminUserDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const admin = await getAdminUser(params.id);
+  const { id } = await params;
+  const admin = await getAdminUser(id);
 
   if (!admin) {
     notFound();
