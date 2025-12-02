@@ -36,8 +36,23 @@ import { signupUser } from '../../helpers/auth.helpers';
 test.describe.configure({ mode: 'serial' });
 
 // URLs for the OIDC flow
-// Note: We use actual domain names because Playwright doesn't support custom Host headers
-const SSIM_BASE = process.env.SSIM_URL || 'https://ssim-dev.banksim.ca';
+// Derive SSIM URL from BASE_URL to ensure we test against the matching environment
+// - Production (BASE_URL=https://banksim.ca) -> SSIM at https://ssim.banksim.ca
+// - Dev (BASE_URL=https://dev.banksim.ca) -> SSIM at https://ssim-dev.banksim.ca
+function getSsimUrl(): string {
+  if (process.env.SSIM_URL) {
+    return process.env.SSIM_URL;
+  }
+  const baseUrl = process.env.BASE_URL || 'https://dev.banksim.ca';
+  // If BASE_URL is production (banksim.ca without prefix), use production SSIM
+  if (baseUrl === 'https://banksim.ca') {
+    return 'https://ssim.banksim.ca';
+  }
+  // Otherwise use dev SSIM
+  return 'https://ssim-dev.banksim.ca';
+}
+
+const SSIM_BASE = getSsimUrl();
 
 test.describe('Open Banking OIDC Flow', () => {
   // Create a test user for the OIDC flow
