@@ -25,8 +25,12 @@ run_ecs_task() {
     local command="$2"
     local log_prefix="$3"
 
+    # Create temp file for JSON (file:///dev/stdin doesn't work on macOS)
+    local TMPFILE=$(mktemp)
+    trap "rm -f $TMPFILE" RETURN
+
     # Create task definition
-    local task_def=$(cat <<EOF
+    cat > "$TMPFILE" <<EOF
 {
     "family": "bsim-admin-${task_name}",
     "executionRoleArn": "${EXECUTION_ROLE}",
@@ -59,12 +63,11 @@ run_ecs_task() {
     "memory": "512"
 }
 EOF
-)
 
     # Register task definition
     echo "Registering task definition..."
-    local task_def_arn=$(echo "$task_def" | aws ecs register-task-definition \
-        --cli-input-json file:///dev/stdin \
+    local task_def_arn=$(aws ecs register-task-definition \
+        --cli-input-json "file://$TMPFILE" \
         --region "$AWS_REGION" \
         --query 'taskDefinition.taskDefinitionArn' \
         --output text)
