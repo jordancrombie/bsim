@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **E2E Test User Cleanup** - Automatic cleanup of test users after E2E test runs
+  - Created `/api/test-cleanup/users` endpoint protected by `X-Test-Cleanup-Key` header
+  - Deletes only users with `@testuser.banksim.ca` email domain (E2E test users)
+  - Added Playwright global teardown (`e2e/global-teardown.ts`) to cleanup after tests
+  - Added `TEST_CLEANUP_KEY` environment variable to docker-compose.yml
+  - Added `cleanup-test-users` and `count-test-users` commands to `scripts/aws-admin.sh`
+  - Supports both dev environment (via API) and production (via ECS one-time task)
+
 - **Admin Invite System** - Invitation-based admin signup for adding new administrators
   - Super Admins can create invite codes with optional email restrictions
   - Configurable roles (Admin or Super Admin) and expiration periods (1-30 days)

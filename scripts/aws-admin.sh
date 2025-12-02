@@ -182,20 +182,68 @@ case "$1" in
             "list-admins"
         ;;
 
+    cleanup-test-users)
+        echo "============================================"
+        echo "  BSIM Test User Cleanup"
+        echo "============================================"
+        echo ""
+        echo "This will DELETE all test users (@testuser.banksim.ca) from the production database."
+        echo "These are users created during E2E test runs."
+        echo ""
+
+        # First, count the users
+        echo "Counting test users..."
+        run_ecs_task "count-test-users" \
+            "const{PrismaClient}=require('@prisma/client');const p=new PrismaClient();p.user.count({where:{email:{endsWith:'@testuser.banksim.ca'}}}).then(r=>console.log('Found',r,'test users')).catch(e=>console.error(e)).finally(()=>p.\$disconnect());" \
+            "count-test-users"
+
+        echo ""
+        read -p "Do you want to delete these test users? (yes/no): " confirm
+        if [ "$confirm" != "yes" ]; then
+            echo "Cancelled."
+            exit 0
+        fi
+
+        echo ""
+        echo "Deleting test users..."
+        run_ecs_task "delete-test-users" \
+            "const{PrismaClient}=require('@prisma/client');const p=new PrismaClient();p.user.deleteMany({where:{email:{endsWith:'@testuser.banksim.ca'}}}).then(r=>console.log('Deleted',r.count,'test users')).catch(e=>console.error(e)).finally(()=>p.\$disconnect());" \
+            "delete-test-users"
+
+        echo ""
+        echo "============================================"
+        echo "Test users have been cleaned up."
+        echo "============================================"
+        ;;
+
+    count-test-users)
+        echo "============================================"
+        echo "  BSIM Test User Count"
+        echo "============================================"
+        echo ""
+
+        run_ecs_task "count-test-users" \
+            "const{PrismaClient}=require('@prisma/client');const p=new PrismaClient();p.user.count({where:{email:{endsWith:'@testuser.banksim.ca'}}}).then(r=>console.log('Found',r,'test users with @testuser.banksim.ca')).catch(e=>console.error(e)).finally(()=>p.\$disconnect());" \
+            "count-test-users"
+        ;;
+
     *)
         echo "BSIM AWS Admin Management"
         echo ""
         echo "Usage: ./scripts/aws-admin.sh [command]"
         echo ""
         echo "Commands:"
-        echo "  reset-admin      - Delete all admin users (triggers first-user setup)"
-        echo "  delete-passkeys  - Delete all admin passkeys (keeps users)"
-        echo "  list-admins      - List all admin users"
+        echo "  reset-admin        - Delete all admin users (triggers first-user setup)"
+        echo "  delete-passkeys    - Delete all admin passkeys (keeps users)"
+        echo "  list-admins        - List all admin users"
+        echo "  cleanup-test-users - Delete all E2E test users (@testuser.banksim.ca)"
+        echo "  count-test-users   - Count E2E test users without deleting"
         echo ""
         echo "Examples:"
-        echo "  ./scripts/aws-admin.sh reset-admin      # Reset admin for testing"
-        echo "  ./scripts/aws-admin.sh delete-passkeys  # Re-register passkeys with new RP_ID"
-        echo "  ./scripts/aws-admin.sh list-admins      # Check current admin users"
+        echo "  ./scripts/aws-admin.sh reset-admin        # Reset admin for testing"
+        echo "  ./scripts/aws-admin.sh delete-passkeys    # Re-register passkeys with new RP_ID"
+        echo "  ./scripts/aws-admin.sh list-admins        # Check current admin users"
+        echo "  ./scripts/aws-admin.sh cleanup-test-users # Clean up E2E test users"
         echo ""
         echo "Note: These commands run against the AWS production database."
         echo "      Make sure you have AWS CLI configured with appropriate credentials."
