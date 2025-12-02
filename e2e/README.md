@@ -30,7 +30,8 @@ e2e/
 │   ├── auth/
 │   │   ├── signup.spec.ts    # Signup flow tests
 │   │   ├── login.spec.ts     # Login flow tests
-│   │   └── dashboard.spec.ts # Dashboard verification tests
+│   │   ├── dashboard.spec.ts # Dashboard verification tests
+│   │   └── passkey.spec.ts   # Passkey/WebAuthn tests (Chromium only)
 │   ├── banking/
 │   │   ├── accounts.spec.ts  # Account management tests
 │   │   ├── credit-cards.spec.ts # Credit card tests
@@ -39,8 +40,11 @@ e2e/
 │   │   └── oidc-flow.spec.ts # OIDC/OAuth flow tests (requires SSIM)
 │   └── fixtures/
 │       └── test-data.ts      # Test user data and helpers
-└── helpers/
-    └── auth.helpers.ts       # Authentication helper functions
+├── helpers/
+│   ├── auth.helpers.ts       # Authentication helper functions
+│   └── webauthn.helpers.ts   # WebAuthn virtual authenticator helpers
+└── docs/
+    └── WEBAUTHN_TESTING_PLAN.md # WebAuthn testing documentation
 ```
 
 ## Test Coverage
@@ -48,10 +52,11 @@ e2e/
 | Category | Tests | Description |
 |----------|-------|-------------|
 | Auth | 17 | Login, signup, dashboard, session management |
+| Passkey | 5 | WebAuthn registration and login (Chromium only) |
 | Banking | 28 | Account CRUD, deposits, withdrawals, credit cards |
 | Transfer | 8 | Inter-customer transfers via email |
 | Open Banking | 9 | OIDC flow, consent, KENOK account fetch (requires SSIM) |
-| **Total** | **76** | |
+| **Total** | **81** | |
 
 ### Open Banking / OIDC Tests
 
@@ -67,6 +72,17 @@ The Open Banking tests validate BSIM's auth server and Open Banking APIs through
 - RP-initiated logout through auth server
 
 **Important:** These tests require [SSIM](https://github.com/jordancrombie/ssim) (or another OIDC client) to be running. They validate BSIM's OAuth/OIDC implementation from the perspective of a third-party application.
+
+### Passkey / WebAuthn Tests
+
+The passkey tests validate WebAuthn authentication using Chrome DevTools Protocol (CDP) to create a virtual authenticator:
+- Passkey registration after signup
+- Passkey login after registration
+- Skip passkey setup option
+- Passkey button visibility
+- Password fallback when no passkey registered
+
+**Important:** These tests only run on Chromium because they require CDP for the virtual authenticator. They are automatically skipped on WebKit/Firefox. See [WEBAUTHN_TESTING_PLAN.md](docs/WEBAUTHN_TESTING_PLAN.md) for implementation details.
 
 ### Test Design
 

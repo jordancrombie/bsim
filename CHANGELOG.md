@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Passkey E2E Tests** - Comprehensive WebAuthn/passkey authentication testing
+  - Uses Chrome DevTools Protocol (CDP) to create virtual authenticator (Chromium only)
+  - Tests passkey registration after signup, login with passkey, skip passkey flow
+  - Created `e2e/helpers/webauthn.helpers.ts` with virtual authenticator utilities
+  - Created `e2e/tests/auth/passkey.spec.ts` with 5 passkey-specific tests
+  - Added `e2e/docs/WEBAUTHN_TESTING_PLAN.md` documenting the testing approach
+
 ### Security
 - **Next.js CVE-2025-29927 Middleware Bypass** - Updated Next.js to 16.0.6
   - Frontend and Admin upgraded from 14.2.18 to 16.0.6
