@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Admin Invite System** - Invitation-based admin signup for adding new administrators
+  - Super Admins can create invite codes with optional email restrictions
+  - Configurable roles (Admin or Super Admin) and expiration periods (1-30 days)
+  - New `/invite` page for invited admins to register with passkey authentication
+  - Invite management UI at `/admins/invites` with create, copy link, and revoke actions
+  - Invite codes use format XXXX-XXXX-XXXX for easy sharing
+  - Tracks invite usage, expiration, and revocation status
+  - Database model: `AdminInvite` with relations to creator and user
+
 - **Passkey E2E Tests** - Comprehensive WebAuthn/passkey authentication testing
   - Uses Chrome DevTools Protocol (CDP) to create virtual authenticator (Chromium only)
   - Tests passkey registration after signup, login with passkey, skip passkey flow

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { getCurrentAdmin } from '@/lib/auth';
 import Link from 'next/link';
 
 // Disable static generation - this page requires database access
@@ -26,14 +27,48 @@ async function getAdminUsers() {
   });
 }
 
+async function getPendingInviteCount() {
+  return prisma.adminInvite.count({
+    where: {
+      usedAt: null,
+      revokedAt: null,
+      expiresAt: { gt: new Date() },
+    },
+  });
+}
+
 export default async function AdminUsersPage() {
-  const admins = await getAdminUsers();
+  const [admins, currentAdmin, pendingInvites] = await Promise.all([
+    getAdminUsers(),
+    getCurrentAdmin(),
+    getPendingInviteCount(),
+  ]);
+
+  const isSuperAdmin = currentAdmin?.role === 'SUPER_ADMIN';
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Admin Users</h1>
-        <span className="text-sm text-gray-500">{admins.length} total admins</span>
+        <div className="flex items-center space-x-4">
+          <span className="text-sm text-gray-500">{admins.length} total admins</span>
+          {isSuperAdmin && (
+            <Link
+              href="/admins/invites"
+              className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 transition-colors"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Invite Admin
+              {pendingInvites > 0 && (
+                <span className="ml-2 px-2 py-0.5 bg-indigo-500 text-white text-xs rounded-full">
+                  {pendingInvites}
+                </span>
+              )}
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="bg-white shadow rounded-lg overflow-hidden">
