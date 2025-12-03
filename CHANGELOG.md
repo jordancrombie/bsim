@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Admin Portal E2E Tests** - Comprehensive end-to-end testing for admin portal functionality
+  - Created `e2e/tests/admin/portal.spec.ts` with 14 comprehensive tests:
+    - Dashboard statistics display after login
+    - Users management: list view and user details (CIF, accounts, cards, passkeys)
+    - Admins management: list view and admin details
+    - Card Types management: list view, add modal, edit modal, full CRUD cycle
+    - Account Types management: list view, add modal, edit modal, full CRUD cycle
+    - Navigation between admin portal sections via sidebar
+  - CRUD tests create inactive records with unique timestamps and verify cleanup
+  - Tests run in serial mode to maintain authenticated session
+  - All tests pass on both local (localhost) and production (banksim.ca)
+
 - **Production Database Migration Documentation** - Added comprehensive guide for running database migrations in AWS production
   - Documented why `npx prisma` fails in standalone Next.js containers (downloads incompatible Prisma 7.x)
   - Added recommended approach: run raw SQL via PrismaClient in ECS one-time tasks
