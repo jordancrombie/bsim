@@ -1,6 +1,6 @@
 # Payment Network Implementation Status
 
-Last Updated: December 2024
+Last Updated: December 3, 2024
 
 ## Overview
 
@@ -42,7 +42,7 @@ The Payment Network integration connects three systems:
 | Token claims (`card_token`) | ✅ | `/auth-server/src/config/oidc.ts` (extraTokenClaims) |
 | SSIM OAuth client config | ✅ | Database: `oauth_clients` |
 
-### Phase 3: SSIM Integration 📋 DOCUMENTED (Waiting for SSIM team)
+### Phase 3: SSIM Integration ✅ COMPLETE
 
 | Component | Status | Location |
 |-----------|--------|----------|
@@ -50,6 +50,16 @@ The Payment Network integration connects three systems:
 | TypeScript interfaces | ✅ | Included in guide |
 | SimNetAdapter example | ✅ | Included in guide |
 | Dev credentials | ✅ | Included in guide |
+| End-to-end payment flow | ✅ | Tested with SSIM team |
+
+**Integration Issues Resolved (Dec 2024):**
+| Issue | Resolution |
+|-------|------------|
+| Missing nginx proxy for payment-dev | Added `payment-dev.banksim.ca` to `nginx.dev.conf` |
+| Invalid redirect_uri | Added `/payment/callback` URIs to ssim-client |
+| card_token not in JWT | Fixed Grant ID prefix (`Grant:`) for oidc-provider |
+| Merchant mismatch | Merchant ID must match OAuth client_id (`ssim-client`) |
+| Amount format | Use decimal dollars (`299.99`), not cents (`29999`) |
 
 ### Phase 4: Queue System & Reliability ⏳ NOT STARTED
 
@@ -195,10 +205,11 @@ Run: `cd nsim && npm test`
 
 ## Remaining Work
 
-### Short-term (Phase 3 completion)
-- [ ] SSIM team implements integration
-- [ ] End-to-end testing across all three systems
-- [ ] Fix any issues discovered during integration
+### Open Decisions
+- [ ] **Merchant ID flexibility** - Should merchants be able to use a custom merchant ID separate from their OAuth client_id? Options:
+  1. Keep current design (merchant ID = client_id) - simplest
+  2. Accept custom `merchant_id` parameter in OAuth flow
+  3. Add `merchantId` field to OAuthClient table
 
 ### Medium-term (Phases 4-5)
 - [ ] Add webhook notifications
