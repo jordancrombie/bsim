@@ -171,6 +171,36 @@ services:
         node dist/server.js
       "
 
+  # NSIM Payment Network
+  payment-network:
+    build:
+      context: ../nsim
+      dockerfile: Dockerfile
+    container_name: bsim-payment-network
+    environment:
+      NODE_ENV: production
+      PORT: 3006
+      # BSIM Backend connection (for payment processing)
+      BSIM_BASE_URL: http://backend:3001
+      BSIM_API_KEY: ${BSIM_PAYMENT_API_KEY:-dev-payment-api-key}
+      # Redis for queue (optional, local dev)
+      REDIS_HOST: ${REDIS_HOST:-}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      # Queue mode
+      USE_QUEUE: ${USE_QUEUE:-false}
+      # Authorization expiry (hours)
+      AUTH_EXPIRY_HOURS: 168
+    depends_on:
+      - backend
+    networks:
+      - bsim-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3006/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+
   # Nginx Reverse Proxy (SSL Termination)
   nginx:
     image: nginx:alpine
@@ -186,6 +216,7 @@ services:
       - frontend
       - auth-server
       - openbanking
+      - payment-network
     networks:
       - bsim-network
     healthcheck:
