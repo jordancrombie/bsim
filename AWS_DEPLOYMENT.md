@@ -2,45 +2,149 @@
 
 This guide walks you through deploying BSIM to AWS using ECS Fargate, RDS PostgreSQL, and Application Load Balancer.
 
+---
+
+## Multi-Repository Ecosystem
+
+> **IMPORTANT:** The BSIM ecosystem spans multiple repositories. This repository (BSIM) serves as the **orchestrator** for AWS deployment, managing infrastructure for components that live in separate repos.
+
+### Repository Structure
+
+| Repository | Description | Deployed To |
+|------------|-------------|-------------|
+| **[bsim](https://github.com/jordancrombie/bsim)** | Core banking simulator (this repo) - Frontend, Admin, Auth Server, Open Banking, Backend | `banksim.ca`, `admin.*`, `auth.*`, `openbanking.*`, `api.*` |
+| **[ssim](https://github.com/jordancrombie/ssim)** | Store Simulator - Third-party merchant demo app | `ssim.banksim.ca` |
+| **[nsim](https://github.com/jordancrombie/nsim)** | Payment Network Simulator - Routes payments between merchants and banks | `payment.banksim.ca` |
+
+### How It Works
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              BSIM Ecosystem                                      │
+│                                                                                  │
+│   ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐          │
+│   │   BSIM Repo     │     │   SSIM Repo     │     │   NSIM Repo     │          │
+│   │  (This Repo)    │     │   (Separate)    │     │   (Separate)    │          │
+│   │                 │     │                 │     │                 │          │
+│   │  • Frontend     │     │  • Store UI     │     │  • Payment API  │          │
+│   │  • Admin        │     │  • OAuth Client │     │  • Webhooks     │          │
+│   │  • Auth Server  │     │  • Checkout     │     │  • Redis Queue  │          │
+│   │  • Open Banking │     │                 │     │                 │          │
+│   │  • Backend      │     │                 │     │                 │          │
+│   │                 │     │                 │     │                 │          │
+│   │  ─────────────  │     │                 │     │                 │          │
+│   │  AWS Config:    │     │                 │     │                 │          │
+│   │  • docker-compose│    │                 │     │                 │          │
+│   │  • Task Defs    │     │                 │     │                 │          │
+│   │  • ALB Rules    │     │                 │     │                 │          │
+│   │  • All Services │     │                 │     │                 │          │
+│   └────────┬────────┘     └────────┬────────┘     └────────┬────────┘          │
+│            │                       │                       │                    │
+│            └───────────────────────┴───────────────────────┘                    │
+│                                    │                                            │
+│                    ┌───────────────▼───────────────┐                            │
+│                    │      Shared AWS Infrastructure │                            │
+│                    │  • ECS Cluster (bsim-cluster)  │                            │
+│                    │  • ALB (bsim-alb)              │                            │
+│                    │  • RDS PostgreSQL              │                            │
+│                    │  • ElastiCache Redis           │                            │
+│                    │  • Route 53 (banksim.ca)       │                            │
+│                    └────────────────────────────────┘                            │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Key Points
+
+1. **BSIM is the "showrunner"**: All AWS deployment configuration lives here, including:
+   - Task definitions for all services (including SSIM and NSIM)
+   - ALB listener rules
+   - Security groups
+   - docker-compose files that reference external repos
+
+2. **Separate repos, unified deployment**: SSIM and NSIM have their own repos for development, but their Docker images are pushed to the same ECR and deployed to the same ECS cluster.
+
+3. **Shared infrastructure**: All services share:
+   - VPC and subnets
+   - Application Load Balancer
+   - RDS PostgreSQL database
+   - ElastiCache Redis (for NSIM)
+   - SSL certificate (*.banksim.ca)
+
+4. **Cross-repo references**: The `docker-compose.yml` in this repo references NSIM via relative path (`../nsim`). For local development, clone all repos as siblings.
+
+### Local Development Setup
+
+```bash
+# Clone all repos as siblings
+cd ~/projects
+git clone https://github.com/jordancrombie/bsim
+git clone https://github.com/jordancrombie/ssim
+git clone https://github.com/jordancrombie/nsim
+
+# Directory structure should be:
+# ~/projects/
+#   ├── bsim/        # This repo
+#   ├── ssim/        # Store simulator
+#   └── nsim/        # Payment network
+
+# Start everything from BSIM
+cd bsim
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+```
+
+---
+
 ## Architecture Overview
 
 ```
-┌────────────────────────────────────────────────────────────────────────────────────┐
-│                                   AWS Cloud                                         │
-│                                                                                     │
-│  ┌──────────────────────────────────────────────────────────────────────────────┐  │
-│  │                    Application Load Balancer (ALB)                            │  │
-│  │                      with AWS Certificate Manager                             │  │
-│  │   Routes: banksim.ca, admin.*, auth.*, openbanking.*, api.*, ssim.*          │  │
-│  └───┬────────┬──────────┬───────────────┬──────────────┬──────────────┬────────┘  │
-│      │        │          │               │              │              │            │
-│  ┌───▼───┐ ┌──▼───┐ ┌────▼────┐  ┌──────▼──────┐ ┌─────▼─────┐ ┌──────▼──────┐    │
-│  │Frontend│ │Admin │ │Auth Srv │  │ OpenBanking │ │  Backend  │ │    SSIM     │    │
-│  │Next.js │ │Next.js│ │  OIDC  │  │  FDX API    │ │  Express  │ │  Next.js    │    │
-│  │ :3000  │ │ :3002│ │  :3003 │  │    :3004    │ │   :3001   │ │   :3005     │    │
-│  └───┬────┘ └──┬───┘ └────┬────┘  └──────┬──────┘ └─────┬─────┘ └──────┬──────┘    │
-│      │         │          │              │              │              │            │
-│      └─────────┴──────────┴──────────────┴──────────────┴──────────────┘            │
-│                                          │                                          │
-│                               ┌──────────▼───────────┐                              │
-│                               │   RDS PostgreSQL     │                              │
-│                               │    (Managed DB)      │                              │
-│                               └──────────────────────┘                              │
-└────────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────────────┐
+│                                      AWS Cloud                                            │
+│                                                                                           │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│  │                         Application Load Balancer (ALB)                              │ │
+│  │                           with AWS Certificate Manager                               │ │
+│  │   Routes: banksim.ca, admin.*, auth.*, openbanking.*, api.*, ssim.*, payment.*      │ │
+│  └──┬────────┬──────────┬───────────────┬──────────────┬──────────────┬────────┬───────┘ │
+│     │        │          │               │              │              │        │         │
+│  ┌──▼───┐ ┌──▼───┐ ┌────▼────┐  ┌──────▼──────┐ ┌─────▼─────┐ ┌──────▼──────┐ ┌▼──────┐ │
+│  │Front │ │Admin │ │Auth Srv │  │ OpenBanking │ │  Backend  │ │    SSIM     │ │ NSIM  │ │
+│  │:3000 │ │:3002 │ │  :3003  │  │    :3004    │ │   :3001   │ │   :3005     │ │ :3006 │ │
+│  │      │ │      │ │         │  │             │ │           │ │             │ │       │ │
+│  │ BSIM │ │ BSIM │ │  BSIM   │  │    BSIM     │ │   BSIM    │ │ SSIM Repo   │ │ NSIM  │ │
+│  │ Repo │ │ Repo │ │  Repo   │  │    Repo     │ │   Repo    │ │ (external)  │ │ Repo  │ │
+│  └──┬───┘ └──┬───┘ └────┬────┘  └──────┬──────┘ └─────┬─────┘ └──────┬──────┘ └┬──────┘ │
+│     │        │          │              │              │              │         │        │
+│     └────────┴──────────┴──────────────┴──────────────┼──────────────┘         │        │
+│                                                       │                        │        │
+│                                        ┌──────────────▼───────────┐            │        │
+│                                        │    RDS PostgreSQL        │            │        │
+│                                        │     (Shared DB)          │            │        │
+│                                        └──────────────────────────┘            │        │
+│                                                                                │        │
+│                                        ┌───────────────────────────────────────▼──────┐ │
+│                                        │          ElastiCache Redis                   │ │
+│                                        │      (NSIM Job Queue & Webhooks)             │ │
+│                                        └──────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Services Overview
 
-| Service | Subdomain | Port | Description |
-|---------|-----------|------|-------------|
-| Frontend | banksim.ca | 3000 | Customer-facing Next.js app |
-| Admin | admin.banksim.ca | 3002 | Admin dashboard |
-| Auth Server | auth.banksim.ca | 3003 | OIDC Authorization Server |
-| Open Banking | openbanking.banksim.ca | 3004 | FDX-inspired resource API |
-| Backend | api.banksim.ca | 3001 | Core banking API |
-| SSIM | ssim.banksim.ca | 3005 | Store Simulator (third-party demo) |
+| Service | Subdomain | Port | Repository | Description |
+|---------|-----------|------|------------|-------------|
+| Frontend | banksim.ca | 3000 | bsim | Customer-facing Next.js app |
+| Admin | admin.banksim.ca | 3002 | bsim | Admin dashboard |
+| Auth Server | auth.banksim.ca | 3003 | bsim | OIDC Authorization Server |
+| Open Banking | openbanking.banksim.ca | 3004 | bsim | FDX-inspired resource API |
+| Backend | api.banksim.ca | 3001 | bsim | Core banking API |
+| SSIM | ssim.banksim.ca | 3005 | **ssim** (external) | Store Simulator merchant demo |
+| NSIM | payment.banksim.ca | 3006 | **nsim** (external) | Payment Network middleware |
 
-> **Note:** SSIM (Store Simulator) is maintained in a separate repository at https://github.com/jordancrombie/ssim but is deployed as part of the BSIM AWS infrastructure. It demonstrates OAuth/OIDC integration with the Open Banking API. See the SSIM repository for its source code and deployment details.
+> **External Repositories:**
+> - **SSIM** (Store Simulator): https://github.com/jordancrombie/ssim - Demonstrates OAuth/OIDC integration and payment flows from a merchant perspective.
+> - **NSIM** (Payment Network): https://github.com/jordancrombie/nsim - Routes payments between merchants (SSIM) and banks (BSIM), provides webhooks and retry logic.
+
+---
 
 ## Prerequisites
 
