@@ -157,6 +157,22 @@ SSIM is a third-party demo application that demonstrates the BSIM Open Banking i
 
 **Note:** SSIM is maintained in a separate repository but deployed as part of the BSIM AWS infrastructure. It shares the same ALB and runs as an ECS Fargate service alongside the BSIM services. See the SSIM repository's `AWS_DEPLOYMENT.md` for deployment details.
 
+### NSIM - Payment Network Simulator
+
+NSIM is the payment network middleware that routes card payments between merchants (SSIM) and banks (BSIM). It provides a complete payment processing infrastructure with webhooks, retry logic, and authorization expiry handling.
+
+- **Repository:** https://github.com/jordancrombie/nsim
+- **Dev URL:** https://payment-dev.banksim.ca
+- **Production URL:** https://payment.banksim.ca
+- **Features:**
+  - Payment authorization, capture, void, and refund
+  - Webhook notifications for payment events
+  - Redis-backed job queue (BullMQ) for async processing
+  - Automatic retry with exponential backoff
+  - Authorization expiry handling
+
+See [docs/PAYMENT_NETWORK_STATUS.md](docs/PAYMENT_NETWORK_STATUS.md) for implementation status and [nsim/SSIM_INTEGRATION_GUIDE.md](../nsim/SSIM_INTEGRATION_GUIDE.md) for merchant integration.
+
 ## Project Structure
 
 ```
