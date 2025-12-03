@@ -8,6 +8,8 @@
  * Only works with @testadmin.banksim.ca email domain.
  */
 
+import { randomUUID } from 'crypto';
+
 /**
  * Test admin user data
  */
@@ -51,12 +53,15 @@ export function getAdminUrl(): string {
 
 /**
  * Generate a unique test admin email address
- * Format: test-admin-{timestamp}-{random}@testadmin.banksim.ca
+ * Format: test-admin-{uuid}@testadmin.banksim.ca
+ *
+ * Uses cryptographically secure UUID to guarantee uniqueness
+ * even when multiple Playwright workers start tests simultaneously.
  */
 export function generateTestAdminEmail(): string {
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8);
-  return `test-admin-${timestamp}-${random}@testadmin.banksim.ca`;
+  // UUID v4 provides 122 bits of randomness - virtually impossible to collide
+  const uuid = randomUUID().substring(0, 12);
+  return `test-admin-${uuid}@testadmin.banksim.ca`;
 }
 
 /**
