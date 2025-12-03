@@ -26,7 +26,11 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
     'fdx:accountdetailed:read': 'View your account details and balances',
     'fdx:transactions:read': 'View your transaction history',
     'fdx:customercontact:read': 'View your contact information (address, phone)',
+    'payment:authorize': 'Authorize a payment with your selected card',
   };
+
+  // Check if this is a payment authorization flow
+  const isPaymentFlow = (scopes: string[]) => scopes.includes('payment:authorize');
 
   // GET /interaction/:uid - Show login or consent page
   router.get('/:uid', async (req: Request, res: Response, next: NextFunction) => {
@@ -56,21 +60,6 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
       }
 
       if (prompt.name === 'consent') {
-        // Get user's accounts for selection
-        // Note: session.accountId is now the fiUserRef (external identifier)
-        const user = await prisma.user.findUnique({
-          where: { fiUserRef: session?.accountId },
-          include: {
-            accounts: {
-              select: {
-                id: true,
-                accountNumber: true,
-                balance: true,
-              },
-            },
-          },
-        });
-
         // Parse requested scopes
         const requestedScopes = (params.scope as string)?.split(' ') || [];
         const scopeDetails = requestedScopes
@@ -80,13 +69,64 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
             description: scopeDescriptions[s],
           }));
 
-        // Show consent page
+        // Check if this is a payment flow
+        const paymentFlow = isPaymentFlow(requestedScopes);
+
+        // Get user with accounts OR credit cards depending on flow
+        // Note: session.accountId is now the fiUserRef (external identifier)
+        const user = await prisma.user.findUnique({
+          where: { fiUserRef: session?.accountId },
+          include: {
+            accounts: !paymentFlow ? {
+              select: {
+                id: true,
+                accountNumber: true,
+                balance: true,
+              },
+            } : false,
+            creditCards: paymentFlow ? {
+              select: {
+                id: true,
+                cardNumber: true,
+                cardType: true,
+                cardHolder: true,
+                availableCredit: true,
+                expiryMonth: true,
+                expiryYear: true,
+              },
+            } : false,
+          },
+        });
+
+        // For payment flow, show payment consent page with card selection
+        if (paymentFlow) {
+          // Extract payment details from request params (passed via state or custom params)
+          const merchantName = getClientName();
+          const amount = params.amount as string || null;
+          const orderId = params.order_id as string || params.state as string || null;
+
+          return res.render('payment-consent', {
+            uid,
+            clientName: merchantName,
+            clientLogo: getClientLogo(),
+            scopes: scopeDetails,
+            creditCards: (user as any)?.creditCards || [],
+            amount,
+            orderId,
+            user: {
+              name: user ? `${user.firstName} ${user.lastName}` : 'Unknown',
+              email: user?.email,
+            },
+          });
+        }
+
+        // Show regular consent page for Open Banking
         return res.render('consent', {
           uid,
           clientName: getClientName(),
           clientLogo: getClientLogo(),
           scopes: scopeDetails,
-          accounts: user?.accounts || [],
+          accounts: (user as any)?.accounts || [],
           user: {
             name: user ? `${user.firstName} ${user.lastName}` : 'Unknown',
             email: user?.email,
@@ -151,10 +191,11 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
       }
 
       const { prompt, params, session } = details;
-      const { selectedAccounts } = req.body;
+      const { selectedAccounts, selectedCard } = req.body;
 
       // Get the requested scopes
       const requestedScopes = (params.scope as string)?.split(' ') || [];
+      const paymentFlow = isPaymentFlow(requestedScopes);
 
       // Generate a grant ID
       const grantId = crypto.randomUUID();
@@ -163,6 +204,7 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
       console.log('[Interaction] Session accountId (fiUserRef):', session?.accountId);
       console.log('[Interaction] Client ID:', params.client_id);
       console.log('[Interaction] Requested scopes:', requestedScopes);
+      console.log('[Interaction] Payment flow:', paymentFlow);
 
       // Look up user by fiUserRef to get internal ID for consent storage
       const user = await prisma.user.findUnique({
@@ -175,7 +217,35 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
         return res.status(400).send('User not found');
       }
 
-      // Store the consent in our database
+      let cardToken: string | null = null;
+
+      // Handle payment consent - create PaymentConsent with card token
+      if (paymentFlow && selectedCard) {
+        console.log('[Interaction] Creating PaymentConsent for card:', selectedCard);
+
+        // Generate unique card token
+        cardToken = `ctok_${crypto.randomUUID().replace(/-/g, '')}`;
+
+        // Get merchant info from client
+        const client = await provider.Client.find(params.client_id as string) as any;
+        const merchantName = client?.clientName || 'Unknown Merchant';
+
+        // Create PaymentConsent record
+        await prisma.paymentConsent.create({
+          data: {
+            cardToken,
+            userId: user.id,
+            creditCardId: selectedCard,
+            merchantId: params.client_id as string,
+            merchantName,
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours for payment consent
+          },
+        });
+
+        console.log('[Interaction] PaymentConsent created with token:', cardToken);
+      }
+
+      // Store the consent in our database (for both flows)
       console.log('[Interaction] Creating consent in database...');
       await prisma.consent.create({
         data: {
@@ -183,7 +253,9 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
           userId: user.id, // Use internal ID for database relation
           clientId: params.client_id as string,
           scopes: requestedScopes,
-          accountIds: Array.isArray(selectedAccounts) ? selectedAccounts : [selectedAccounts].filter(Boolean),
+          accountIds: paymentFlow
+            ? (selectedCard ? [selectedCard] : [])
+            : (Array.isArray(selectedAccounts) ? selectedAccounts : [selectedAccounts].filter(Boolean)),
           expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
         },
       });
@@ -210,6 +282,24 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
       console.log('[Interaction] Saving grant...');
       const savedGrant = await grant.save();
       console.log('[Interaction] Grant saved:', savedGrant);
+
+      // For payment flow, store the card token in session to include in token claims
+      if (paymentFlow && cardToken) {
+        // Store card token in the grant's metadata for inclusion in access token
+        // We'll use the session to pass this to the token generation
+        const grantData = await prisma.oidcPayload.findFirst({
+          where: { id: savedGrant },
+        });
+        if (grantData) {
+          const payload = grantData.payload as any;
+          payload.cardToken = cardToken;
+          await prisma.oidcPayload.update({
+            where: { id: savedGrant },
+            data: { payload },
+          });
+          console.log('[Interaction] Card token stored in grant payload');
+        }
+      }
 
       const result = {
         consent: {
