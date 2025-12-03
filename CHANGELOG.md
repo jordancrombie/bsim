@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Payment Network HTTP API** - Internal API for NSIM to process payments against BSIM
+  - New `/api/payment-network/authorize` endpoint for payment authorization
+  - New `/api/payment-network/capture` endpoint for capturing authorized payments
+  - New `/api/payment-network/void` endpoint for voiding authorizations
+  - New `/api/payment-network/refund` endpoint for refunding captured payments
+  - New `/api/payment-network/validate-token` endpoint for card token validation
+  - API key authentication via `X-API-Key` header
+  - Wires `SimNetHandler` to process payment requests from NSIM
+
 - **Payment Network Plugin Architecture** - Pluggable payment network integration for merchant payments
   - New `IPaymentNetworkHandler` interface for connecting external payment networks
   - `SimNetHandler` implementation for NSIM (Network Simulator) integration
