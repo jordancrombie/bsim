@@ -37,6 +37,7 @@ import { createCreditCardTransactionRoutes } from './routes/creditCardTransactio
 import { createSettingsRoutes } from './routes/settingsRoutes';
 import { createNotificationRoutes } from './routes/notificationRoutes';
 import { createTestCleanupRoutes } from './routes/testCleanupRoutes';
+import { createPaymentNetworkRoutes } from './routes/paymentNetworkRoutes';
 
 const app = express();
 
@@ -110,6 +111,7 @@ app.use('/api/credit-card-transactions', createCreditCardTransactionRoutes(credi
 app.use('/api/settings', createSettingsRoutes(prisma));
 app.use('/api/notifications', createNotificationRoutes(notificationController));
 app.use('/api/test-cleanup', createTestCleanupRoutes(prisma));
+app.use('/api/payment-network', createPaymentNetworkRoutes(prisma));
 
 // Health check
 app.get('/health', (req, res) => {
