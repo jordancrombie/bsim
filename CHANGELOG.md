@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Production Database Migration Documentation** - Added comprehensive guide for running database migrations in AWS production
+  - Documented why `npx prisma` fails in standalone Next.js containers (downloads incompatible Prisma 7.x)
+  - Added recommended approach: run raw SQL via PrismaClient in ECS one-time tasks
+  - Included common pitfalls: private subnets, exit codes 127/P1012, wrong Prisma versions
+  - Added example task definitions and commands for both admin (standalone) and backend (full) services
+
 - **Admin Passkey E2E Tests** - Full end-to-end testing for admin passkey authentication
   - Created `e2e/tests/admin/passkey.spec.ts` with 7 comprehensive tests:
     - Admin invite signup with passkey registration
