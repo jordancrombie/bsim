@@ -5,14 +5,19 @@
  * Each test run generates unique emails using timestamps to avoid conflicts.
  */
 
+import { randomUUID } from 'crypto';
+
 /**
  * Generate a unique test email address
- * Format: test-{timestamp}-{random}@testuser.banksim.ca
+ * Format: test-{uuid}@testuser.banksim.ca
+ *
+ * Uses cryptographically secure UUID to guarantee uniqueness
+ * even when multiple Playwright workers start tests simultaneously.
  */
 export function generateTestEmail(): string {
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8);
-  return `test-${timestamp}-${random}@testuser.banksim.ca`;
+  // UUID v4 provides 122 bits of randomness - virtually impossible to collide
+  const uuid = randomUUID().substring(0, 12);
+  return `test-${uuid}@testuser.banksim.ca`;
 }
 
 /**

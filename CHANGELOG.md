@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **E2E Test Race Condition Fix** - Resolved email collision issues when running tests in parallel
+  - Changed email generation to use `crypto.randomUUID()` for cryptographically secure uniqueness
+  - Updated Playwright config to use `fullyParallel: false` to prevent multiple workers from running tests within the same file concurrently
+  - Added global setup to clean up leftover test users before tests run
+  - Tests now pass consistently without needing retries for email collision errors
+
 ### Added
 - **Admin Portal E2E Tests** - Comprehensive end-to-end testing for admin portal functionality
   - Created `e2e/tests/admin/portal.spec.ts` with 14 comprehensive tests:

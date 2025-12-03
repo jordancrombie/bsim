@@ -16,11 +16,15 @@ const baseURL = process.env.BASE_URL || 'https://dev.banksim.ca';
 export default defineConfig({
   testDir: './tests',
 
+  // Global setup to clean up leftover test users before tests run
+  globalSetup: './global-setup.ts',
+
   // Global teardown to clean up test users after all tests
   globalTeardown: './global-teardown.ts',
 
-  // Run tests in parallel
-  fullyParallel: true,
+  // Run test files in parallel, but tests within a file run sequentially.
+  // This prevents race conditions in beforeAll hooks that create shared test users.
+  fullyParallel: false,
 
   // Fail the build on CI if you accidentally left test.only in the source code
   forbidOnly: !!process.env.CI,
