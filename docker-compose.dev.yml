@@ -10,6 +10,7 @@
 #   127.0.0.1 auth-dev.banksim.ca
 #   127.0.0.1 openbanking-dev.banksim.ca
 #   127.0.0.1 ssim-dev.banksim.ca
+#   127.0.0.1 payment-dev.banksim.ca
 
 services:
   # Backend API - dev domain configuration

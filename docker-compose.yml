@@ -171,6 +171,22 @@ services:
         node dist/server.js
       "
 
+  # Redis for NSIM job queue
+  redis:
+    image: redis:7-alpine
+    container_name: bsim-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bsim-network
+
   # NSIM Payment Network
   payment-network:
     build:
@@ -183,15 +199,13 @@ services:
       # BSIM Backend connection (for payment processing)
       BSIM_BASE_URL: http://backend:3001
       BSIM_API_KEY: ${BSIM_PAYMENT_API_KEY:-dev-payment-api-key}
-      # Redis for queue (optional, local dev)
-      REDIS_HOST: ${REDIS_HOST:-}
-      REDIS_PORT: ${REDIS_PORT:-6379}
-      # Queue mode
-      USE_QUEUE: ${USE_QUEUE:-false}
+      # Redis for job queue
+      REDIS_URL: redis://redis:6379
       # Authorization expiry (hours)
       AUTH_EXPIRY_HOURS: 168
     depends_on:
       - backend
+      - redis
     networks:
       - bsim-network
     healthcheck:
@@ -233,3 +247,4 @@ networks:
 volumes:
   postgres_data:
   uploads_data:
+  redis_data:

@@ -1,6 +1,6 @@
 # Payment Network Implementation Status
 
-Last Updated: December 3, 2024
+Last Updated: December 3, 2025
 
 ## Overview
 
@@ -61,14 +61,52 @@ The Payment Network integration connects three systems:
 | Merchant mismatch | Merchant ID must match OAuth client_id (`ssim-client`) |
 | Amount format | Use decimal dollars (`299.99`), not cents (`29999`) |
 
-### Phase 4: Queue System & Reliability ⏳ NOT STARTED
+### Phase 4: Queue System & Reliability ✅ COMPLETE
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| Redis queue | ⏳ | For async payment processing |
-| Retry logic | ⏳ | Failed payment retries |
-| Webhook notifications | ⏳ | Async status updates to merchants |
-| Timeout handling | ⏳ | Authorization expiry management |
+| Component | Status | Location |
+|-----------|--------|----------|
+| Redis container | ✅ | `/docker-compose.yml` (bsim-redis) |
+| BullMQ job queue | ✅ | `/nsim/src/queue/webhook-queue.ts` |
+| Webhook registration API | ✅ | `/nsim/src/routes/webhook.ts` |
+| Webhook delivery | ✅ | `/nsim/src/queue/webhook-queue.ts` |
+| Retry logic for BSIM calls | ✅ | `/nsim/src/services/bsim-client.ts` |
+| Authorization expiry handling | ✅ | `/nsim/src/queue/expiry-scheduler.ts` |
+
+**New Files (Dec 2024):**
+| File | Description |
+|------|-------------|
+| `/nsim/src/queue/redis.ts` | Redis connection management |
+| `/nsim/src/queue/webhook-queue.ts` | BullMQ webhook queue with retry |
+| `/nsim/src/queue/expiry-scheduler.ts` | Scheduled auth expiry checks |
+| `/nsim/src/services/webhook.ts` | Webhook service (register, notify) |
+| `/nsim/src/routes/webhook.ts` | Webhook CRUD API endpoints |
+| `/nsim/src/types/webhook.ts` | Webhook TypeScript types |
+
+**Architecture Decisions (Dec 2024):**
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Redis deployment | Separate Docker container | Self-contained, easy to swap for AWS ElastiCache in prod |
+| Webhook registration | NSIM API endpoint | Keeps merchant config in payment network |
+| Queue library | BullMQ | Mature, TypeScript-native, Redis-backed |
+| Implementation order | 1. Webhooks, 2. Retry logic, 3. Timeout handling | Webhooks highest value for merchants |
+
+**Webhook API Endpoints:**
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/webhooks` | Register webhook for merchant |
+| GET | `/api/v1/webhooks/:id` | Get webhook by ID |
+| GET | `/api/v1/webhooks/merchant/:merchantId` | List merchant webhooks |
+| PATCH | `/api/v1/webhooks/:id` | Update webhook (url, events, isActive) |
+| DELETE | `/api/v1/webhooks/:id` | Delete webhook |
+
+**Webhook Events:**
+- `payment.authorized` - Payment authorized successfully
+- `payment.captured` - Payment captured
+- `payment.voided` - Authorization voided
+- `payment.refunded` - Payment refunded
+- `payment.declined` - Payment declined
+- `payment.expired` - Authorization expired
+- `payment.failed` - Payment failed
 
 ### Phase 5: Admin & Monitoring ⏳ NOT STARTED
 
@@ -211,14 +249,13 @@ Run: `cd nsim && npm test`
   2. Accept custom `merchant_id` parameter in OAuth flow
   3. Add `merchantId` field to OAuthClient table
 
-### Medium-term (Phases 4-5)
-- [ ] Add webhook notifications
-- [ ] Add retry logic for failed requests
+### Phase 5: Admin & Monitoring
 - [ ] Build admin payment dashboard
 - [ ] Add merchant management UI
+- [ ] Add refund management UI
+- [ ] Add payment analytics
 
 ### Future
 - [ ] PostgreSQL persistent storage in NSIM (currently in-memory)
-- [ ] Redis queue for async processing
 - [ ] Rate limiting
 - [ ] PCI compliance considerations

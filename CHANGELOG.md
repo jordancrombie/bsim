@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **NSIM Phase 4: Queue System & Reliability** - Complete webhook and queue infrastructure
+  - Redis container (`bsim-redis`) for job queue persistence
+  - BullMQ-based webhook delivery queue with exponential backoff retry (5 retries)
+  - Webhook registration API for merchants (`POST /api/v1/webhooks`)
+  - Webhook events: `payment.authorized`, `payment.captured`, `payment.voided`, `payment.refunded`, `payment.declined`, `payment.expired`, `payment.failed`
+  - HMAC-SHA256 webhook signature verification
+  - Automatic retry for failed BSIM API calls with exponential backoff
+  - Authorization expiry scheduler (checks every 60 seconds, auto-voids expired holds)
+  - Graceful shutdown handling for all workers
+  - Updated SSIM Integration Guide with webhook documentation
+  - New NSIM files: `queue/redis.ts`, `queue/webhook-queue.ts`, `queue/expiry-scheduler.ts`, `services/webhook.ts`, `routes/webhook.ts`, `types/webhook.ts`
+
 - **Payment Network HTTP API** - Internal API for NSIM to process payments against BSIM
   - New `/api/payment-network/authorize` endpoint for payment authorization
   - New `/api/payment-network/capture` endpoint for capturing authorized payments
