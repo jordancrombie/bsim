@@ -286,18 +286,21 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
       // For payment flow, store the card token in session to include in token claims
       if (paymentFlow && cardToken) {
         // Store card token in the grant's metadata for inclusion in access token
-        // We'll use the session to pass this to the token generation
+        // oidc-provider stores grants with 'Grant:' prefix in the database
+        const grantDbId = `Grant:${savedGrant}`;
         const grantData = await prisma.oidcPayload.findFirst({
-          where: { id: savedGrant },
+          where: { id: grantDbId },
         });
         if (grantData) {
           const payload = grantData.payload as any;
           payload.cardToken = cardToken;
           await prisma.oidcPayload.update({
-            where: { id: savedGrant },
+            where: { id: grantDbId },
             data: { payload },
           });
-          console.log('[Interaction] Card token stored in grant payload');
+          console.log('[Interaction] Card token stored in grant payload:', cardToken);
+        } else {
+          console.log('[Interaction] Grant not found in database with id:', grantDbId);
         }
       }
 
