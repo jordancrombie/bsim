@@ -1,0 +1,31 @@
+{
+    "family": "bsim-update-oauth",
+    "executionRoleArn": "arn:aws:iam::301868770392:role/bsim-ecs-task-execution-role",
+    "networkMode": "awsvpc",
+    "containerDefinitions": [
+        {
+            "name": "update-oauth",
+            "image": "301868770392.dkr.ecr.ca-central-1.amazonaws.com/bsim/admin:latest",
+            "cpu": 0,
+            "essential": true,
+            "environment": [
+                {
+                    "name": "DATABASE_URL",
+                    "value": "postgresql://bsimadmin:8O9MwSmoA1IUQfOZyw7H4L2lDoeA2M8w@bsim-db.cb80gi4u4k7g.ca-central-1.rds.amazonaws.com:5432/bsim"
+                }
+            ],
+            "command": ["node", "-e", "const{PrismaClient}=require('@prisma/client');const p=new PrismaClient();async function main(){const client=await p.oAuthClient.findUnique({where:{clientId:'ssim-client'}});if(!client){console.log('Client not found');return;}console.log('Current:',JSON.stringify(client.redirectUris));const newUri='https://ssim.banksim.ca/payment/callback';if(client.redirectUris.includes(newUri)){console.log('URI already exists');return;}const updated=await p.oAuthClient.update({where:{clientId:'ssim-client'},data:{redirectUris:[...client.redirectUris,newUri]}});console.log('Updated:',JSON.stringify(updated.redirectUris));}main().catch(e=>console.error('Error:',e.message)).finally(()=>p.$disconnect());"],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/bsim-admin",
+                    "awslogs-region": "ca-central-1",
+                    "awslogs-stream-prefix": "update-oauth"
+                }
+            }
+        }
+    ],
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "256",
+    "memory": "512"
+}

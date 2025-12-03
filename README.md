@@ -15,9 +15,10 @@ A full-stack banking simulator application with passwordless authentication (Web
 - 📊 Transaction tracking (deposits, withdrawals, transfers)
 - 🛠️ **Admin Interface** - Separate admin dashboard for user management
 - 🏦 **Open Banking Platform** - OAuth 2.0/OIDC for third-party data access (FDX-inspired)
+- 💳 **Payment Network Integration** - Card payment processing via NSIM middleware
 - 🗄️ PostgreSQL database with Prisma ORM
 - 🐳 **Full Docker containerization** for development and production
-- 🚀 **AWS ECS Fargate deployment ready**
+- 🚀 **AWS ECS Fargate deployment ready** with ElastiCache Redis
 - 🏗️ Clean architecture with repository pattern
 - 🔒 HTTPS support with configurable domain names and wildcard subdomains
 - 🌐 Dynamic subdomain support (works with any *.domain.com)
@@ -164,14 +165,34 @@ NSIM is the payment network middleware that routes card payments between merchan
 - **Repository:** https://github.com/jordancrombie/nsim
 - **Dev URL:** https://payment-dev.banksim.ca
 - **Production URL:** https://payment.banksim.ca
+- **AWS Resources:** ECS Fargate service, ElastiCache Redis, CloudWatch logs
 - **Features:**
   - Payment authorization, capture, void, and refund
-  - Webhook notifications for payment events
-  - Redis-backed job queue (BullMQ) for async processing
-  - Automatic retry with exponential backoff
-  - Authorization expiry handling
+  - Webhook notifications for payment events (`payment.authorized`, `payment.captured`, etc.)
+  - Redis-backed job queue (BullMQ) for async webhook delivery
+  - Automatic retry with exponential backoff (up to 5 retries)
+  - Authorization expiry handling (7-day default, auto-void on expiry)
+  - HMAC-SHA256 webhook signature verification
 
-See [docs/PAYMENT_NETWORK_STATUS.md](docs/PAYMENT_NETWORK_STATUS.md) for implementation status and [nsim/SSIM_INTEGRATION_GUIDE.md](../nsim/SSIM_INTEGRATION_GUIDE.md) for merchant integration.
+**End-to-End Payment Flow:**
+```
+┌─────────┐     ┌──────────┐     ┌─────────────┐     ┌──────────┐
+│  SSIM   │────>│   Auth   │────>│    NSIM     │────>│   BSIM   │
+│(Merchant)│    │  Server  │     │  (payment.  │     │(Backend) │
+│         │<───│(consent) │<────│banksim.ca)  │<────│          │
+└─────────┘     └──────────┘     └─────────────┘     └──────────┘
+```
+
+1. Customer initiates checkout on SSIM
+2. SSIM redirects to BSIM auth server with `payment:authorize` scope
+3. Customer selects credit card and consents
+4. SSIM receives card token via OAuth callback
+5. SSIM calls NSIM `/api/v1/payments/authorize` with card token
+6. NSIM calls BSIM `/api/payment-network/authorize` to place hold
+7. NSIM sends webhook to SSIM with payment status
+8. SSIM captures/voids payment as needed
+
+See [docs/NSIM_PRODUCTION_DEPLOYMENT.md](docs/NSIM_PRODUCTION_DEPLOYMENT.md) for AWS deployment.
 
 ## Project Structure
 
@@ -309,7 +330,7 @@ BSIM includes a complete Open Banking implementation allowing third-party applic
 5. App exchanges code for access token
 6. App calls Open Banking API with access token
 
-### FDX-Inspired Scopes
+### Supported Scopes
 
 | Scope | Description |
 |-------|-------------|
@@ -319,6 +340,7 @@ BSIM includes a complete Open Banking implementation allowing third-party applic
 | `fdx:accountdetailed:read` | Read account details and balances |
 | `fdx:transactions:read` | Read transaction history |
 | `fdx:customercontact:read` | Read customer contact information |
+| `payment:authorize` | Authorize payment with selected credit card (returns card token) |
 
 ### Open Banking API Endpoints
 
@@ -648,8 +670,10 @@ See [DOCKER_README.md](DOCKER_README.md) for Docker containerization details.
 - [x] Unit test suite (Jest) - 462 tests across backend, open banking, auth-server, and admin
 - [x] Session management (view/revoke active OAuth sessions)
 - [x] E2E test suite (Playwright) - 76 tests for auth, banking, transfers, and OIDC flows (CI/CD-ready)
-- [ ] E2E tests for admin interface
-- [ ] E2E tests for auth server (passkey flows)
+- [x] Payment network integration (NSIM) with OAuth card consent flow
+- [x] NSIM production deployment (ECS Fargate + ElastiCache Redis)
+- [x] Webhook system for payment notifications
+- [x] Admin E2E tests (14 tests for dashboard, users, admins, card types, account types)
 - [ ] CI/CD pipeline setup
 - [ ] Mobile app support
 - [ ] Client credentials grant for server-to-server

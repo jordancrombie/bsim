@@ -1,0 +1,32 @@
+{
+    "family": "bsim-resolve-migration",
+    "executionRoleArn": "arn:aws:iam::301868770392:role/bsim-ecs-task-execution-role",
+    "networkMode": "awsvpc",
+    "containerDefinitions": [
+        {
+            "name": "resolve-migration",
+            "image": "301868770392.dkr.ecr.ca-central-1.amazonaws.com/bsim/backend:latest",
+            "cpu": 0,
+            "essential": true,
+            "environment": [
+                {
+                    "name": "DATABASE_URL",
+                    "value": "postgresql://bsimadmin:8O9MwSmoA1IUQfOZyw7H4L2lDoeA2M8w@bsim-db.cb80gi4u4k7g.ca-central-1.rds.amazonaws.com:5432/bsim"
+                }
+            ],
+            "entryPoint": ["/bin/sh", "-c"],
+            "command": ["npx prisma migrate resolve --applied 20251201_add_post_logout_redirect_uris && npx prisma migrate deploy"],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/bsim-backend",
+                    "awslogs-region": "ca-central-1",
+                    "awslogs-stream-prefix": "resolve-migration"
+                }
+            }
+        }
+    ],
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "256",
+    "memory": "512"
+}

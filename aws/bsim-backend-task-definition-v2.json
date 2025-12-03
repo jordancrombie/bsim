@@ -1,0 +1,86 @@
+{
+    "family": "bsim-backend",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "512",
+    "memory": "1024",
+    "executionRoleArn": "arn:aws:iam::301868770392:role/bsim-ecs-task-execution-role",
+    "containerDefinitions": [
+        {
+            "name": "backend",
+            "image": "301868770392.dkr.ecr.ca-central-1.amazonaws.com/bsim/backend:latest",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "containerPort": 3001,
+                    "hostPort": 3001,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": true,
+            "environment": [
+                {
+                    "name": "USE_HTTPS",
+                    "value": "false"
+                },
+                {
+                    "name": "DOMAIN",
+                    "value": "banksim.ca"
+                },
+                {
+                    "name": "ORIGIN",
+                    "value": "https://banksim.ca"
+                },
+                {
+                    "name": "DATABASE_URL",
+                    "value": "postgresql://bsimadmin:8O9MwSmoA1IUQfOZyw7H4L2lDoeA2M8w@bsim-db.cb80gi4u4k7g.ca-central-1.rds.amazonaws.com:5432/bsim"
+                },
+                {
+                    "name": "PORT",
+                    "value": "3001"
+                },
+                {
+                    "name": "JWT_SECRET",
+                    "value": "rTEqeLo6pbh/65JySeNk0sCSxt6n9Img4LF7dZ9MGEA="
+                },
+                {
+                    "name": "RP_ID",
+                    "value": "banksim.ca"
+                },
+                {
+                    "name": "NODE_ENV",
+                    "value": "production"
+                },
+                {
+                    "name": "JWT_EXPIRES_IN",
+                    "value": "7d"
+                },
+                {
+                    "name": "FRONTEND_PORT",
+                    "value": "443"
+                },
+                {
+                    "name": "CORS_ORIGIN",
+                    "value": "https://banksim.ca,https://*.banksim.ca"
+                },
+                {
+                    "name": "BSIM_PAYMENT_API_KEY",
+                    "value": "8f4b1259a53a01b6549ecf4c1f70730f8a0909b8b2e04a92c74b4a4e0ea3b6f2"
+                }
+            ],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/bsim-backend",
+                    "awslogs-region": "ca-central-1",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            },
+            "systemControls": []
+        }
+    ]
+}

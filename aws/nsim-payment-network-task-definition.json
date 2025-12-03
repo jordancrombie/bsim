@@ -1,0 +1,46 @@
+{
+  "family": "bsim-payment-network",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::301868770392:role/bsim-ecs-task-execution-role",
+  "containerDefinitions": [
+    {
+      "name": "payment-network",
+      "image": "301868770392.dkr.ecr.ca-central-1.amazonaws.com/bsim/payment-network:latest",
+      "portMappings": [
+        {
+          "containerPort": 3006,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "environment": [
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "PORT", "value": "3006" },
+        { "name": "BSIM_BASE_URL", "value": "https://api.banksim.ca" },
+        { "name": "BSIM_API_KEY", "value": "8f4b1259a53a01b6549ecf4c1f70730f8a0909b8b2e04a92c74b4a4e0ea3b6f2" },
+        { "name": "REDIS_URL", "value": "redis://bsim-redis.k6ukh5.0001.cac1.cache.amazonaws.com:6379" },
+        { "name": "AUTH_EXPIRY_HOURS", "value": "168" },
+        { "name": "BSIM_RETRY_MAX_RETRIES", "value": "3" },
+        { "name": "BSIM_RETRY_DELAY_MS", "value": "500" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/bsim-payment-network",
+          "awslogs-region": "ca-central-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:3006/health || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 10
+      }
+    }
+  ]
+}

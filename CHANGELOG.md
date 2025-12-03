@@ -8,6 +8,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **NSIM Production Deployment** - Full AWS deployment of Payment Network Simulator
+  - ECR repository `bsim/payment-network` for NSIM Docker images
+  - ECS Fargate service `bsim-payment-network-service` on port 3006
+  - ElastiCache Redis cluster (`bsim-redis`, cache.t4g.micro) for BullMQ job queue
+  - ALB listener rule for `payment.banksim.ca` subdomain
+  - Route 53 DNS record pointing to shared ALB
+  - CloudWatch log group `/ecs/bsim-payment-network`
+  - Redis security group `bsim-redis-sg` for ECS-only access
+  - See [docs/NSIM_PRODUCTION_DEPLOYMENT.md](docs/NSIM_PRODUCTION_DEPLOYMENT.md) for details
+
+- **Payment Network Database Models** - Database support for card payment processing
+  - `PaymentConsent` model for user card consent tokens (OAuth card selection)
+  - `PaymentAuthorization` model for authorization holds on credit cards
+  - `PaymentAuthorizationStatus` enum (PENDING, AUTHORIZED, CAPTURED, VOIDED, etc.)
+  - Migration `20251203_add_payment_network_models` applied to production
+
+- **Multi-Repository Ecosystem Documentation** - Comprehensive docs for BSIM/SSIM/NSIM architecture
+  - Updated [AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md) with ecosystem overview and diagrams
+  - Updated [AWS_DEPLOYMENT_NOTES.md](AWS_DEPLOYMENT_NOTES.md) with Redis and NSIM details
+  - Updated SSIM `AWS_DEPLOYMENT.md` with ecosystem context
+  - Clear documentation that BSIM is the "showrunner" for all AWS deployments
+
 - **NSIM Phase 4: Queue System & Reliability** - Complete webhook and queue infrastructure
   - Redis container (`bsim-redis`) for job queue persistence
   - BullMQ-based webhook delivery queue with exponential backoff retry (5 retries)
@@ -48,6 +70,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enables SSIM to initiate card payments via OAuth 2.0 flow
 
 ### Fixed
+- **NSIM Production Payment Flow** - Fixed multiple issues preventing end-to-end payment authorization
+  - Added `payment:authorize` scope to auth server's supported scopes list (was causing `invalid_client_metadata` error)
+  - Fixed environment variable mismatch: backend expected `BSIM_PAYMENT_API_KEY`, task definition had `PAYMENT_NETWORK_API_KEY`
+  - Created and applied `20251203_add_payment_network_models` migration for `payment_consents` and `payment_authorizations` tables
+  - Resolved stuck migration `20251201_add_post_logout_redirect_uris` using `prisma migrate resolve --applied`
+  - Rebuilt and redeployed auth-server with payment scope support
+  - Payment OAuth redirect URI `https://ssim.banksim.ca/payment/callback` already registered in OAuth client
+
+- **ECS Private Subnet Networking** - Fixed NSIM service failing to start
+  - Private subnets lacked NAT gateway, preventing ECR image pulls
+  - Changed to public subnets with `assignPublicIp=ENABLED`
+  - Service now reaches steady state and passes health checks
+
 - **E2E Test Race Condition Fix** - Resolved email collision issues when running tests in parallel
   - Changed email generation to use `crypto.randomUUID()` for cryptographically secure uniqueness
   - Updated Playwright config to use `fullyParallel: false` to prevent multiple workers from running tests within the same file concurrently
