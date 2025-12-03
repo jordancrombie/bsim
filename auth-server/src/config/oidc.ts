@@ -228,13 +228,15 @@ export function createOidcProvider(prisma: PrismaClient): Provider {
       // Check if this is a payment flow with a card token
       if (token.grantId) {
         try {
+          // oidc-provider stores grants with 'Grant:' prefix in the database
+          const grantDbId = `Grant:${token.grantId}`;
           const grantData = await prisma.oidcPayload.findFirst({
-            where: { id: token.grantId },
+            where: { id: grantDbId },
           });
           if (grantData) {
             const payload = grantData.payload as any;
             if (payload.cardToken) {
-              console.log('[OIDC] Adding card_token to access token');
+              console.log('[OIDC] Adding card_token to access token:', payload.cardToken);
               return { card_token: payload.cardToken };
             }
           }
