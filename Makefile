@@ -7,6 +7,9 @@ help:
 	@echo "  make dev-up        - Start all services with dev.banksim.ca domains"
 	@echo "  make dev-down      - Stop all dev services"
 	@echo "  make dev-build     - Rebuild and start dev services"
+	@echo "  make dev-rebuild   - Force rebuild ALL with --no-cache"
+	@echo "  make dev-rebuild-frontend - Force rebuild frontend only (fixes API URL)"
+	@echo "  make dev-check     - Verify dev environment configuration"
 	@echo "  make dev-logs      - View logs from all dev services"
 	@echo "  make dev-hosts     - Show /etc/hosts entries needed"
 	@echo ""
@@ -75,8 +78,33 @@ dev-down:
 dev-build:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
 
+dev-rebuild:
+	@echo "Rebuilding all containers with --no-cache (forces fresh build)..."
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml build --no-cache
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+dev-rebuild-frontend:
+	@echo "Rebuilding frontend with --no-cache (fixes NEXT_PUBLIC_* vars)..."
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml build --no-cache frontend
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d frontend
+
 dev-logs:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml logs -f
+
+dev-check:
+	@echo "=== Checking Dev Environment Configuration ==="
+	@echo ""
+	@echo "Backend DOMAIN:"
+	@docker exec bsim-backend printenv DOMAIN 2>/dev/null || echo "  Container not running"
+	@echo ""
+	@echo "Auth ISSUER:"
+	@docker exec bsim-auth printenv ISSUER 2>/dev/null || echo "  Container not running"
+	@echo ""
+	@echo "Frontend API URL (baked at build time):"
+	@docker exec bsim-frontend grep -r "banksim.ca/api" .next/server/chunks/ 2>/dev/null | grep -o 'https://[^"]*banksim.ca/api' | head -1 || echo "  Could not detect"
+	@echo ""
+	@echo "Expected for dev: dev.banksim.ca, auth-dev.banksim.ca, https://dev.banksim.ca/api"
+	@echo "If frontend shows 'banksim.ca/api' (no 'dev-'), run: make dev-rebuild-frontend"
 
 dev-hosts:
 	@echo ""

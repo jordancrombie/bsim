@@ -69,7 +69,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Card token (`card_token`) included in JWT access token claims
   - Enables SSIM to initiate card payments via OAuth 2.0 flow
 
+- **Development Environment Tooling** - New Makefile targets and Claude hints for dev/prod configuration
+  - Added `make dev-check` to verify dev environment configuration (domain, API URL)
+  - Added `make dev-rebuild` to force rebuild all containers with `--no-cache`
+  - Added `make dev-rebuild-frontend` to fix stale `NEXT_PUBLIC_*` build-time variables
+  - Created `.claude/CLAUDE.md` hints file documenting dev vs prod configuration
+  - Documents that `NEXT_PUBLIC_*` vars are baked at build time, not runtime
+
 ### Fixed
+- **Frontend Dev/Prod Domain Mismatch** - Fixed CORS errors when frontend called wrong API domain
+  - Frontend was built with production `NEXT_PUBLIC_API_URL` (banksim.ca) instead of dev (dev.banksim.ca)
+  - Root cause: Docker cached build layers ignoring changed build args
+  - Solution: Use `make dev-rebuild-frontend` to force `--no-cache` rebuild
+  - Added `make dev-check` diagnostic to detect this issue early
 - **NSIM Production Payment Flow** - Fixed multiple issues preventing end-to-end payment authorization
   - Added `payment:authorize` scope to auth server's supported scopes list (was causing `invalid_client_metadata` error)
   - Fixed environment variable mismatch: backend expected `BSIM_PAYMENT_API_KEY`, task definition had `PAYMENT_NETWORK_API_KEY`
