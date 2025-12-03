@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Payment Network Plugin Architecture** - Pluggable payment network integration for merchant payments
+  - New `IPaymentNetworkHandler` interface for connecting external payment networks
+  - `SimNetHandler` implementation for NSIM (Network Simulator) integration
+  - `PaymentConsent` model for user card consent tokens
+  - `PaymentAuthorization` model for authorization holds on credit cards
+  - Nginx routing for `payment.banksim.ca` subdomain (NSIM endpoint)
+  - Full payment lifecycle: authorize → capture/void → refund
+  - Separate from Open Banking - designed for card-present/card-not-present transactions
+  - See [docs/PAYMENT_NETWORK_PLAN.md](docs/PAYMENT_NETWORK_PLAN.md) for architecture details
+  - NSIM repository: https://github.com/jordancrombie/nsim
+
+- **OAuth Payment Authorization Flow** - Card selection consent for merchant payments
+  - Added `payment:authorize` scope to auth-server
+  - New payment consent UI with card selection (payment-consent.ejs)
+  - Card token generation and storage in PaymentConsent table
+  - Card token (`card_token`) included in JWT access token claims
+  - Enables SSIM to initiate card payments via OAuth 2.0 flow
+
 ### Fixed
 - **E2E Test Race Condition Fix** - Resolved email collision issues when running tests in parallel
   - Changed email generation to use `crypto.randomUUID()` for cryptographically secure uniqueness

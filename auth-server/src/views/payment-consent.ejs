@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authorize Payment - BSIM</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      width: 100%;
+      max-width: 520px;
+      padding: 40px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .client-logo {
+      width: 64px;
+      height: 64px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      object-fit: cover;
+    }
+    .client-placeholder {
+      width: 64px;
+      height: 64px;
+      border-radius: 12px;
+      background: #d1fae5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 24px;
+      color: #059669;
+    }
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      color: #6b7280;
+      font-size: 14px;
+    }
+    .client-name {
+      font-weight: 600;
+      color: #059669;
+    }
+    .user-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #f3f4f6;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      color: #374151;
+      margin-top: 12px;
+    }
+    .amount-display {
+      background: #f0fdf4;
+      border: 2px solid #86efac;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .amount-label {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+    .amount-value {
+      font-size: 36px;
+      font-weight: 700;
+      color: #059669;
+    }
+    .section {
+      margin-bottom: 24px;
+    }
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .cards-list {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .card-item {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid #e5e7eb;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .card-item:last-child {
+      border-bottom: none;
+    }
+    .card-item:hover {
+      background: #f9fafb;
+    }
+    .card-item.selected {
+      background: #f0fdf4;
+      border-color: #86efac;
+    }
+    .card-item input[type="radio"] {
+      width: 20px;
+      height: 20px;
+      margin-right: 16px;
+      accent-color: #059669;
+    }
+    .card-visual {
+      width: 60px;
+      height: 38px;
+      border-radius: 6px;
+      margin-right: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 10px;
+      color: white;
+    }
+    .card-visa { background: linear-gradient(135deg, #1a1f71, #2e4a9a); }
+    .card-mc { background: linear-gradient(135deg, #eb001b, #f79e1b); }
+    .card-amex { background: linear-gradient(135deg, #006fcf, #00a1e4); }
+    .card-default { background: linear-gradient(135deg, #4b5563, #6b7280); }
+    .card-info {
+      flex: 1;
+    }
+    .card-number {
+      font-family: monospace;
+      font-size: 14px;
+      color: #374151;
+      font-weight: 500;
+    }
+    .card-details {
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+    .card-available {
+      font-size: 14px;
+      font-weight: 600;
+      color: #059669;
+      text-align: right;
+    }
+    .card-available-label {
+      font-size: 10px;
+      color: #6b7280;
+      text-transform: uppercase;
+    }
+    .no-cards {
+      text-align: center;
+      padding: 40px 20px;
+      color: #6b7280;
+    }
+    .no-cards-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+    .buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    button {
+      flex: 1;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-cancel {
+      background: white;
+      border: 1px solid #d1d5db;
+      color: #374151;
+    }
+    .btn-cancel:hover {
+      background: #f9fafb;
+    }
+    .btn-authorize {
+      background: #059669;
+      border: none;
+      color: white;
+    }
+    .btn-authorize:hover {
+      background: #047857;
+    }
+    .btn-authorize:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    .warning {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      color: #92400e;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-top: 16px;
+    }
+    .info {
+      text-align: center;
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 16px;
+    }
+    .security-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 16px;
+      font-size: 12px;
+      color: #059669;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <% if (clientLogo) { %>
+        <img src="<%= clientLogo %>" alt="<%= clientName %>" class="client-logo">
+      <% } else { %>
+        <div class="client-placeholder">💳</div>
+      <% } %>
+      <h1>Authorize Payment</h1>
+      <p class="subtitle">
+        <span class="client-name"><%= clientName %></span> wants to charge your card
+      </p>
+      <div class="user-badge">
+        <span>👤</span>
+        <span>Signed in as <%= user.email %></span>
+      </div>
+    </div>
+
+    <% if (amount) { %>
+      <div class="amount-display">
+        <div class="amount-label">Amount to authorize</div>
+        <div class="amount-value">$<%= parseFloat(amount).toFixed(2) %></div>
+      </div>
+    <% } %>
+
+    <form method="post" action="/interaction/<%= uid %>/confirm" id="payment-form">
+      <% if (creditCards.length > 0) { %>
+        <div class="section">
+          <div class="section-title">Select Payment Card</div>
+          <div class="cards-list">
+            <% creditCards.forEach(function(card, index) { %>
+              <label class="card-item" onclick="selectCard(this)">
+                <input type="radio" name="selectedCard" value="<%= card.id %>" <%= index === 0 ? 'checked' : '' %> required>
+                <div class="card-visual <%=
+                  card.cardType === 'VISA' || card.cardType === 'VISA_DEBIT' ? 'card-visa' :
+                  card.cardType === 'MC' || card.cardType === 'MC_DEBIT' ? 'card-mc' :
+                  card.cardType === 'AMEX' ? 'card-amex' : 'card-default'
+                %>">
+                  <%= card.cardType.replace('_DEBIT', '') %>
+                </div>
+                <div class="card-info">
+                  <div class="card-number">•••• •••• •••• <%= card.cardNumber.slice(-4) %></div>
+                  <div class="card-details">
+                    <span><%= card.cardHolder %></span>
+                    <span>Exp: <%= String(card.expiryMonth).padStart(2, '0') %>/<%= String(card.expiryYear).slice(-2) %></span>
+                  </div>
+                </div>
+                <div class="card-available">
+                  <div class="card-available-label">Available</div>
+                  $<%= parseFloat(card.availableCredit).toFixed(2) %>
+                </div>
+              </label>
+            <% }); %>
+          </div>
+        </div>
+
+        <div class="warning">
+          <strong>Important:</strong> By authorizing, you allow <%= clientName %> to charge the selected card. You can dispute unauthorized charges through your BSIM account.
+        </div>
+
+        <div class="buttons">
+          <button type="button" class="btn-cancel" onclick="document.getElementById('abort-form').submit()">
+            Cancel
+          </button>
+          <button type="submit" class="btn-authorize">
+            Authorize Payment
+          </button>
+        </div>
+      <% } else { %>
+        <div class="no-cards">
+          <div class="no-cards-icon">💳</div>
+          <p>No credit cards found</p>
+          <p style="margin-top: 8px; font-size: 13px;">Please add a credit card to your BSIM account first.</p>
+        </div>
+        <div class="buttons">
+          <button type="button" class="btn-cancel" onclick="document.getElementById('abort-form').submit()" style="flex: 1;">
+            Go Back
+          </button>
+        </div>
+      <% } %>
+    </form>
+
+    <form id="abort-form" method="post" action="/interaction/<%= uid %>/abort" style="display: none;"></form>
+
+    <div class="security-badge">
+      <span>🔒</span>
+      <span>Secure payment authorization by BSIM</span>
+    </div>
+  </div>
+
+  <script>
+    function selectCard(element) {
+      document.querySelectorAll('.card-item').forEach(item => item.classList.remove('selected'));
+      element.classList.add('selected');
+      element.querySelector('input[type="radio"]').checked = true;
+    }
+    // Select first card by default
+    document.querySelector('.card-item')?.classList.add('selected');
+  </script>
+</body>
+</html>

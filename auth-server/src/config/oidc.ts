@@ -4,7 +4,7 @@ import { createPrismaAdapterFactory } from '../adapters/prisma';
 import { config } from './env';
 import { compare } from 'bcrypt';
 
-// FDX-inspired scopes
+// FDX-inspired scopes + Payment scopes
 const SCOPES = [
   'openid',
   'profile',
@@ -12,6 +12,8 @@ const SCOPES = [
   'fdx:accountdetailed:read',
   'fdx:transactions:read',
   'fdx:customercontact:read',
+  // Payment Network scopes
+  'payment:authorize',  // Authorize a single payment with selected card
 ];
 
 // Claims mapping for each scope
@@ -22,6 +24,7 @@ const CLAIMS = {
   'fdx:accountdetailed:read': [],
   'fdx:transactions:read': [],
   'fdx:customercontact:read': ['phone_number', 'address'],
+  'payment:authorize': ['card_token'],  // Card token for payment authorization
 };
 
 export function createOidcProvider(prisma: PrismaClient): Provider {
@@ -220,8 +223,25 @@ export function createOidcProvider(prisma: PrismaClient): Provider {
 </html>`;
     },
 
-    // Extra token claims
+    // Extra token claims - include card_token for payment flows
     extraTokenClaims: async (ctx, token) => {
+      // Check if this is a payment flow with a card token
+      if (token.grantId) {
+        try {
+          const grantData = await prisma.oidcPayload.findFirst({
+            where: { id: token.grantId },
+          });
+          if (grantData) {
+            const payload = grantData.payload as any;
+            if (payload.cardToken) {
+              console.log('[OIDC] Adding card_token to access token');
+              return { card_token: payload.cardToken };
+            }
+          }
+        } catch (err) {
+          console.error('[OIDC] Error fetching grant for card_token:', err);
+        }
+      }
       return {};
     },
   };
