@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added global setup to clean up leftover test users before tests run
   - Tests now pass consistently without needing retries for email collision errors
 
+- **Credit Card Cancel Test Timing Fix** - Fixed flaky test that counted cards before API data loaded
+  - Added `waitForLoadState('networkidle')` before counting credit cards
+  - Ensures cards are loaded from API before initial count is taken
+  - All 102 chromium tests now pass consistently across multiple runs
+
 ### Added
 - **Admin Portal E2E Tests** - Comprehensive end-to-end testing for admin portal functionality
   - Created `e2e/tests/admin/portal.spec.ts` with 14 comprehensive tests:
