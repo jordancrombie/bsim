@@ -313,3 +313,61 @@ enum NotificationType {
   PAYMENT_DUE
   SYSTEM
 }
+
+// ============================================
+// Payment Network Models
+// ============================================
+
+// Payment consent from user for a specific card and merchant
+model PaymentConsent {
+  id            String    @id @default(uuid())
+  cardToken     String    @unique  // Token issued to merchant/network
+  userId        String
+  creditCardId  String
+  merchantId    String
+  merchantName  String
+  maxAmount     Decimal?  @db.Decimal(15, 2)  // Optional per-transaction limit
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  authorizations PaymentAuthorization[]
+
+  @@index([userId])
+  @@index([creditCardId])
+  @@index([merchantId])
+  @@map("payment_consents")
+}
+
+// Payment authorization hold on a card
+model PaymentAuthorization {
+  id                String                      @id @default(uuid())
+  authorizationCode String                      @unique
+  consentId         String
+  consent           PaymentConsent              @relation(fields: [consentId], references: [id])
+  amount            Decimal                     @db.Decimal(15, 2)
+  currency          String                      @default("CAD")
+  merchantId        String
+  merchantName      String
+  orderId           String
+  status            PaymentAuthorizationStatus  @default(PENDING)
+  capturedAmount    Decimal                     @default(0) @db.Decimal(15, 2)
+  declineReason     String?
+  expiresAt         DateTime
+  createdAt         DateTime                    @default(now())
+  updatedAt         DateTime                    @updatedAt
+
+  @@index([consentId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("payment_authorizations")
+}
+
+enum PaymentAuthorizationStatus {
+  PENDING
+  CAPTURED
+  VOIDED
+  EXPIRED
+  DECLINED
+}
