@@ -199,6 +199,9 @@ test.describe('Credit Card Management', () => {
   test('should cancel credit card creation', async ({ page }) => {
     await page.goto(PAGES.creditCards);
 
+    // Wait for cards to load before counting
+    await page.waitForLoadState('networkidle');
+
     // Count existing cards (look for card links with gradient backgrounds)
     const initialCards = await page.locator('a[href^="/dashboard/credit-cards/"]').count();
 
