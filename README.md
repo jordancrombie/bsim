@@ -16,6 +16,7 @@ A full-stack banking simulator application with passwordless authentication (Web
 - 🛠️ **Admin Interface** - Separate admin dashboard for user management
 - 🏦 **Open Banking Platform** - OAuth 2.0/OIDC for third-party data access (FDX-inspired)
 - 💳 **Payment Network Integration** - Card payment processing via NSIM middleware
+- 📱 **Digital Wallet Support** - Card enrollment API for wallet providers (WSIM)
 - 🗄️ PostgreSQL database with Prisma ORM
 - 🐳 **Full Docker containerization** for development and production
 - 🚀 **AWS ECS Fargate deployment ready** with ElastiCache Redis

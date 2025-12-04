@@ -33,6 +33,7 @@ model User {
   creditCards CreditCard[]
   consents    Consent[]
   notifications Notification[]
+  walletCredentials WalletCredential[]
 
   @@map("users")
 }
@@ -370,4 +371,31 @@ enum PaymentAuthorizationStatus {
   VOIDED
   EXPIRED
   DECLINED
+}
+
+// ============================================
+// Digital Wallet Models
+// ============================================
+
+// Wallet credential issued to digital wallet providers (e.g., WSIM)
+model WalletCredential {
+  id              String    @id @default(uuid())
+  credentialToken String    @unique  // Long-lived JWT for wallet API access
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  walletId        String    // WSIM's identifier
+  walletName      String    // e.g., "WSIM Wallet"
+  permittedCards  String[]  // Array of credit card IDs user consented to share
+  scopes          String[]  // Permitted operations: ["cards:read", "payments:create"]
+  issuedAt        DateTime  @default(now())
+  expiresAt       DateTime
+  revokedAt       DateTime?
+  lastUsedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([walletId])
+  @@index([credentialToken])
+  @@map("wallet_credentials")
 }

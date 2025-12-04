@@ -27,10 +27,14 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
     'fdx:transactions:read': 'View your transaction history',
     'fdx:customercontact:read': 'View your contact information (address, phone)',
     'payment:authorize': 'Authorize a payment with your selected card',
+    'wallet:enroll': 'Enroll your cards in a digital wallet',
   };
 
   // Check if this is a payment authorization flow
   const isPaymentFlow = (scopes: string[]) => scopes.includes('payment:authorize');
+
+  // Check if this is a wallet enrollment flow
+  const isWalletFlow = (scopes: string[]) => scopes.includes('wallet:enroll');
 
   // GET /interaction/:uid - Show login or consent page
   router.get('/:uid', async (req: Request, res: Response, next: NextFunction) => {
@@ -69,22 +73,23 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
             description: scopeDescriptions[s],
           }));
 
-        // Check if this is a payment flow
+        // Check if this is a payment flow or wallet flow
         const paymentFlow = isPaymentFlow(requestedScopes);
+        const walletFlow = isWalletFlow(requestedScopes);
 
         // Get user with accounts OR credit cards depending on flow
         // Note: session.accountId is now the fiUserRef (external identifier)
         const user = await prisma.user.findUnique({
           where: { fiUserRef: session?.accountId },
           include: {
-            accounts: !paymentFlow ? {
+            accounts: (!paymentFlow && !walletFlow) ? {
               select: {
                 id: true,
                 accountNumber: true,
                 balance: true,
               },
             } : false,
-            creditCards: paymentFlow ? {
+            creditCards: (paymentFlow || walletFlow) ? {
               select: {
                 id: true,
                 cardNumber: true,
@@ -97,6 +102,23 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
             } : false,
           },
         });
+
+        // For wallet enrollment flow, show wallet consent page with card selection
+        if (walletFlow) {
+          const walletName = getClientName();
+
+          return res.render('wallet-consent', {
+            uid,
+            clientName: walletName,
+            clientLogo: getClientLogo(),
+            scopes: scopeDetails,
+            creditCards: (user as any)?.creditCards || [],
+            user: {
+              name: user ? `${user.firstName} ${user.lastName}` : 'Unknown',
+              email: user?.email,
+            },
+          });
+        }
 
         // For payment flow, show payment consent page with card selection
         if (paymentFlow) {
@@ -191,11 +213,12 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
       }
 
       const { prompt, params, session } = details;
-      const { selectedAccounts, selectedCard } = req.body;
+      const { selectedAccounts, selectedCard, selectedCards, walletEnrollment } = req.body;
 
       // Get the requested scopes
       const requestedScopes = (params.scope as string)?.split(' ') || [];
       const paymentFlow = isPaymentFlow(requestedScopes);
+      const walletFlow = isWalletFlow(requestedScopes);
 
       // Generate a grant ID
       const grantId = crypto.randomUUID();
@@ -205,11 +228,12 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
       console.log('[Interaction] Client ID:', params.client_id);
       console.log('[Interaction] Requested scopes:', requestedScopes);
       console.log('[Interaction] Payment flow:', paymentFlow);
+      console.log('[Interaction] Wallet flow:', walletFlow);
 
       // Look up user by fiUserRef to get internal ID for consent storage
       const user = await prisma.user.findUnique({
         where: { fiUserRef: session?.accountId },
-        select: { id: true },
+        select: { id: true, fiUserRef: true },
       });
 
       if (!user) {
@@ -218,6 +242,39 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
       }
 
       let cardToken: string | null = null;
+      let walletCredentialToken: string | null = null;
+      let walletCredentialId: string | null = null;
+
+      // Handle wallet enrollment - create WalletCredential
+      if (walletFlow && selectedCards) {
+        console.log('[Interaction] Creating WalletCredential for cards:', selectedCards);
+
+        // Get wallet info from client
+        const client = await provider.Client.find(params.client_id as string) as any;
+        const walletName = client?.clientName || 'Digital Wallet';
+
+        // Normalize selectedCards to array
+        const cardIds = Array.isArray(selectedCards) ? selectedCards : [selectedCards];
+
+        // Generate unique wallet credential token (long-lived, 90 days)
+        walletCredentialToken = `wcred_${crypto.randomUUID().replace(/-/g, '')}`;
+
+        // Create WalletCredential record
+        const credential = await prisma.walletCredential.create({
+          data: {
+            credentialToken: walletCredentialToken,
+            userId: user.id,
+            walletId: params.client_id as string,
+            walletName,
+            permittedCards: cardIds,
+            scopes: ['cards:read', 'payments:create'],
+            expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days
+          },
+        });
+
+        walletCredentialId = credential.id;
+        console.log('[Interaction] WalletCredential created with token:', walletCredentialToken.substring(0, 15) + '...');
+      }
 
       // Handle payment consent - create PaymentConsent with card token
       if (paymentFlow && selectedCard) {
@@ -245,7 +302,17 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
         console.log('[Interaction] PaymentConsent created with token:', cardToken);
       }
 
-      // Store the consent in our database (for both flows)
+      // Get selected items for consent storage
+      let consentAccountIds: string[] = [];
+      if (walletFlow && selectedCards) {
+        consentAccountIds = Array.isArray(selectedCards) ? selectedCards : [selectedCards];
+      } else if (paymentFlow && selectedCard) {
+        consentAccountIds = [selectedCard];
+      } else if (selectedAccounts) {
+        consentAccountIds = Array.isArray(selectedAccounts) ? selectedAccounts : [selectedAccounts].filter(Boolean);
+      }
+
+      // Store the consent in our database (for all flows)
       console.log('[Interaction] Creating consent in database...');
       await prisma.consent.create({
         data: {
@@ -253,9 +320,7 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
           userId: user.id, // Use internal ID for database relation
           clientId: params.client_id as string,
           scopes: requestedScopes,
-          accountIds: paymentFlow
-            ? (selectedCard ? [selectedCard] : [])
-            : (Array.isArray(selectedAccounts) ? selectedAccounts : [selectedAccounts].filter(Boolean)),
+          accountIds: consentAccountIds,
           expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
         },
       });
@@ -283,9 +348,8 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
       const savedGrant = await grant.save();
       console.log('[Interaction] Grant saved:', savedGrant);
 
-      // For payment flow, store the card token in session to include in token claims
-      if (paymentFlow && cardToken) {
-        // Store card token in the grant's metadata for inclusion in access token
+      // Store flow-specific data in grant payload for inclusion in token claims
+      if ((paymentFlow && cardToken) || (walletFlow && walletCredentialToken)) {
         // oidc-provider stores grants with 'Grant:' prefix in the database
         const grantDbId = `Grant:${savedGrant}`;
         const grantData = await prisma.oidcPayload.findFirst({
@@ -293,12 +357,20 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
         });
         if (grantData) {
           const payload = grantData.payload as any;
-          payload.cardToken = cardToken;
+          if (cardToken) {
+            payload.cardToken = cardToken;
+            console.log('[Interaction] Card token stored in grant payload:', cardToken);
+          }
+          if (walletCredentialToken) {
+            payload.walletCredentialToken = walletCredentialToken;
+            payload.walletCredentialId = walletCredentialId;
+            payload.fiUserRef = user.fiUserRef;
+            console.log('[Interaction] Wallet credential stored in grant payload');
+          }
           await prisma.oidcPayload.update({
             where: { id: grantDbId },
             data: { payload },
           });
-          console.log('[Interaction] Card token stored in grant payload:', cardToken);
         } else {
           console.log('[Interaction] Grant not found in database with id:', grantDbId);
         }
