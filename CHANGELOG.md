@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **WSIM Integration Phase 1** - Digital wallet enrollment support for BSIM
+  - Added `wallet:enroll` OIDC scope to auth-server for wallet providers
+  - New `WalletCredential` database model for long-lived wallet API access (90-day expiry)
+  - Wallet consent UI (`wallet-consent.ejs`) with multi-card selection
+  - New wallet API endpoints in backend:
+    - `GET /api/wallet/cards` - Get user's enrolled cards (masked)
+    - `POST /api/wallet/tokens` - Generate ephemeral payment tokens
+    - `GET /api/wallet/credentials/:id/status` - Check credential validity
+    - `POST /api/wallet/credentials/:id/revoke` - Revoke wallet access
+  - Token claims: `wallet_credential` and `fi_user_ref` returned in access token
+  - See [docs/WSIM_INTEGRATION_PLAN.md](docs/WSIM_INTEGRATION_PLAN.md) for full architecture
+
 - **NSIM Production Deployment** - Full AWS deployment of Payment Network Simulator
   - ECR repository `bsim/payment-network` for NSIM Docker images
   - ECS Fargate service `bsim-payment-network-service` on port 3006

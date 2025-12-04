@@ -1,8 +1,15 @@
 # BSIM Project TODO
 
-Last Updated: December 3, 2025
+Last Updated: December 4, 2025
 
 ## Completed ✅
+
+### WSIM Integration Phase 1 (December 2025)
+- [x] Add `wallet:enroll` scope to auth-server OIDC provider
+- [x] Create `WalletCredential` database model and migration
+- [x] Implement wallet API endpoints (`/api/wallet/*`)
+- [x] Create wallet consent UI with multi-card selection
+- [x] Generate `wallet_credential` JWT in token response
 
 ### NSIM Production Deployment (December 2025)
 - [x] Deploy NSIM to AWS ECS Fargate
@@ -40,6 +47,14 @@ Last Updated: December 3, 2025
 - [x] Configure Docker builds for `linux/amd64` platform
 
 ## In Progress 🔄
+
+### WSIM Integration Phase 2-4
+- [ ] Update Makefile `dev-hosts` target for WSIM subdomains
+- [ ] Add WSIM server blocks to nginx.dev.conf
+- [ ] Add WSIM services to docker-compose files
+- [ ] Register WSIM client in BSIM auth-server
+- [ ] Update SSIM environment for WSIM support
+- [ ] Update NSIM environment for wallet token routing
 
 ### Documentation
 - [ ] Create comprehensive API documentation for payment network

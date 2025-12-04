@@ -4,7 +4,7 @@ import { createPrismaAdapterFactory } from '../adapters/prisma';
 import { config } from './env';
 import { compare } from 'bcrypt';
 
-// FDX-inspired scopes + Payment scopes
+// FDX-inspired scopes + Payment scopes + Wallet scopes
 const SCOPES = [
   'openid',
   'profile',
@@ -14,6 +14,8 @@ const SCOPES = [
   'fdx:customercontact:read',
   // Payment Network scopes
   'payment:authorize',  // Authorize a single payment with selected card
+  // Digital Wallet scopes
+  'wallet:enroll',      // Enroll cards in digital wallet
 ];
 
 // Claims mapping for each scope
@@ -25,6 +27,7 @@ const CLAIMS = {
   'fdx:transactions:read': [],
   'fdx:customercontact:read': ['phone_number', 'address'],
   'payment:authorize': ['card_token'],  // Card token for payment authorization
+  'wallet:enroll': ['wallet_credential', 'fi_user_ref'],  // Wallet enrollment credential
 };
 
 export function createOidcProvider(prisma: PrismaClient): Provider {
@@ -223,9 +226,9 @@ export function createOidcProvider(prisma: PrismaClient): Provider {
 </html>`;
     },
 
-    // Extra token claims - include card_token for payment flows
+    // Extra token claims - include card_token for payment flows and wallet_credential for wallet flows
     extraTokenClaims: async (ctx, token) => {
-      // Check if this is a payment flow with a card token
+      // Check if this is a flow that needs extra claims
       if (token.grantId) {
         try {
           // oidc-provider stores grants with 'Grant:' prefix in the database
@@ -235,13 +238,25 @@ export function createOidcProvider(prisma: PrismaClient): Provider {
           });
           if (grantData) {
             const payload = grantData.payload as any;
+            const extraClaims: Record<string, any> = {};
+
+            // Payment flow - add card token
             if (payload.cardToken) {
               console.log('[OIDC] Adding card_token to access token:', payload.cardToken);
-              return { card_token: payload.cardToken };
+              extraClaims.card_token = payload.cardToken;
             }
+
+            // Wallet flow - add wallet credential and fi_user_ref
+            if (payload.walletCredentialToken) {
+              console.log('[OIDC] Adding wallet_credential to access token');
+              extraClaims.wallet_credential = payload.walletCredentialToken;
+              extraClaims.fi_user_ref = payload.fiUserRef;
+            }
+
+            return extraClaims;
           }
         } catch (err) {
-          console.error('[OIDC] Error fetching grant for card_token:', err);
+          console.error('[OIDC] Error fetching grant for extra claims:', err);
         }
       }
       return {};
