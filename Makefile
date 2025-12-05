@@ -19,6 +19,7 @@ help:
 	@echo "  make db-reset      - Reset database (deletes all data)"
 	@echo "  make db-migrate    - Run database migrations"
 	@echo "  make db-studio     - Open Prisma Studio"
+	@echo "  make db-seed-oauth - Seed OAuth clients (SSIM, WSIM)"
 	@echo ""
 	@echo "Backend:"
 	@echo "  make backend-dev   - Start backend in dev mode"
@@ -51,6 +52,9 @@ db-migrate:
 
 db-studio:
 	./scripts/db.sh studio
+
+db-seed-oauth:
+	./scripts/seed-oauth-clients.sh seed-all
 
 # Backend commands
 backend-dev:
@@ -115,6 +119,8 @@ dev-hosts:
 	@echo "127.0.0.1 auth-dev.banksim.ca"
 	@echo "127.0.0.1 openbanking-dev.banksim.ca"
 	@echo "127.0.0.1 ssim-dev.banksim.ca"
+	@echo "127.0.0.1 wsim-dev.banksim.ca"
+	@echo "127.0.0.1 wsim-auth-dev.banksim.ca"
 	@echo ""
 	@echo "All domains use *.banksim.ca wildcard certificate"
 	@echo ""
