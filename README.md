@@ -34,7 +34,7 @@ The fastest way to run the entire stack locally with dev subdomains:
 
 ```bash
 # Configure local DNS or add to /etc/hosts:
-# 127.0.0.1 dev.banksim.ca admin-dev.banksim.ca auth-dev.banksim.ca openbanking-dev.banksim.ca ssim-dev.banksim.ca
+# 127.0.0.1 dev.banksim.ca admin-dev.banksim.ca auth-dev.banksim.ca openbanking-dev.banksim.ca ssim-dev.banksim.ca wsim-dev.banksim.ca wsim-auth-dev.banksim.ca
 
 # Build and start all services with dev configuration
 make dev-build
@@ -58,6 +58,8 @@ Access the application (local development):
 - **Authorization Server**: https://auth-dev.banksim.ca
 - **Open Banking API**: https://openbanking-dev.banksim.ca
 - **Store Simulator**: https://ssim-dev.banksim.ca
+- **Wallet Simulator**: https://wsim-dev.banksim.ca
+- **Wallet Auth Server**: https://wsim-auth-dev.banksim.ca
 - **Database**: localhost:5432
 
 ### Option 2: Docker Compose - Production
@@ -159,6 +161,46 @@ SSIM is a third-party demo application that demonstrates the BSIM Open Banking i
 
 **Note:** SSIM is maintained in a separate repository but deployed as part of the BSIM AWS infrastructure. It shares the same ALB and runs as an ECS Fargate service alongside the BSIM services. See the SSIM repository's `AWS_DEPLOYMENT.md` for deployment details.
 
+### WSIM - Wallet Simulator
+
+WSIM is a digital wallet application that integrates with BSIM for card enrollment and tokenized payments. It demonstrates wallet-based payment flows where users enroll their BSIM cards and use them for contactless payments at merchants.
+
+- **Repository:** https://github.com/jordancrombie/wsim
+- **Dev URL:** https://wsim-dev.banksim.ca
+- **Production URL:** https://wsim.banksim.ca
+- **Auth Server:** https://wsim-auth.banksim.ca (OIDC Provider for wallet authentication)
+- **Features:**
+  - Card enrollment via BSIM OAuth flow (`wallet:enroll` scope)
+  - Multi-card wallet with user-selected cards
+  - Ephemeral payment token generation (JWT with 5-minute TTL)
+  - Integration with SSIM for wallet-based checkout
+  - Passkey authentication for wallet access
+
+**Wallet Payment Flow:**
+```
+┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────┐
+│  SSIM   │────>│  WSIM   │────>│  BSIM   │     │  NSIM   │────>│  BSIM   │
+│(Merchant)│    │ (Wallet)│     │(Enroll) │     │(Network)│     │(Issuer) │
+└─────────┘     └─────────┘     └─────────┘     └─────────┘     └─────────┘
+     │               │               │               │               │
+     │ 1. Checkout   │               │               │               │
+     ├──────────────>│               │               │               │
+     │               │ 2. Get Token  │               │               │
+     │               ├──────────────>│               │               │
+     │               │ 3. JWT Token  │               │               │
+     │               │<──────────────│               │               │
+     │ 4. Card Token │               │               │               │
+     │<──────────────│               │               │               │
+     │               │               │ 5. Authorize  │               │
+     ├───────────────────────────────────────────────>│               │
+     │               │               │               │ 6. Validate   │
+     │               │               │               ├──────────────>│
+     │               │               │               │ 7. Approved   │
+     │               │               │               │<──────────────│
+     │ 8. Payment OK │               │               │               │
+     │<──────────────────────────────────────────────│               │
+```
+
 ### NSIM - Payment Network Simulator
 
 NSIM is the payment network middleware that routes card payments between merchants (SSIM) and banks (BSIM). It provides a complete payment processing infrastructure with webhooks, retry logic, and authorization expiry handling.
@@ -174,6 +216,7 @@ NSIM is the payment network middleware that routes card payments between merchan
   - Automatic retry with exponential backoff (up to 5 retries)
   - Authorization expiry handling (7-day default, auto-void on expiry)
   - HMAC-SHA256 webhook signature verification
+  - **Wallet token support** - JWT wallet payment tokens from WSIM are decoded and validated
 
 **End-to-End Payment Flow:**
 ```
@@ -675,6 +718,7 @@ See [DOCKER_README.md](DOCKER_README.md) for Docker containerization details.
 - [x] NSIM production deployment (ECS Fargate + ElastiCache Redis)
 - [x] Webhook system for payment notifications
 - [x] Admin E2E tests (14 tests for dashboard, users, admins, card types, account types)
+- [x] WSIM wallet integration (card enrollment, JWT payment tokens, wallet checkout flow)
 - [ ] CI/CD pipeline setup
 - [ ] Mobile app support
 - [ ] Client credentials grant for server-to-server

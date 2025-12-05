@@ -1,6 +1,6 @@
 # BSIM Project TODO
 
-Last Updated: December 4, 2025
+Last Updated: December 5, 2025
 
 ## Completed ✅
 
@@ -48,13 +48,21 @@ Last Updated: December 4, 2025
 
 ## In Progress 🔄
 
-### WSIM Integration Phase 2-4
-- [ ] Update Makefile `dev-hosts` target for WSIM subdomains
-- [ ] Add WSIM server blocks to nginx.dev.conf
-- [ ] Add WSIM services to docker-compose files
-- [ ] Register WSIM client in BSIM auth-server
-- [ ] Update SSIM environment for WSIM support
-- [ ] Update NSIM environment for wallet token routing
+### WSIM Integration Phase 2 (December 2025) ✅
+- [x] Update Makefile `dev-hosts` target for WSIM subdomains
+- [x] Add WSIM server blocks to nginx.dev.conf
+- [x] Add WSIM services to docker-compose files (wsim-backend, wsim-auth-server, wsim-frontend)
+- [x] Add WSIM dev overrides to docker-compose.dev.yml
+- [x] Create OAuth client seed script (`scripts/seed-oauth-clients.sh`)
+- [x] Register WSIM client in BSIM auth-server (run `make db-seed-oauth`)
+- [x] Add JWT wallet payment token decoding in SimNetHandler
+- [x] Skip merchant ID validation for cryptographically-verified wallet tokens
+- [x] Test WSIM wallet payment flow end-to-end ✅
+
+### WSIM Integration Phase 3-4 (Future)
+- [ ] Production deployment of WSIM services to AWS ECS
+- [ ] Configure production OAuth client secrets
+- [ ] Add WSIM monitoring and logging
 
 ### Documentation
 - [ ] Create comprehensive API documentation for payment network
@@ -94,15 +102,17 @@ Last Updated: December 4, 2025
 ┌─────────────────────────────────────────────────────────────────┐
 │                        banksim.ca (ALB)                         │
 ├─────────────────────────────────────────────────────────────────┤
-│  banksim.ca      → BSIM Frontend (User Banking Portal)          │
-│  api.banksim.ca  → BSIM Backend (Banking API + Auth Server)     │
-│  admin.banksim.ca→ BSIM Admin (Administrative Interface)        │
-│  nsim.banksim.ca → NSIM (Payment Network Simulator)             │
-│  ssim.banksim.ca → SSIM (Shopping Site Simulator)               │
+│  banksim.ca           → BSIM Frontend (User Banking Portal)     │
+│  auth.banksim.ca      → BSIM Auth Server (OIDC Provider)        │
+│  admin.banksim.ca     → BSIM Admin (Administrative Interface)   │
+│  nsim.banksim.ca      → NSIM (Payment Network Simulator)        │
+│  ssim.banksim.ca      → SSIM (Shopping Site Simulator)          │
+│  wsim.banksim.ca      → WSIM (Wallet Simulator)                 │
+│  wsim-auth.banksim.ca → WSIM Auth (Wallet OIDC Provider)        │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Payment Flow
+### Direct Payment Flow (SSIM → NSIM → BSIM)
 ```
 SSIM (Merchant) → NSIM (Network) → BSIM (Issuer)
      │                  │                │
@@ -116,6 +126,29 @@ SSIM (Merchant) → NSIM (Network) → BSIM (Issuer)
      │                  │←───────────────┤
      │ 5. Payment Result│                │
      │←─────────────────┤                │
+```
+
+### Wallet Payment Flow (SSIM → WSIM → BSIM → NSIM → BSIM)
+```
+SSIM (Merchant) → WSIM (Wallet) → BSIM (Token) → NSIM → BSIM (Issuer)
+     │                  │               │           │          │
+     │ 1. Wallet Pay    │               │           │          │
+     ├─────────────────→│               │           │          │
+     │                  │ 2. Get Token  │           │          │
+     │                  ├──────────────→│           │          │
+     │                  │ 3. JWT Token  │           │          │
+     │                  │←──────────────│           │          │
+     │ 4. Card Token    │               │           │          │
+     │←─────────────────│               │           │          │
+     │                           5. Authorize       │          │
+     ├─────────────────────────────────────────────→│          │
+     │                                              │ 6. Decode│
+     │                                              │    JWT   │
+     │                                              ├─────────→│
+     │                                              │ 7. OK    │
+     │                                              │←─────────│
+     │ 8. Payment Result                            │          │
+     │←─────────────────────────────────────────────│          │
 ```
 
 ## Quick Reference

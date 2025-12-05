@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **WSIM Integration Phase 2** - Complete wallet payment flow with SSIM checkout
+  - Docker Compose integration for WSIM services (wsim-backend, wsim-auth-server, wsim-frontend)
+  - nginx routing for `wsim-dev.banksim.ca` and `wsim-auth-dev.banksim.ca` subdomains
+  - OAuth client seed script (`scripts/seed-oauth-clients.sh`) for WSIM and SSIM clients
+  - New Makefile targets: `make db-seed-oauth`, updated `make dev-hosts`
+  - JWT wallet payment token support in `SimNetHandler`:
+    - Decodes and verifies `wallet_payment_token` JWT tokens
+    - Extracts `jti` claim to look up PaymentConsent records
+    - Skips merchant ID validation for wallet tokens (cryptographically verified via JWT signature)
+  - End-to-end wallet payment flow: SSIM → WSIM → BSIM token → NSIM → BSIM authorize
+
 - **WSIM Integration Phase 1** - Digital wallet enrollment support for BSIM
   - Added `wallet:enroll` OIDC scope to auth-server for wallet providers
   - New `WalletCredential` database model for long-lived wallet API access (90-day expiry)

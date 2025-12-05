@@ -215,6 +215,68 @@ services:
       start_period: 10s
       retries: 3
 
+  # WSIM Backend (Wallet Simulator API)
+  wsim-backend:
+    build:
+      context: ../wsim/backend
+      dockerfile: Dockerfile
+    container_name: bsim-wsim-backend
+    environment:
+      NODE_ENV: production
+      PORT: 3003
+      DATABASE_URL: postgresql://bsim:bsim_dev_password@db:5432/wsim
+      APP_URL: https://wsim.banksim.ca
+      FRONTEND_URL: https://wsim.banksim.ca
+      AUTH_SERVER_URL: https://wsim-auth.banksim.ca
+      JWT_SECRET: ${WSIM_JWT_SECRET:-wsim-dev-jwt-secret}
+      SESSION_SECRET: ${WSIM_SESSION_SECRET:-wsim-dev-session-secret}
+      ENCRYPTION_KEY: ${WSIM_ENCRYPTION_KEY:-0123456789abcdef0123456789abcdef}
+      CORS_ORIGINS: https://wsim.banksim.ca,https://wsim-auth.banksim.ca
+      BSIM_PROVIDERS: '[{"bsimId":"bsim","name":"Bank Simulator","issuer":"https://auth.banksim.ca","apiUrl":"https://banksim.ca","clientId":"wsim-wallet","clientSecret":"${WSIM_BSIM_CLIENT_SECRET:-wsim-dev-secret}"}]'
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - bsim-network
+    restart: unless-stopped
+
+  # WSIM Auth Server (Wallet OIDC Provider)
+  wsim-auth-server:
+    build:
+      context: ../wsim/auth-server
+      dockerfile: Dockerfile
+    container_name: bsim-wsim-auth-server
+    environment:
+      NODE_ENV: production
+      PORT: 3005
+      DATABASE_URL: postgresql://bsim:bsim_dev_password@db:5432/wsim
+      ISSUER: https://wsim-auth.banksim.ca
+      BACKEND_URL: http://wsim-backend:3003
+      COOKIE_SECRET: ${WSIM_COOKIE_SECRET:-wsim-dev-cookie-secret}
+      CORS_ORIGINS: https://wsim.banksim.ca,https://ssim.banksim.ca
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - bsim-network
+    restart: unless-stopped
+
+  # WSIM Frontend (Wallet UI)
+  wsim-frontend:
+    build:
+      context: ../wsim/frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: https://wsim.banksim.ca/api
+        NEXT_PUBLIC_AUTH_URL: https://wsim-auth.banksim.ca
+    container_name: bsim-wsim-frontend
+    depends_on:
+      - wsim-backend
+      - wsim-auth-server
+    networks:
+      - bsim-network
+    restart: unless-stopped
+
   # Nginx Reverse Proxy (SSL Termination)
   nginx:
     image: nginx:alpine
@@ -231,6 +293,9 @@ services:
       - auth-server
       - openbanking
       - payment-network
+      - wsim-backend
+      - wsim-frontend
+      - wsim-auth-server
     networks:
       - bsim-network
     healthcheck:
