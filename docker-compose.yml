@@ -233,6 +233,10 @@ services:
       ENCRYPTION_KEY: ${WSIM_ENCRYPTION_KEY:-0123456789abcdef0123456789abcdef}
       CORS_ORIGINS: https://wsim.banksim.ca,https://wsim-auth.banksim.ca
       BSIM_PROVIDERS: '[{"bsimId":"bsim","name":"Bank Simulator","issuer":"https://auth.banksim.ca","apiUrl":"https://banksim.ca","clientId":"wsim-wallet","clientSecret":"${WSIM_BSIM_CLIENT_SECRET:-wsim-dev-secret}"}]'
+      # WebAuthn / Passkey configuration
+      WEBAUTHN_RP_NAME: WSIM Wallet
+      WEBAUTHN_RP_ID: banksim.ca
+      WEBAUTHN_ORIGIN: https://wsim.banksim.ca
     depends_on:
       db:
         condition: service_healthy
@@ -252,8 +256,15 @@ services:
       DATABASE_URL: postgresql://bsim:bsim_dev_password@db:5432/wsim
       ISSUER: https://wsim-auth.banksim.ca
       BACKEND_URL: http://wsim-backend:3003
+      FRONTEND_URL: https://wsim.banksim.ca
       COOKIE_SECRET: ${WSIM_COOKIE_SECRET:-wsim-dev-cookie-secret}
       CORS_ORIGINS: https://wsim.banksim.ca,https://ssim.banksim.ca
+      # WebAuthn / Passkey configuration
+      WEBAUTHN_RP_NAME: WSIM Wallet
+      WEBAUTHN_RP_ID: banksim.ca
+      WEBAUTHN_ORIGIN: https://wsim.banksim.ca
+      # Popup origins allowed for embedded payment flow
+      ALLOWED_POPUP_ORIGINS: https://ssim.banksim.ca
     depends_on:
       db:
         condition: service_healthy
