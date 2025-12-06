@@ -141,6 +141,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Lesson learned:** When frontend code already includes `/api/` prefix, set `NEXT_PUBLIC_API_URL` to base URL only
   - Added warning to AWS_DEPLOYMENT.md troubleshooting section
 
+- **SSIM v1.8.2 WSIM Wallet Integration** - Deployed SSIM with WSIM wallet payment support (December 6, 2025)
+  - Built and pushed SSIM v1.8.2 Docker image with WSIM integration code
+  - Updated `ssim-merchant` OAuth client in WSIM database with correct credentials:
+    - Redirect URI: `https://ssim.banksim.ca/payment/wallet-callback`
+    - Scope: `openid profile payment:authorize`
+    - API Key: `wsim_api_e9da3d7ab1a8bfe90f976a7e5f831244`
+  - Added WSIM environment variables to SSIM task definition:
+    - `WSIM_ENABLED=true`
+    - `WSIM_AUTH_URL=https://wsim-auth.banksim.ca`
+    - `WSIM_CLIENT_ID=ssim-merchant`
+    - `WSIM_CLIENT_SECRET`, `WSIM_API_KEY` (generated secrets)
+    - `WSIM_API_URL=https://wsim.banksim.ca/api/merchant`
+  - **WSIM auth-server client caching**: Restarted WSIM auth-server after adding OAuth client
+    - Unlike BSIM (dynamic lookup), WSIM caches OAuth clients at startup
+    - New clients require service restart: `aws ecs update-service --force-new-deployment`
+  - **Fixed WSIM_POPUP_URL**: Changed from `https://wsim.banksim.ca/payment/popup` to `https://wsim-auth.banksim.ca`
+    - Popup/embed endpoints are on auth-server, not frontend
+    - Old value caused double path: `/popup/popup/card-picker`
+
 - **Frontend Dev/Prod Domain Mismatch** - Fixed CORS errors when frontend called wrong API domain
   - Frontend was built with production `NEXT_PUBLIC_API_URL` (banksim.ca) instead of dev (dev.banksim.ca)
   - Root cause: Docker cached build layers ignoring changed build args
