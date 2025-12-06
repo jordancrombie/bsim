@@ -63,8 +63,8 @@ services:
       AUTH_SERVER_URL: https://wsim-auth-dev.banksim.ca
       CORS_ORIGINS: https://wsim-dev.banksim.ca,https://wsim-auth-dev.banksim.ca,https://ssim-dev.banksim.ca,https://dev.banksim.ca
       BSIM_PROVIDERS: '[{"bsimId":"bsim","name":"Bank Simulator","issuer":"https://auth-dev.banksim.ca","apiUrl":"https://dev.banksim.ca","clientId":"wsim-wallet","clientSecret":"wsim-dev-secret"}]'
-      # WebAuthn - origin for dev domain
-      WEBAUTHN_ORIGIN: https://wsim-dev.banksim.ca
+      # WebAuthn - allow both frontend and auth-server popup origins
+      WEBAUTHN_ORIGINS: https://wsim-dev.banksim.ca,https://wsim-auth-dev.banksim.ca
 
   # WSIM Auth Server - dev domain configuration
   wsim-auth-server:
@@ -73,8 +73,8 @@ services:
       ISSUER: https://wsim-auth-dev.banksim.ca
       FRONTEND_URL: https://wsim-dev.banksim.ca
       CORS_ORIGINS: https://wsim-dev.banksim.ca,https://ssim-dev.banksim.ca
-      # WebAuthn - origin for dev domain
-      WEBAUTHN_ORIGIN: https://wsim-dev.banksim.ca
+      # WebAuthn - allow both frontend and auth-server popup origins
+      WEBAUTHN_ORIGINS: https://wsim-dev.banksim.ca,https://wsim-auth-dev.banksim.ca
       # Popup origins for dev
       ALLOWED_POPUP_ORIGINS: https://ssim-dev.banksim.ca
 
