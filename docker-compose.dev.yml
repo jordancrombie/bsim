@@ -75,8 +75,9 @@ services:
       CORS_ORIGINS: https://wsim-dev.banksim.ca,https://ssim-dev.banksim.ca
       # WebAuthn - allow both frontend and auth-server popup origins
       WEBAUTHN_ORIGINS: https://wsim-dev.banksim.ca,https://wsim-auth-dev.banksim.ca
-      # Popup origins for dev
+      # Popup/Embed origins for dev
       ALLOWED_POPUP_ORIGINS: https://ssim-dev.banksim.ca
+      ALLOWED_EMBED_ORIGINS: https://ssim-dev.banksim.ca
 
   # WSIM Frontend - dev domain configuration
   wsim-frontend:

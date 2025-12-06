@@ -893,6 +893,74 @@ aws ecs update-service \
 - Check application health endpoint returns 200 OK
 - Review CloudWatch logs for application errors
 
+### OAuth client errors (invalid_client_metadata, authorization failures)
+
+**Symptom:** OAuth flow fails with `invalid_client_metadata` or similar OIDC provider errors.
+
+**Common Cause:** Invalid `grantTypes` in the OAuth client record.
+
+**Valid Grant Types for oidc-provider:**
+- `authorization_code` - Standard OAuth 2.0 authorization code flow
+- `implicit` - Implicit flow (not recommended)
+- `client_credentials` - Server-to-server authentication
+- `urn:ietf:params:oauth:grant-type:device_code` - Device flow
+
+**Invalid Grant Types:**
+- `refresh_token` - This is a **token type**, not a grant type! Including it causes the OIDC provider to reject the client.
+
+**How to check:**
+```sql
+SELECT "clientId", "grantTypes" FROM oauth_clients WHERE "clientId" = 'your-client-id';
+```
+
+**Fix:**
+```sql
+UPDATE oauth_clients
+SET "grantTypes" = ARRAY['authorization_code']
+WHERE "clientId" = 'your-client-id';
+```
+
+**Note:** To enable refresh tokens, the client must use `authorization_code` grant and request the `offline_access` scope - not by adding `refresh_token` to grantTypes.
+
+### Next.js frontend API URL issues (404 errors, wrong domain)
+
+**Symptom:** Frontend makes requests to wrong URL (e.g., `/api/api/...` or wrong domain)
+
+**Root Cause:** `NEXT_PUBLIC_*` environment variables are **baked in at build time**. They cannot be changed at runtime.
+
+**Common Mistakes:**
+
+1. **Double `/api/` prefix**: If your frontend code already adds `/api/` to URLs, don't include it in `NEXT_PUBLIC_API_URL`:
+   ```bash
+   # WRONG - If frontend code does: fetch(`${API_URL}/api/users`)
+   --build-arg NEXT_PUBLIC_API_URL=https://example.com/api  # Results in /api/api/users
+
+   # CORRECT - Set to base URL only
+   --build-arg NEXT_PUBLIC_API_URL=https://example.com      # Results in /api/users
+   ```
+
+2. **Forgot build args entirely**: The frontend builds successfully but calls `localhost` or relative paths in production.
+
+3. **Used environment vars instead of build args**: Setting `environment:` in ECS task definition has NO effect on Next.js `NEXT_PUBLIC_*` vars.
+
+**How to verify what URL is baked into the frontend:**
+```bash
+# Download a JS chunk and search for the API URL
+curl -sL "https://your-frontend.com/_next/static/chunks/[hash].js" | grep -o 'https://[^"]*api[^"]*' | head -5
+```
+
+**Fix:** Rebuild the Docker image with correct `--build-arg` values, push to ECR, and force redeploy:
+```bash
+docker build --platform linux/amd64 \
+  --build-arg NEXT_PUBLIC_API_URL=https://correct-url.com \
+  -t your-image .
+
+docker push your-ecr-repo/your-image:latest
+
+aws ecs update-service --cluster your-cluster \
+  --service your-service --force-new-deployment
+```
+
 ## Next Steps
 
 1. Set up CI/CD pipeline with GitHub Actions or AWS CodePipeline

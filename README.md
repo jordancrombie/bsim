@@ -169,6 +169,7 @@ WSIM is a digital wallet application that integrates with BSIM for card enrollme
 - **Dev URL:** https://wsim-dev.banksim.ca
 - **Production URL:** https://wsim.banksim.ca
 - **Auth Server:** https://wsim-auth.banksim.ca (OIDC Provider for wallet authentication)
+- **AWS Resources:** ECS Fargate services (3), shared RDS database (wsim schema), CloudWatch logs
 - **Features:**
   - Card enrollment via BSIM OAuth flow (`wallet:enroll` scope)
   - Multi-card wallet with user-selected cards
@@ -440,9 +441,9 @@ INSERT INTO oauth_clients (
   'your-generated-secret',  -- plaintext (not bcrypt hashed)
   'Your App Name',
   ARRAY['https://yourapp.com/callback', 'http://localhost:3000/callback'],
-  ARRAY['authorization_code', 'refresh_token'],
+  ARRAY['authorization_code'],  -- NOT 'refresh_token'! See warning below
   ARRAY['code'],
-  'openid profile email fdx:accountdetailed:read fdx:transactions:read',
+  'openid profile email fdx:accountdetailed:read fdx:transactions:read offline_access',
   true,
   NOW(), NOW()
 );
@@ -453,6 +454,16 @@ INSERT INTO oauth_clients (
 - Include both production and development redirect URIs
 - The `grantTypes` and `responseTypes` arrays are required for proper OAuth flow
 - Set `isActive` to `true` to enable the client
+
+> **⚠️ Warning: Valid Grant Types**
+>
+> Only use valid OAuth 2.0 grant types in `grantTypes`:
+> - `authorization_code` - Standard authorization code flow
+> - `implicit` - Implicit flow (not recommended)
+> - `client_credentials` - Server-to-server
+>
+> **Do NOT include `refresh_token`** - it's a token type, not a grant type!
+> To enable refresh tokens, use `authorization_code` grant and include `offline_access` in the scope.
 
 **Registered Clients:**
 | Client ID | Application | Description |
