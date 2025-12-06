@@ -1,6 +1,6 @@
 # BSIM Project TODO
 
-Last Updated: December 5, 2025
+Last Updated: December 6, 2025
 
 ## Completed ✅
 
@@ -59,10 +59,29 @@ Last Updated: December 5, 2025
 - [x] Skip merchant ID validation for cryptographically-verified wallet tokens
 - [x] Test WSIM wallet payment flow end-to-end ✅
 
-### WSIM Integration Phase 3-4 (Future)
-- [ ] Production deployment of WSIM services to AWS ECS
-- [ ] Configure production OAuth client secrets
-- [ ] Add WSIM monitoring and logging
+### WSIM AWS Production Deployment ✅ (December 2025)
+- [x] Production deployment of WSIM services to AWS ECS (3 Fargate services)
+- [x] Create `wsim` database in shared RDS PostgreSQL instance
+- [x] Configure ECR repositories for WSIM Docker images
+- [x] Set up ALB listener rules for `wsim.banksim.ca` and `wsim-auth.banksim.ca`
+- [x] Configure Route53 DNS records
+- [x] Register OAuth clients (`wsim-wallet` in BSIM, `ssim-merchant` in WSIM)
+- [x] Configure BSIM_PROVIDERS for bank enrollment
+- [x] Fix double `/api/api/` URL issue in frontend (rebuild with correct NEXT_PUBLIC_API_URL)
+- [x] Fix OAuth client invalid grantTypes (remove `refresh_token`, keep only `authorization_code`)
+- [x] Verify enrollment page shows banks correctly
+
+### WSIM Production Enrollment Fixes (December 6, 2025) ✅
+- [x] Rebuild and redeploy auth-server with `wallet:enroll` scope (image was outdated)
+- [x] Run `prisma db push` to create `wallet_credentials` table in production
+- [x] Add missing redirect URI (`/api/enrollment/callback/bsim`) to OAuth client
+- [x] Fix client secret (bcrypt → plaintext for oidc-provider compatibility)
+- [x] Rebuild and redeploy backend with `/api/wallet/*` routes (image was outdated)
+- [x] Update WSIM `BSIM_PROVIDERS.apiUrl` from `banksim.ca` to `api.banksim.ca`
+
+### WSIM Integration Phase 4 (Future)
+- [ ] Add WSIM monitoring and CloudWatch alarms
+- [ ] Set up auto-scaling for WSIM services
 
 ### Documentation
 - [ ] Create comprehensive API documentation for payment network
@@ -97,7 +116,7 @@ Last Updated: December 5, 2025
 
 ## Architecture Notes
 
-### Current Service Topology (Production)
+### Current Service Topology (Production) ✅ All Deployed
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        banksim.ca (ALB)                         │
@@ -105,10 +124,11 @@ Last Updated: December 5, 2025
 │  banksim.ca           → BSIM Frontend (User Banking Portal)     │
 │  auth.banksim.ca      → BSIM Auth Server (OIDC Provider)        │
 │  admin.banksim.ca     → BSIM Admin (Administrative Interface)   │
-│  nsim.banksim.ca      → NSIM (Payment Network Simulator)        │
+│  payment.banksim.ca   → NSIM (Payment Network Simulator)        │
 │  ssim.banksim.ca      → SSIM (Shopping Site Simulator)          │
-│  wsim.banksim.ca      → WSIM (Wallet Simulator)                 │
+│  wsim.banksim.ca      → WSIM Frontend (Wallet UI)               │
 │  wsim-auth.banksim.ca → WSIM Auth (Wallet OIDC Provider)        │
+│  (internal)           → WSIM Backend (Wallet API on port 3007)  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 

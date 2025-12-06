@@ -1,0 +1,46 @@
+{
+  "family": "bsim-wsim-backend",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::301868770392:role/bsim-ecs-task-execution-role",
+  "containerDefinitions": [{
+    "name": "wsim-backend",
+    "image": "301868770392.dkr.ecr.ca-central-1.amazonaws.com/bsim/wsim-backend:latest",
+    "portMappings": [{"containerPort": 3003, "protocol": "tcp"}],
+    "essential": true,
+    "environment": [
+      {"name": "NODE_ENV", "value": "production"},
+      {"name": "PORT", "value": "3003"},
+      {"name": "DATABASE_URL", "value": "postgresql://bsimadmin:8O9MwSmoA1IUQfOZyw7H4L2lDoeA2M8w@bsim-db.cb80gi4u4k7g.ca-central-1.rds.amazonaws.com:5432/wsim"},
+      {"name": "APP_URL", "value": "https://wsim.banksim.ca"},
+      {"name": "FRONTEND_URL", "value": "https://wsim.banksim.ca"},
+      {"name": "AUTH_SERVER_URL", "value": "https://wsim-auth.banksim.ca"},
+      {"name": "JWT_SECRET", "value": "5/m6TZR+Ok6ImoOowFSvZ9hJoCVVIUzR085miIdLszU="},
+      {"name": "SESSION_SECRET", "value": "qkvCDlfcvCJ+I5pjb0v3OGkOshH9z0R7XTrt1x2auVk="},
+      {"name": "ENCRYPTION_KEY", "value": "46b6c3d697774de9dbeebc4322ac8594"},
+      {"name": "INTERNAL_API_SECRET", "value": "8F8YIa5Ww1t/rscdLAhZmUOQ6ZqkZGYG9jm/di82yt8="},
+      {"name": "CORS_ORIGINS", "value": "https://wsim.banksim.ca,https://wsim-auth.banksim.ca,https://ssim.banksim.ca"},
+      {"name": "WEBAUTHN_RP_NAME", "value": "WSIM Wallet"},
+      {"name": "WEBAUTHN_RP_ID", "value": "banksim.ca"},
+      {"name": "WEBAUTHN_ORIGINS", "value": "https://wsim.banksim.ca,https://wsim-auth.banksim.ca"},
+      {"name": "BSIM_PROVIDERS", "value": "[{\"bsimId\":\"bsim\",\"name\":\"Bank Simulator\",\"issuer\":\"https://auth.banksim.ca\",\"apiUrl\":\"https://banksim.ca\",\"clientId\":\"wsim-wallet\",\"clientSecret\":\"HbKVgyI2w1xmMEpMJRMvrIxUkpQPglxAV0R5xlAOmLA=\"}]"}
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "/ecs/bsim-wsim-backend",
+        "awslogs-region": "ca-central-1",
+        "awslogs-stream-prefix": "ecs"
+      }
+    },
+    "healthCheck": {
+      "command": ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:3003/health || exit 1"],
+      "interval": 30,
+      "timeout": 5,
+      "retries": 3,
+      "startPeriod": 60
+    }
+  }]
+}

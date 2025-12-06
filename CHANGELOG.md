@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **WSIM AWS Production Deployment** - Full production deployment of Wallet Simulator to AWS ECS
+  - Deployed 3 ECS Fargate services: wsim-backend, wsim-auth-server, wsim-frontend
+  - Created `wsim` database in shared RDS PostgreSQL instance
+  - ECR repositories for all WSIM Docker images
+  - ALB listener rules for `wsim.banksim.ca` and `wsim-auth.banksim.ca` subdomains
+  - Route 53 DNS records pointing to shared ALB
+  - CloudWatch log groups: `/ecs/bsim-wsim-backend`, `/ecs/bsim-wsim-auth-server`, `/ecs/bsim-wsim-frontend`
+  - OAuth client registration: `wsim-wallet` in BSIM, `ssim-merchant` in WSIM
+  - Task definitions in `aws/` directory: `wsim-backend-task-definition.json`, `wsim-auth-server-task-definition.json`, `wsim-frontend-task-definition.json`
+  - See [AWS_PRODUCTION_MIGRATION_PLAN.md](AWS_PRODUCTION_MIGRATION_PLAN.md) for deployment details
+
 - **WSIM Integration Phase 2** - Complete wallet payment flow with SSIM checkout
   - Docker Compose integration for WSIM services (wsim-backend, wsim-auth-server, wsim-frontend)
   - nginx routing for `wsim-dev.banksim.ca` and `wsim-auth-dev.banksim.ca` subdomains
@@ -100,6 +111,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Documents that `NEXT_PUBLIC_*` vars are baked at build time, not runtime
 
 ### Fixed
+- **WSIM Production Enrollment Flow** - Fixed complete enrollment flow with multiple issues (December 6, 2025)
+  - **Outdated auth-server image**: Deployed image (Dec 3) was missing `wallet:enroll` scope added Dec 4
+    - Fix: Rebuilt and redeployed auth-server with latest code
+  - **Missing `wallet_credentials` table**: Database schema not synced after adding WalletCredential model
+    - Fix: Ran `npx prisma db push` via ECS task to create the table
+  - **Missing redirect URI**: OAuth client lacked `/api/enrollment/callback/bsim` redirect URI
+    - Fix: Added via Prisma update: `redirectUris.push('https://wsim.banksim.ca/api/enrollment/callback/bsim')`
+  - **Client secret mismatch**: BSIM had bcrypt-hashed secret, but oidc-provider requires plaintext
+    - Fix: Updated to plaintext secret matching WSIM's BSIM_PROVIDERS config
+  - **Outdated backend image**: Deployed image (Dec 3) was missing `/api/wallet/*` routes added Dec 4
+    - Fix: Rebuilt and redeployed backend with wallet routes
+  - **Wrong BSIM API URL**: WSIM's `BSIM_PROVIDERS.apiUrl` was `https://banksim.ca` but backend is on `api.banksim.ca` subdomain
+    - Fix: Updated WSIM task definition to use `https://api.banksim.ca`
+  - **Lesson learned**: After adding new features, always rebuild AND redeploy all affected Docker images
+
+- **WSIM OAuth Client Invalid Grant Type** - Fixed enrollment failing with OIDC provider error
+  - `wsim-wallet` OAuth client had `grantTypes = ['authorization_code', 'refresh_token']`
+  - BSIM's OIDC provider (oidc-provider) only accepts `authorization_code` or `implicit` as valid grant types
+  - `refresh_token` is a token type, not a grant type - it was incorrectly included
+  - Fix: `UPDATE oauth_clients SET "grantTypes" = ARRAY['authorization_code'] WHERE "clientId" = 'wsim-wallet';`
+  - No code changes or redeployments needed - just the database update
+  - Added warning to AWS_DEPLOYMENT.md about valid grant types
+
+- **WSIM Frontend Double API Path** - Fixed `/api/api/` URL causing 404 errors on enrollment page
+  - Frontend was built with `NEXT_PUBLIC_API_URL=https://wsim.banksim.ca/api` but code adds `/api/` prefix
+  - Result: requests went to `https://wsim.banksim.ca/api/api/enrollment/banks` (double `/api/`)
+  - Fix: Rebuild with `NEXT_PUBLIC_API_URL=https://wsim.banksim.ca` (no `/api` suffix)
+  - **Lesson learned:** When frontend code already includes `/api/` prefix, set `NEXT_PUBLIC_API_URL` to base URL only
+  - Added warning to AWS_DEPLOYMENT.md troubleshooting section
+
 - **Frontend Dev/Prod Domain Mismatch** - Fixed CORS errors when frontend called wrong API domain
   - Frontend was built with production `NEXT_PUBLIC_API_URL` (banksim.ca) instead of dev (dev.banksim.ca)
   - Root cause: Docker cached build layers ignoring changed build args

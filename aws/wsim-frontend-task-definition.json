@@ -1,0 +1,34 @@
+{
+  "family": "bsim-wsim-frontend",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::301868770392:role/bsim-ecs-task-execution-role",
+  "containerDefinitions": [{
+    "name": "wsim-frontend",
+    "image": "301868770392.dkr.ecr.ca-central-1.amazonaws.com/bsim/wsim-frontend:latest",
+    "portMappings": [{"containerPort": 3000, "protocol": "tcp"}],
+    "essential": true,
+    "environment": [
+      {"name": "NODE_ENV", "value": "production"},
+      {"name": "PORT", "value": "3000"},
+      {"name": "HOSTNAME", "value": "0.0.0.0"}
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "/ecs/bsim-wsim-frontend",
+        "awslogs-region": "ca-central-1",
+        "awslogs-stream-prefix": "ecs"
+      }
+    },
+    "healthCheck": {
+      "command": ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:3000/ || exit 1"],
+      "interval": 30,
+      "timeout": 5,
+      "retries": 3,
+      "startPeriod": 60
+    }
+  }]
+}

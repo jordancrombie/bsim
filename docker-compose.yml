@@ -262,9 +262,11 @@ services:
       # WebAuthn / Passkey configuration
       WEBAUTHN_RP_NAME: WSIM Wallet
       WEBAUTHN_RP_ID: banksim.ca
-      WEBAUTHN_ORIGIN: https://wsim.banksim.ca
-      # Popup origins allowed for embedded payment flow
+      # Multiple origins for passkey verification (frontend + auth-server popup/iframe)
+      WEBAUTHN_ORIGINS: https://wsim.banksim.ca,https://wsim-auth.banksim.ca
+      # Popup/embed origins allowed for embedded payment flow
       ALLOWED_POPUP_ORIGINS: https://ssim.banksim.ca
+      ALLOWED_EMBED_ORIGINS: https://ssim.banksim.ca
     depends_on:
       db:
         condition: service_healthy
