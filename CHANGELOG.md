@@ -158,7 +158,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - New clients require service restart: `aws ecs update-service --force-new-deployment`
   - **Fixed WSIM_POPUP_URL**: Changed from `https://wsim.banksim.ca/payment/popup` to `https://wsim-auth.banksim.ca`
     - Popup/embed endpoints are on auth-server, not frontend
-    - Old value caused double path: `/popup/popup/card-picker`
+  - **Fixed WSIM auth-server BACKEND_URL**: Changed from `http://localhost:3003` to `https://wsim.banksim.ca`
+    - In ECS Fargate, each service runs in its own container - they can't communicate via localhost
+    - Auth-server was failing with `TypeError: fetch failed` when requesting payment tokens
+    - Backend is accessible via ALB at `wsim.banksim.ca` (priority 7 rule routes to backend target group)
 
 - **Frontend Dev/Prod Domain Mismatch** - Fixed CORS errors when frontend called wrong API domain
   - Frontend was built with production `NEXT_PUBLIC_API_URL` (banksim.ca) instead of dev (dev.banksim.ca)
