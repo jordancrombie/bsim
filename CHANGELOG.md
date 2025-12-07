@@ -8,6 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **WSIM Admin Interface Deployment** - Admin portal for WSIM auth-server
+  - Passkey-based admin authentication (same pattern as BSIM admin)
+  - Admin invite system for adding new administrators
+  - Admin management pages at `https://wsim-auth.banksim.ca/administration`
+  - Database tables: `admin_users`, `admin_passkeys`, `admin_invites`
+  - Environment variables: `AUTH_ADMIN_JWT_SECRET`, `AUTH_SERVER_URL`
+
+### Changed
+- **Documentation Reorganization** - Improved public documentation structure
+  - Moved deployment docs to `docs/` folder: `AWS_DEPLOYMENT.md`, `BACKEND_SETUP.md`, `DOCKER_SSL_SETUP.md`, `AWS_PRODUCTION_MIGRATION_PLAN.md`
+  - Added `LOCAL_DEPLOYMENT_PLANS/` to `.gitignore` for local-only planning documents
+  - Added critical `--no-cache` Docker build guidance to `docs/AWS_DEPLOYMENT.md`
+  - Added ECR repository names table for all services (BSIM, WSIM, SSIM, NSIM)
+  - Fixed broken links in `README.md` and `CHANGELOG.md` after file moves
+  - Removed `.claude/CLAUDE.md` from repository (AI-specific hints kept locally only)
+
+### Fixed
+- **Test User Cleanup** - Deleted 478 `@testuser.banksim.ca` test users from production BSIM database
+
 - **WSIM AWS Production Deployment** - Full production deployment of Wallet Simulator to AWS ECS
   - Deployed 3 ECS Fargate services: wsim-backend, wsim-auth-server, wsim-frontend
   - Created `wsim` database in shared RDS PostgreSQL instance
