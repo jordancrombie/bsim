@@ -155,3 +155,6 @@ AWS_DEPLOYMENT_NOTES.md
 
 # Local deployment plans (shared via filesystem, not repo)
 LOCAL_DEPLOYMENT_PLANS/
+
+# Claude Code hints (AI-specific, kept locally only)
+.claude/
