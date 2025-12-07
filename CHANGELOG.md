@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `bsim-logo.png` to frontend public assets
   - Updated home page to display logo instead of text heading
   - Kept "The Banking Simulator" subtitle
+  - Added SimToolBox ecosystem footer with links to GitHub repositories
 
 - **Documentation Reorganization** - Improved public documentation structure
   - Moved deployment docs to `docs/` folder: `AWS_DEPLOYMENT.md`, `BACKEND_SETUP.md`, `DOCKER_SSL_SETUP.md`, `AWS_PRODUCTION_MIGRATION_PLAN.md`
