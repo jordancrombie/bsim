@@ -152,3 +152,6 @@ certs/*.intermediates
 
 # AWS Deployment Notes (contains sensitive info)
 AWS_DEPLOYMENT_NOTES.md
+
+# Local deployment plans (shared via filesystem, not repo)
+LOCAL_DEPLOYMENT_PLANS/

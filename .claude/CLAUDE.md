@@ -59,3 +59,65 @@ docker exec bsim-backend printenv | grep -E "DOMAIN|CORS"
 1. **Registration/Login fails with CORS error**: Frontend calling wrong domain - rebuild frontend
 2. **Passkeys don't work**: Check `RP_ID` matches the domain (use parent domain for cross-subdomain)
 3. **OAuth redirects fail**: Check `ISSUER` and redirect URIs match the environment
+
+---
+
+## Critical: AWS Production Deployments
+
+### ALWAYS Use --no-cache When Building for Production
+
+When building Docker images for AWS ECR deployment, **ALWAYS use `--no-cache`** to ensure the latest code is included:
+
+```bash
+# CORRECT - Forces fresh build with latest code
+docker build --no-cache --platform linux/amd64 -t <ecr-repo>:latest .
+
+# WRONG - May use cached layers with stale code
+docker build --platform linux/amd64 -t <ecr-repo>:latest .
+```
+
+**Why this matters:**
+- Docker caches intermediate layers based on file checksums
+- If only TypeScript source files changed (not package.json), Docker may reuse old `npm ci` and build layers
+- This results in deploying outdated code even though the build "succeeded"
+- Symptoms: New features/routes return 404, new env vars not recognized, recent bug fixes not applied
+
+### Production Deployment Checklist
+
+1. **Build with --no-cache**:
+   ```bash
+   cd /path/to/service
+   docker build --no-cache --platform linux/amd64 -t 301868770392.dkr.ecr.ca-central-1.amazonaws.com/bsim/<service>:latest .
+   ```
+
+2. **Push to ECR**:
+   ```bash
+   aws ecr get-login-password --region ca-central-1 | docker login --username AWS --password-stdin 301868770392.dkr.ecr.ca-central-1.amazonaws.com
+   docker push 301868770392.dkr.ecr.ca-central-1.amazonaws.com/bsim/<service>:latest
+   ```
+
+3. **Force new deployment**:
+   ```bash
+   aws ecs update-service --cluster bsim-cluster --service <service-name> --force-new-deployment --region ca-central-1
+   ```
+
+4. **Verify deployment**:
+   ```bash
+   # Wait for new task to be running
+   aws ecs describe-services --cluster bsim-cluster --services <service-name> --region ca-central-1 \
+     --query 'services[0].deployments[*].{status:status,running:runningCount}'
+   ```
+
+### ECR Repository Names
+
+| Service | ECR Repository |
+|---------|----------------|
+| BSIM Backend | `bsim/backend` |
+| BSIM Auth Server | `bsim/auth-server` |
+| BSIM Frontend | `bsim/frontend` |
+| BSIM Admin | `bsim/admin` |
+| WSIM Backend | `bsim/wsim-backend` |
+| WSIM Auth Server | `bsim/wsim-auth-server` |
+| WSIM Frontend | `bsim/wsim-frontend` |
+| SSIM | `bsim/ssim` |
+| NSIM | `bsim/nsim` |
