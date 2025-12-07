@@ -64,6 +64,30 @@ export default function Home() {
             </li>
           </ul>
         </div>
+
+        <div className="mt-6 pt-6 border-t border-gray-200 text-center">
+          <p className="text-xs text-gray-500">
+            BSIM is part of the{' '}
+            <a
+              href="https://github.com/jordancrombie/SimToolBox"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-indigo-600 hover:text-indigo-700 hover:underline"
+            >
+              SimToolBox
+            </a>{' '}
+            open ecosystem.
+            <br />
+            <a
+              href="https://github.com/jordancrombie/bsim"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-indigo-600 hover:text-indigo-700 hover:underline"
+            >
+              Learn more about BSIM
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );
