@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Environment variables: `AUTH_ADMIN_JWT_SECRET`, `AUTH_SERVER_URL`
 
 ### Changed
+- **Homepage Logo Branding** - Replaced "BSIM" text with logo image on home page
+  - Added `bsim-logo.png` to frontend public assets
+  - Updated home page to display logo instead of text heading
+  - Kept "The Banking Simulator" subtitle
+
 - **Documentation Reorganization** - Improved public documentation structure
   - Moved deployment docs to `docs/` folder: `AWS_DEPLOYMENT.md`, `BACKEND_SETUP.md`, `DOCKER_SSL_SETUP.md`, `AWS_PRODUCTION_MIGRATION_PLAN.md`
   - Added `LOCAL_DEPLOYMENT_PLANS/` to `.gitignore` for local-only planning documents

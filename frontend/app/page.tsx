@@ -1,12 +1,22 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Home() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">BSIM</h1>
-          <p className="text-gray-600">Banking Simulator</p>
+          <div className="flex justify-center mb-4">
+            <Image
+              src="/bsim-logo.png"
+              alt="BSIM - Banking Simulator"
+              width={280}
+              height={100}
+              priority
+              className="object-contain"
+            />
+          </div>
+          <p className="text-gray-600">The Banking Simulator</p>
         </div>
 
         <div className="space-y-4">
