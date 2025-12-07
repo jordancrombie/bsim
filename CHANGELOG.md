@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - CloudWatch log groups: `/ecs/bsim-wsim-backend`, `/ecs/bsim-wsim-auth-server`, `/ecs/bsim-wsim-frontend`
   - OAuth client registration: `wsim-wallet` in BSIM, `ssim-merchant` in WSIM
   - Task definitions in `aws/` directory: `wsim-backend-task-definition.json`, `wsim-auth-server-task-definition.json`, `wsim-frontend-task-definition.json`
-  - See [AWS_PRODUCTION_MIGRATION_PLAN.md](AWS_PRODUCTION_MIGRATION_PLAN.md) for deployment details
+  - See [docs/AWS_PRODUCTION_MIGRATION_PLAN.md](docs/AWS_PRODUCTION_MIGRATION_PLAN.md) for deployment details
 
 - **WSIM Integration Phase 2** - Complete wallet payment flow with SSIM checkout
   - Docker Compose integration for WSIM services (wsim-backend, wsim-auth-server, wsim-frontend)
@@ -59,8 +59,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Migration `20251203_add_payment_network_models` applied to production
 
 - **Multi-Repository Ecosystem Documentation** - Comprehensive docs for BSIM/SSIM/NSIM architecture
-  - Updated [AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md) with ecosystem overview and diagrams
-  - Updated [AWS_DEPLOYMENT_NOTES.md](AWS_DEPLOYMENT_NOTES.md) with Redis and NSIM details
+  - Updated [docs/AWS_DEPLOYMENT.md](docs/AWS_DEPLOYMENT.md) with ecosystem overview and diagrams
+  - Updated [docs/AWS_DEPLOYMENT_NOTES.md](docs/AWS_DEPLOYMENT_NOTES.md) with Redis and NSIM details
   - Updated SSIM `AWS_DEPLOYMENT.md` with ecosystem context
   - Clear documentation that BSIM is the "showrunner" for all AWS deployments
 

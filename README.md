@@ -84,7 +84,7 @@ Access the application (production):
 - **Open Banking API**: https://openbanking.banksim.ca (FDX-style API)
 - **Backend API (HTTPS)**: https://banksim.ca/api/health
 
-Note: The application runs with SSL/HTTPS using nginx as a reverse proxy. See [DOCKER_SSL_SETUP.md](DOCKER_SSL_SETUP.md) for details.
+Note: The application runs with SSL/HTTPS using nginx as a reverse proxy. See [docs/DOCKER_SSL_SETUP.md](docs/DOCKER_SSL_SETUP.md) for details.
 
 ### Option 3: Local Development (Without Docker)
 
@@ -141,13 +141,10 @@ Visit http://localhost:3000 and try:
 ## Documentation
 
 - **[QUICKSTART.md](QUICKSTART.md)** - Get started in 5 minutes
-- **[BACKEND_SETUP.md](BACKEND_SETUP.md)** - Detailed backend documentation
-- **[IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md)** - Full architecture overview
-- **[OPENBANKING_PLAN.md](OPENBANKING_PLAN.md)** - Open Banking architecture and implementation
+- **[docs/BACKEND_SETUP.md](docs/BACKEND_SETUP.md)** - Detailed backend documentation
 - **[auth-server/README.md](auth-server/README.md)** - Authorization Server (OIDC) documentation
-- **[DOCKER_README.md](DOCKER_README.md)** - Docker setup and usage
-- **[DOCKER_SSL_SETUP.md](DOCKER_SSL_SETUP.md)** - SSL/HTTPS configuration for local and AWS
-- **[AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md)** - Deploy to AWS ECS Fargate
+- **[docs/DOCKER_SSL_SETUP.md](docs/DOCKER_SSL_SETUP.md)** - SSL/HTTPS configuration for local and AWS
+- **[docs/AWS_DEPLOYMENT.md](docs/AWS_DEPLOYMENT.md)** - Deploy to AWS ECS Fargate
 
 ## Related Repositories
 
@@ -703,9 +700,7 @@ When `STORAGE_TYPE` is not set or set to `local`, files are stored in the contai
 
 ## Deployment
 
-See [AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md) for complete instructions on deploying to AWS ECS Fargate.
-
-See [DOCKER_README.md](DOCKER_README.md) for Docker containerization details.
+See [docs/AWS_DEPLOYMENT.md](docs/AWS_DEPLOYMENT.md) for complete instructions on deploying to AWS ECS Fargate.
 
 ## Roadmap
 
