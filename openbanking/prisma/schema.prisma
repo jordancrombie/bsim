@@ -2,6 +2,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -32,6 +33,7 @@ model User {
   creditCards CreditCard[]
   consents    Consent[]
   notifications Notification[]
+  walletCredentials WalletCredential[]
 
   @@map("users")
 }
@@ -187,14 +189,16 @@ model AccountTypeConfig {
 
 // Admin-specific models (separate from end users)
 model AdminUser {
-  id          String         @id @default(uuid())
-  email       String         @unique
-  firstName   String
-  lastName    String
-  role        AdminRole      @default(ADMIN)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  passkeys    AdminPasskey[]
+  id             String         @id @default(uuid())
+  email          String         @unique
+  firstName      String
+  lastName       String
+  role           AdminRole      @default(ADMIN)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  passkeys       AdminPasskey[]
+  invitesCreated AdminInvite[]  @relation("InviteCreator")
+  inviteUsed     AdminInvite?   @relation("InviteUsed")
 
   @@map("admin_users")
 }
@@ -218,6 +222,24 @@ model AdminPasskey {
 enum AdminRole {
   ADMIN
   SUPER_ADMIN
+}
+
+// Admin invitations for new administrator signups
+model AdminInvite {
+  id          String            @id @default(uuid())
+  code        String            @unique // The invite code shared with the invitee
+  email       String?           // Optional: restrict invite to specific email
+  role        AdminRole         @default(ADMIN)
+  createdById String
+  createdBy   AdminUser         @relation("InviteCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  usedById    String?           @unique
+  usedBy      AdminUser?        @relation("InviteUsed", fields: [usedById], references: [id], onDelete: SetNull)
+  usedAt      DateTime?
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  createdAt   DateTime          @default(now())
+
+  @@map("admin_invites")
 }
 
 // ============================================
@@ -311,4 +333,89 @@ enum NotificationType {
   CREDIT_CARD_CREATED
   PAYMENT_DUE
   SYSTEM
+}
+
+// ============================================
+// Payment Network Models
+// ============================================
+
+// Payment consent from user for a specific card and merchant
+model PaymentConsent {
+  id            String    @id @default(uuid())
+  cardToken     String    @unique  // Token issued to merchant/network
+  userId        String
+  creditCardId  String
+  merchantId    String
+  merchantName  String
+  maxAmount     Decimal?  @db.Decimal(15, 2)  // Optional per-transaction limit
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  authorizations PaymentAuthorization[]
+
+  @@index([userId])
+  @@index([creditCardId])
+  @@index([merchantId])
+  @@map("payment_consents")
+}
+
+// Payment authorization hold on a card
+model PaymentAuthorization {
+  id                String                      @id @default(uuid())
+  authorizationCode String                      @unique
+  consentId         String
+  consent           PaymentConsent              @relation(fields: [consentId], references: [id])
+  amount            Decimal                     @db.Decimal(15, 2)
+  currency          String                      @default("CAD")
+  merchantId        String
+  merchantName      String
+  orderId           String
+  status            PaymentAuthorizationStatus  @default(PENDING)
+  capturedAmount    Decimal                     @default(0) @db.Decimal(15, 2)
+  declineReason     String?
+  expiresAt         DateTime
+  createdAt         DateTime                    @default(now())
+  updatedAt         DateTime                    @updatedAt
+
+  @@index([consentId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("payment_authorizations")
+}
+
+enum PaymentAuthorizationStatus {
+  PENDING
+  CAPTURED
+  VOIDED
+  EXPIRED
+  DECLINED
+}
+
+// ============================================
+// Digital Wallet Models
+// ============================================
+
+// Wallet credential issued to digital wallet providers (e.g., WSIM)
+model WalletCredential {
+  id              String    @id @default(uuid())
+  credentialToken String    @unique  // Long-lived JWT for wallet API access
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  walletId        String    // WSIM's identifier
+  walletName      String    // e.g., "WSIM Wallet"
+  permittedCards  String[]  // Array of credit card IDs user consented to share
+  scopes          String[]  // Permitted operations: ["cards:read", "payments:create"]
+  issuedAt        DateTime  @default(now())
+  expiresAt       DateTime
+  revokedAt       DateTime?
+  lastUsedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([walletId])
+  @@index([credentialToken])
+  @@map("wallet_credentials")
 }
