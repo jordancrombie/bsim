@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Regal Moose Production Deployment** - Second SSIM multi-tenant instance on AWS
+  - Deployed `store.regalmoose.ca` as separate ECS service sharing SSIM database
+  - ACM wildcard certificate `*.regalmoose.ca` added to ALB listener
+  - Route 53 DNS record pointing to shared ALB
+  - CloudWatch log group `/ecs/bsim-regalmoose`
+  - ECS task definition `bsim-regalmoose` with store-specific environment variables
+  - OAuth client registrations in BSIM auth and WSIM auth
+
 - **WSIM Admin Interface Deployment** - Admin portal for WSIM auth-server
   - Passkey-based admin authentication (same pattern as BSIM admin)
   - Admin invite system for adding new administrators
@@ -31,6 +39,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Removed `.claude/CLAUDE.md` from repository (AI-specific hints kept locally only)
 
 ### Fixed
+- **Shared Database Schema Sync** - Synced OpenBanking Prisma schema with backend/auth-server
+  - Added missing models: `AdminInvite`, `PaymentConsent`, `PaymentAuthorization`, `WalletCredential`
+  - Added `binaryTargets` for Alpine Linux compatibility
+  - Prevents accidental table drops when services share the same database
+  - Updated dangerous ECS migration tasks to remove `--accept-data-loss` flag
+
 - **Test User Cleanup** - Deleted 478 `@testuser.banksim.ca` test users from production BSIM database
 
 - **WSIM AWS Production Deployment** - Full production deployment of Wallet Simulator to AWS ECS
