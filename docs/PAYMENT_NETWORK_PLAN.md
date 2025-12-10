@@ -30,7 +30,7 @@ This document outlines the architecture and implementation plan for adding a **P
                                                │
 ┌──────────────────────────────────────────────▼──────────────────────────────┐
 │                         Payment Network (SimNet)                            │
-│                         payment.banksim.ca:3006                             │
+│                         payment.yourbanksimdomain.com:3006                             │
 │                                                                             │
 │  ┌─────────────────────────────────────────────────────────────────────┐   │
 │  │                      Payment Queue Service                           │   │
@@ -97,7 +97,7 @@ This document outlines the architecture and implementation plan for adding a **P
    - User consents to payment scope
    - SSIM receives access token with payment permissions
 3. SSIM submits payment request to Payment Network
-   POST https://payment.banksim.ca/api/v1/payments
+   POST https://payment.yourbanksimdomain.com/api/v1/payments
    {
      "merchantId": "ssim-store-001",
      "amount": 125.99,
@@ -130,7 +130,7 @@ This document outlines the architecture and implementation plan for adding a **P
 ```
 1. SSIM ships order / completes service
 2. SSIM captures payment
-   POST https://payment.banksim.ca/api/v1/payments/{paymentId}/capture
+   POST https://payment.yourbanksimdomain.com/api/v1/payments/{paymentId}/capture
 3. Payment Network forwards to BSIM
 4. BSIM completes the charge (auth → settled)
 5. Transaction recorded in BSIM
@@ -142,7 +142,7 @@ This document outlines the architecture and implementation plan for adding a **P
 ```
 1. Customer requests refund at SSIM
 2. SSIM initiates refund
-   POST https://payment.banksim.ca/api/v1/payments/{paymentId}/refund
+   POST https://payment.yourbanksimdomain.com/api/v1/payments/{paymentId}/refund
    { "amount": 125.99, "reason": "Customer return" }
 3. Payment Network routes to BSIM
 4. BSIM processes refund to card
@@ -511,9 +511,9 @@ const PAYMENT_SCOPES = [
 
 1. **SSIM initiates payment:**
    ```
-   GET https://auth.banksim.ca/auth
+   GET https://auth.yourbanksimdomain.com/auth
    ?client_id=ssim-store
-   &redirect_uri=https://ssim.banksim.ca/payment/callback
+   &redirect_uri=https://ssim.yourbanksimdomain.com/payment/callback
    &response_type=code
    &scope=openid payment:authorize
    &state=order-12345
@@ -598,8 +598,8 @@ const PAYMENT_SCOPES = [
 DATABASE_URL=postgresql://...
 
 # Auth Server (for token validation)
-AUTH_SERVER_URL=https://auth.banksim.ca
-AUTH_SERVER_JWKS_URL=https://auth.banksim.ca/.well-known/jwks.json
+AUTH_SERVER_URL=https://auth.yourbanksimdomain.com
+AUTH_SERVER_JWKS_URL=https://auth.yourbanksimdomain.com/.well-known/jwks.json
 
 # BSIM Backend (for bank operations)
 BSIM_BACKEND_URL=http://backend:3001
@@ -613,14 +613,14 @@ NODE_ENV=production
 **SSIM Configuration:**
 ```env
 # Payment Network
-PAYMENT_NETWORK_URL=https://payment.banksim.ca
+PAYMENT_NETWORK_URL=https://payment.yourbanksimdomain.com
 PAYMENT_MERCHANT_ID=ssim-store-001
 PAYMENT_API_KEY=merchant-api-key
 
 # OAuth (existing)
 OAUTH_CLIENT_ID=ssim-store
 OAUTH_CLIENT_SECRET=...
-OAUTH_AUTH_URL=https://auth.banksim.ca
+OAUTH_AUTH_URL=https://auth.yourbanksimdomain.com
 ```
 
 ### Docker Compose Addition
@@ -658,10 +658,10 @@ payment-network:
 # Payment Network API
 server {
     listen 443 ssl;
-    server_name payment.banksim.ca;
+    server_name payment.yourbanksimdomain.com;
 
-    ssl_certificate /etc/nginx/certs/banksim.ca.crt;
-    ssl_certificate_key /etc/nginx/certs/banksim.ca.key;
+    ssl_certificate /etc/nginx/certs/yourbanksimdomain.com.crt;
+    ssl_certificate_key /etc/nginx/certs/yourbanksimdomain.com.key;
 
     location / {
         proxy_pass http://payment-network:3006;
@@ -701,7 +701,7 @@ server {
 ## API Documentation
 
 Full OpenAPI/Swagger documentation will be generated and available at:
-- `https://payment.banksim.ca/docs`
+- `https://payment.yourbanksimdomain.com/docs`
 
 ---
 
@@ -710,7 +710,7 @@ Full OpenAPI/Swagger documentation will be generated and available at:
 **What SSIM needs to implement:**
 
 1. **IPaymentNetworkAdapter interface** - Abstract payment operations
-2. **SimNetAdapter class** - HTTP client for payment.banksim.ca
+2. **SimNetAdapter class** - HTTP client for payment.yourbanksimdomain.com
 3. **Checkout integration** - Call adapter during checkout
 4. **OAuth flow update** - Request `payment:authorize` scope
 5. **Card selection UI** - Let user pick card during OAuth consent

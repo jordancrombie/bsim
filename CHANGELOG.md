@@ -30,12 +30,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Kept "The Banking Simulator" subtitle
   - Added SimToolBox ecosystem footer with links to GitHub repositories
 
-- **Documentation Reorganization** - Improved public documentation structure
-  - Moved deployment docs to `docs/` folder: `AWS_DEPLOYMENT.md`, `BACKEND_SETUP.md`, `DOCKER_SSL_SETUP.md`, `AWS_PRODUCTION_MIGRATION_PLAN.md`
-  - Added `LOCAL_DEPLOYMENT_PLANS/` to `.gitignore` for local-only planning documents
+- **Documentation Cleanup for Public Sharing** - Generalized docs for open source release
+  - Replaced all `banksim.ca` domain references with `yourbanksimdomain.com` placeholder in public docs
+  - Kept project component names (BSIM, SSIM, NSIM, WSIM) intact as they are project aliases
+  - Moved implementation-specific docs to `LOCAL_DEPLOYMENT_PLANS/` (gitignored):
+    - `AWS_PRODUCTION_MIGRATION_PLAN.md` - Contains AWS account IDs and credentials
+    - `NSIM_PRODUCTION_DEPLOYMENT.md` - Contains AWS-specific deployment details
+    - `WSIM_INTEGRATION_PLAN.md` - Implementation-specific integration details
+    - `PAYMENT_NETWORK_STATUS.md` - Contains OAuth credentials and deployment status
+  - Public docs remaining in `docs/`:
+    - `AWS_DEPLOYMENT.md` - Generic AWS ECS Fargate deployment guide
+    - `BACKEND_SETUP.md` - Generic Express.js/Prisma backend setup guide
+    - `DOCKER_SSL_SETUP.md` - Generic Docker SSL/HTTPS configuration guide
+    - `PAYMENT_NETWORK_PLAN.md` - Generic payment network architecture guide
   - Added critical `--no-cache` Docker build guidance to `docs/AWS_DEPLOYMENT.md`
   - Added ECR repository names table for all services (BSIM, WSIM, SSIM, NSIM)
-  - Fixed broken links in `README.md` and `CHANGELOG.md` after file moves
   - Removed `.claude/CLAUDE.md` from repository (AI-specific hints kept locally only)
 
 ### Fixed
@@ -56,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - CloudWatch log groups: `/ecs/bsim-wsim-backend`, `/ecs/bsim-wsim-auth-server`, `/ecs/bsim-wsim-frontend`
   - OAuth client registration: `wsim-wallet` in BSIM, `ssim-merchant` in WSIM
   - Task definitions in `aws/` directory: `wsim-backend-task-definition.json`, `wsim-auth-server-task-definition.json`, `wsim-frontend-task-definition.json`
-  - See [docs/AWS_PRODUCTION_MIGRATION_PLAN.md](docs/AWS_PRODUCTION_MIGRATION_PLAN.md) for deployment details
+  - See `LOCAL_DEPLOYMENT_PLANS/AWS_PRODUCTION_MIGRATION_PLAN.md` for deployment details (local only)
 
 - **WSIM Integration Phase 2** - Complete wallet payment flow with SSIM checkout
   - Docker Compose integration for WSIM services (wsim-backend, wsim-auth-server, wsim-frontend)
