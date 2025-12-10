@@ -48,22 +48,22 @@ This document explains how SSL/HTTPS is configured for local Docker development 
 ### Prerequisites
 
 You need SSL certificates in the `certs/` directory:
-- `banksim.ca.crt` - SSL certificate
-- `banksim.ca.key` - Private key
+- `yourbanksimdomain.com.crt` - SSL certificate
+- `yourbanksimdomain.com.key` - Private key
 
 If you don't have certificates, generate self-signed ones:
 
 ```bash
 # Using OpenSSL
-openssl req -x509 -newkey rsa:4096 -keyout certs/banksim.ca.key \
-  -out certs/banksim.ca.crt -days 365 -nodes \
+openssl req -x509 -newkey rsa:4096 -keyout certs/yourbanksimdomain.com.key \
+  -out certs/yourbanksimdomain.com.crt -days 365 -nodes \
   -subj "/CN=localhost"
 
 # Or using mkcert (recommended for local development)
 mkcert -install
-mkcert -key-file certs/banksim.ca.key \
-  -cert-file certs/banksim.ca.crt \
-  localhost banksim.ca "*.banksim.ca"
+mkcert -key-file certs/yourbanksimdomain.com.key \
+  -cert-file certs/yourbanksimdomain.com.crt \
+  localhost yourbanksimdomain.com "*.yourbanksimdomain.com"
 ```
 
 ### Running with SSL
@@ -196,7 +196,7 @@ WebAuthn requires HTTPS in production. The SSL setup ensures:
 
 ### Container won't start - certificate not found
 
-**Error**: `Error: ENOENT: no such file or directory, open '/certs/banksim.ca.key'`
+**Error**: `Error: ENOENT: no such file or directory, open '/certs/yourbanksimdomain.com.key'`
 
 **Solution**: This error should only occur if the backend has `USE_HTTPS=true`. Check:
 1. Backend should have `USE_HTTPS=false` in docker-compose.yml
@@ -236,8 +236,8 @@ bsim/
 │   └── nginx.conf              # nginx SSL configuration
 ├── certs/                      # SSL certificates (gitignored)
 │   ├── .gitkeep
-│   ├── banksim.ca.crt         # SSL certificate
-│   └── banksim.ca.key         # Private key (secret!)
+│   ├── yourbanksimdomain.com.crt         # SSL certificate
+│   └── yourbanksimdomain.com.key         # Private key (secret!)
 ├── docker-compose.yml          # Local development stack
 └── backend/src/server.ts       # Backend supports USE_HTTPS flag
 ```

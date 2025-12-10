@@ -12,9 +12,9 @@ This guide walks you through deploying BSIM to AWS using ECS Fargate, RDS Postgr
 
 | Repository | Description | Deployed To |
 |------------|-------------|-------------|
-| **[bsim](https://github.com/jordancrombie/bsim)** | Core banking simulator (this repo) - Frontend, Admin, Auth Server, Open Banking, Backend | `banksim.ca`, `admin.*`, `auth.*`, `openbanking.*`, `api.*` |
-| **[ssim](https://github.com/jordancrombie/ssim)** | Store Simulator - Third-party merchant demo app | `ssim.banksim.ca` |
-| **[nsim](https://github.com/jordancrombie/nsim)** | Payment Network Simulator - Routes payments between merchants and banks | `payment.banksim.ca` |
+| **[bsim](https://github.com/jordancrombie/bsim)** | Core banking simulator (this repo) - Frontend, Admin, Auth Server, Open Banking, Backend | `yourbanksimdomain.com`, `admin.*`, `auth.*`, `openbanking.*`, `api.*` |
+| **[ssim](https://github.com/jordancrombie/ssim)** | Store Simulator - Third-party merchant demo app | `ssim.yourbanksimdomain.com` |
+| **[nsim](https://github.com/jordancrombie/nsim)** | Payment Network Simulator - Routes payments between merchants and banks | `payment.yourbanksimdomain.com` |
 
 ### How It Works
 
@@ -48,7 +48,7 @@ This guide walks you through deploying BSIM to AWS using ECS Fargate, RDS Postgr
 │                    │  • ALB (bsim-alb)              │                            │
 │                    │  • RDS PostgreSQL              │                            │
 │                    │  • ElastiCache Redis           │                            │
-│                    │  • Route 53 (banksim.ca)       │                            │
+│                    │  • Route 53 (yourbanksimdomain.com)       │                            │
 │                    └────────────────────────────────┘                            │
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -68,7 +68,7 @@ This guide walks you through deploying BSIM to AWS using ECS Fargate, RDS Postgr
    - Application Load Balancer
    - RDS PostgreSQL database
    - ElastiCache Redis (for NSIM)
-   - SSL certificate (*.banksim.ca)
+   - SSL certificate (*.yourbanksimdomain.com)
 
 4. **Cross-repo references**: The `docker-compose.yml` in this repo references NSIM via relative path (`../nsim`). For local development, clone all repos as siblings.
 
@@ -103,7 +103,7 @@ docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
 │  ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
 │  │                         Application Load Balancer (ALB)                              │ │
 │  │                           with AWS Certificate Manager                               │ │
-│  │   Routes: banksim.ca, admin.*, auth.*, openbanking.*, api.*, ssim.*, payment.*      │ │
+│  │   Routes: yourbanksimdomain.com, admin.*, auth.*, openbanking.*, api.*, ssim.*, payment.*      │ │
 │  └──┬────────┬──────────┬───────────────┬──────────────┬──────────────┬────────┬───────┘ │
 │     │        │          │               │              │              │        │         │
 │  ┌──▼───┐ ┌──▼───┐ ┌────▼────┐  ┌──────▼──────┐ ┌─────▼─────┐ ┌──────▼──────┐ ┌▼──────┐ │
@@ -132,13 +132,13 @@ docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
 
 | Service | Subdomain | Port | Repository | Description |
 |---------|-----------|------|------------|-------------|
-| Frontend | banksim.ca | 3000 | bsim | Customer-facing Next.js app |
-| Admin | admin.banksim.ca | 3002 | bsim | Admin dashboard |
-| Auth Server | auth.banksim.ca | 3003 | bsim | OIDC Authorization Server |
-| Open Banking | openbanking.banksim.ca | 3004 | bsim | FDX-inspired resource API |
-| Backend | api.banksim.ca | 3001 | bsim | Core banking API |
-| SSIM | ssim.banksim.ca | 3005 | **ssim** (external) | Store Simulator merchant demo |
-| NSIM | payment.banksim.ca | 3006 | **nsim** (external) | Payment Network middleware |
+| Frontend | yourbanksimdomain.com | 3000 | bsim | Customer-facing Next.js app |
+| Admin | admin.yourbanksimdomain.com | 3002 | bsim | Admin dashboard |
+| Auth Server | auth.yourbanksimdomain.com | 3003 | bsim | OIDC Authorization Server |
+| Open Banking | openbanking.yourbanksimdomain.com | 3004 | bsim | FDX-inspired resource API |
+| Backend | api.yourbanksimdomain.com | 3001 | bsim | Core banking API |
+| SSIM | ssim.yourbanksimdomain.com | 3005 | **ssim** (external) | Store Simulator merchant demo |
+| NSIM | payment.yourbanksimdomain.com | 3006 | **nsim** (external) | Payment Network middleware |
 
 > **External Repositories:**
 > - **SSIM** (Store Simulator): https://github.com/jordancrombie/ssim - Demonstrates OAuth/OIDC integration and payment flows from a merchant perspective.
@@ -251,8 +251,8 @@ done
 # NOTE: Use --no-cache for subsequent rebuilds to ensure latest code is included!
 cd frontend
 docker build --no-cache --platform linux/amd64 \
-  --build-arg NEXT_PUBLIC_API_URL=https://api.banksim.ca/api \
-  --build-arg NEXT_PUBLIC_DOMAIN=banksim.ca \
+  --build-arg NEXT_PUBLIC_API_URL=https://api.yourbanksimdomain.com/api \
+  --build-arg NEXT_PUBLIC_DOMAIN=yourbanksimdomain.com \
   --build-arg NEXT_PUBLIC_BACKEND_PORT=443 \
   -t bsim/frontend .
 docker tag bsim/frontend:latest ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bsim/frontend:latest
@@ -263,8 +263,8 @@ cd ..
 # NOTE: Use --no-cache for subsequent rebuilds to ensure latest code is included!
 cd admin
 docker build --no-cache --platform linux/amd64 \
-  --build-arg NEXT_PUBLIC_API_URL=https://api.banksim.ca/api \
-  --build-arg NEXT_PUBLIC_DOMAIN=banksim.ca \
+  --build-arg NEXT_PUBLIC_API_URL=https://api.yourbanksimdomain.com/api \
+  --build-arg NEXT_PUBLIC_DOMAIN=yourbanksimdomain.com \
   -t bsim/admin .
 docker tag bsim/admin:latest ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bsim/admin:latest
 docker push ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bsim/admin:latest
@@ -370,19 +370,19 @@ Create `backend-task-definition.json`:
         },
         {
           "name": "DOMAIN",
-          "value": "banksim.ca"
+          "value": "yourbanksimdomain.com"
         },
         {
           "name": "CORS_ORIGIN",
-          "value": "https://banksim.ca"
+          "value": "https://yourbanksimdomain.com"
         },
         {
           "name": "RP_ID",
-          "value": "banksim.ca"
+          "value": "yourbanksimdomain.com"
         },
         {
           "name": "ORIGIN",
-          "value": "https://banksim.ca"
+          "value": "https://yourbanksimdomain.com"
         }
       ],
       "logConfiguration": {
@@ -437,11 +437,11 @@ Create `frontend-task-definition.json`:
         },
         {
           "name": "NEXT_PUBLIC_DOMAIN",
-          "value": "banksim.ca"
+          "value": "yourbanksimdomain.com"
         },
         {
           "name": "NEXT_PUBLIC_API_URL",
-          "value": "https://api.banksim.ca/api"
+          "value": "https://api.yourbanksimdomain.com/api"
         }
       ],
       "logConfiguration": {
@@ -488,7 +488,7 @@ Create `auth-server-task-definition.json`:
       "environment": [
         { "name": "NODE_ENV", "value": "production" },
         { "name": "PORT", "value": "3003" },
-        { "name": "ISSUER", "value": "https://auth.banksim.ca" },
+        { "name": "ISSUER", "value": "https://auth.yourbanksimdomain.com" },
         { "name": "DATABASE_URL", "value": "postgresql://bsim:YOUR_PASSWORD@RDS_ENDPOINT:5432/bsim" },
         { "name": "COOKIE_SECRET", "value": "YOUR_COOKIE_SECRET" }
       ],
@@ -537,8 +537,8 @@ Create `openbanking-task-definition.json`:
         { "name": "NODE_ENV", "value": "production" },
         { "name": "PORT", "value": "3004" },
         { "name": "DATABASE_URL", "value": "postgresql://bsim:YOUR_PASSWORD@RDS_ENDPOINT:5432/bsim" },
-        { "name": "AUTH_SERVER_ISSUER", "value": "https://auth.banksim.ca" },
-        { "name": "JWKS_URI", "value": "https://auth.banksim.ca/.well-known/jwks.json" },
+        { "name": "AUTH_SERVER_ISSUER", "value": "https://auth.yourbanksimdomain.com" },
+        { "name": "JWKS_URI", "value": "https://auth.yourbanksimdomain.com/.well-known/jwks.json" },
         { "name": "CORS_ORIGIN", "value": "*" }
       ],
       "logConfiguration": {
@@ -645,10 +645,10 @@ aws elbv2 create-target-group \
 ### 7. Request SSL Certificate (AWS Certificate Manager)
 
 ```bash
-# Request certificate for banksim.ca and *.banksim.ca
+# Request certificate for yourbanksimdomain.com and *.yourbanksimdomain.com
 aws acm request-certificate \
-  --domain-name banksim.ca \
-  --subject-alternative-names *.banksim.ca \
+  --domain-name yourbanksimdomain.com \
+  --subject-alternative-names *.yourbanksimdomain.com \
   --validation-method DNS
 
 # Follow DNS validation instructions in AWS Console
@@ -659,7 +659,7 @@ aws acm request-certificate \
 
 ```bash
 # Get certificate ARN
-CERT_ARN=$(aws acm list-certificates --query "CertificateSummaryList[?DomainName=='banksim.ca'].CertificateArn" --output text)
+CERT_ARN=$(aws acm list-certificates --query "CertificateSummaryList[?DomainName=='yourbanksimdomain.com'].CertificateArn" --output text)
 
 # Create HTTPS listener for frontend (default)
 aws elbv2 create-listener \
@@ -669,32 +669,32 @@ aws elbv2 create-listener \
   --certificates CertificateArn=$CERT_ARN \
   --default-actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:.../bsim-frontend-tg
 
-# Create rule for backend API (api.banksim.ca)
+# Create rule for backend API (api.yourbanksimdomain.com)
 aws elbv2 create-rule \
   --listener-arn arn:aws:elasticloadbalancing:... \
   --priority 1 \
-  --conditions Field=host-header,Values=api.banksim.ca \
+  --conditions Field=host-header,Values=api.yourbanksimdomain.com \
   --actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:.../bsim-backend-tg
 
-# Create rule for admin (admin.banksim.ca)
+# Create rule for admin (admin.yourbanksimdomain.com)
 aws elbv2 create-rule \
   --listener-arn arn:aws:elasticloadbalancing:... \
   --priority 2 \
-  --conditions Field=host-header,Values=admin.banksim.ca \
+  --conditions Field=host-header,Values=admin.yourbanksimdomain.com \
   --actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:.../bsim-admin-tg
 
-# Create rule for auth server (auth.banksim.ca)
+# Create rule for auth server (auth.yourbanksimdomain.com)
 aws elbv2 create-rule \
   --listener-arn arn:aws:elasticloadbalancing:... \
   --priority 3 \
-  --conditions Field=host-header,Values=auth.banksim.ca \
+  --conditions Field=host-header,Values=auth.yourbanksimdomain.com \
   --actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:.../bsim-auth-server-tg
 
-# Create rule for open banking API (openbanking.banksim.ca)
+# Create rule for open banking API (openbanking.yourbanksimdomain.com)
 aws elbv2 create-rule \
   --listener-arn arn:aws:elasticloadbalancing:... \
   --priority 4 \
-  --conditions Field=host-header,Values=openbanking.banksim.ca \
+  --conditions Field=host-header,Values=openbanking.yourbanksimdomain.com \
   --actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:.../bsim-openbanking-tg
 
 # Create HTTP to HTTPS redirect
@@ -806,11 +806,11 @@ aws elbv2 describe-load-balancers \
 
 # Create Route 53 records (or configure with your DNS provider)
 # All subdomains point to the same ALB, routing is done by listener rules
-# banksim.ca -> ALB (A record alias)
-# api.banksim.ca -> ALB (A record alias)
-# admin.banksim.ca -> ALB (A record alias)
-# auth.banksim.ca -> ALB (A record alias)
-# openbanking.banksim.ca -> ALB (A record alias)
+# yourbanksimdomain.com -> ALB (A record alias)
+# api.yourbanksimdomain.com -> ALB (A record alias)
+# admin.yourbanksimdomain.com -> ALB (A record alias)
+# auth.yourbanksimdomain.com -> ALB (A record alias)
+# openbanking.yourbanksimdomain.com -> ALB (A record alias)
 ```
 
 ## Monitoring and Logs
@@ -895,8 +895,8 @@ docker build --no-cache --platform linux/amd64 \
 
 # 2. For frontend/admin, DON'T FORGET the build args!
 docker build --no-cache --platform linux/amd64 \
-  --build-arg NEXT_PUBLIC_API_URL=https://api.banksim.ca/api \
-  --build-arg NEXT_PUBLIC_DOMAIN=banksim.ca \
+  --build-arg NEXT_PUBLIC_API_URL=https://api.yourbanksimdomain.com/api \
+  --build-arg NEXT_PUBLIC_DOMAIN=yourbanksimdomain.com \
   --build-arg NEXT_PUBLIC_BACKEND_PORT=443 \
   -t ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/bsim/frontend:latest ./frontend
 
