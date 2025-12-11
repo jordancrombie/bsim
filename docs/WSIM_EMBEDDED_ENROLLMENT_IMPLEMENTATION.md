@@ -6,7 +6,7 @@ This document outlines the implementation for adding embedded WSIM enrollment to
 
 **Branch:** `feature/embedded-wsim-enrollment`
 
-**Status:** Implementation complete on BSIM side, awaiting WSIM team fix for endpoint URL
+**Status:** ✅ Complete - Embedded enrollment and server-side SSO working
 
 **Reference Documentation:** `/Users/jcrombie/ai/wsim/docs/BSIM_ENROLLMENT_INTEGRATION.md`
 
@@ -14,19 +14,18 @@ This document outlines the implementation for adding embedded WSIM enrollment to
 
 ## Implementation Status
 
-### Completed (BSIM Side)
+### Completed
 
 - [x] Backend: Environment variables for WSIM integration
-- [x] Backend: WSIM enrollment routes (`/api/wsim/enrollment-data`, `/api/wsim/enrollment-status`, `/api/wsim/config`)
+- [x] Backend: WSIM enrollment routes (`/api/wsim/enrollment-data`, `/api/wsim/enrollment-status`, `/api/wsim/config`, `/api/wsim/enrollment-complete`)
+- [x] Backend: Server-side SSO endpoint (`/api/wsim/sso-url`) for true cross-device SSO
 - [x] Backend: Wallet routes with cardToken JWT authentication (`/api/wallet/cards/enroll`)
 - [x] Frontend: Wallet Pay page (`/dashboard/wallet-pay`)
 - [x] Frontend: WSIM enrollment utilities with postMessage handling
-- [x] Frontend: API client methods for enrollment
+- [x] Frontend: API client methods for enrollment and SSO
+- [x] Frontend: "Open WSIM Wallet" button uses server-side SSO
 - [x] Docker: Environment variables for dev and production
-
-### Pending (WSIM Side)
-
-- [ ] WSIM needs to call `/api/wallet/cards/enroll` instead of `/api/wallet/cards`
+- [x] WSIM: Partner SSO API (`POST /api/partner/sso-token`)
 
 ### Issues Resolved During Integration
 
@@ -284,6 +283,40 @@ frontend:
 - `frontend/lib/api.ts` - Add enrollment data method
 - `docker-compose.dev.yml` - Add env vars
 - `docker-compose.yml` - Add env vars (for production)
+
+---
+
+## Server-Side SSO
+
+After enrollment, users can open their WSIM Wallet from BSIM with automatic login (no passkey required).
+
+### How It Works
+
+1. User clicks "Open WSIM Wallet" button in BSIM
+2. BSIM frontend calls `GET /api/wsim/sso-url`
+3. BSIM backend calls WSIM's `POST /api/partner/sso-token` with signed payload
+4. WSIM returns a short-lived (5 minute) SSO URL
+5. BSIM frontend opens the SSO URL in a new tab
+6. User is automatically logged into WSIM
+
+### Key Files
+
+- **Backend**: `backend/src/routes/wsimEnrollmentRoutes.ts` - `GET /api/wsim/sso-url` endpoint
+- **Frontend**: `frontend/lib/api.ts` - `getWsimSsoUrl()` method
+- **Frontend**: `frontend/app/dashboard/wallet-pay/page.tsx` - `handleOpenWallet()` function
+
+### Benefits
+
+- **True SSO** - Works on any browser/device as long as user is logged into BSIM
+- **No localStorage dependency** - Server-side token generation
+- **Short-lived tokens** - 5-minute expiry minimizes security exposure
+
+### Troubleshooting
+
+If SSO returns 404 "user_not_found":
+- The WSIM `BsimEnrollment.fiUserRef` must match BSIM's user ID
+- Users enrolled via OIDC flow may have a different `fiUserRef` than their BSIM user ID
+- Embedded enrollment automatically uses the correct BSIM user ID
 
 ---
 

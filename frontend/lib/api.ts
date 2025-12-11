@@ -267,6 +267,27 @@ class ApiClient {
     const response = await this.client.get<WsimConfig>('/wsim/config');
     return response.data;
   }
+
+  /**
+   * Record successful WSIM enrollment
+   * Called after the WSIM popup reports successful enrollment
+   */
+  async recordWsimEnrollment(walletId: string, cardsEnrolled?: number): Promise<{ success: boolean }> {
+    const response = await this.client.post<{ success: boolean }>('/wsim/enrollment-complete', {
+      walletId,
+      cardsEnrolled,
+    });
+    return response.data;
+  }
+
+  /**
+   * Get SSO URL for opening WSIM Wallet
+   * Server-side SSO token generation - works across all browsers/devices
+   */
+  async getWsimSsoUrl(): Promise<{ ssoUrl: string; expiresIn: number }> {
+    const response = await this.client.get<{ ssoUrl: string; expiresIn: number }>('/wsim/sso-url');
+    return response.data;
+  }
 }
 
 export const api = new ApiClient();

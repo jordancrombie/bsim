@@ -206,6 +206,94 @@ export function createWsimEnrollmentRoutes(prisma: PrismaClient): Router {
   });
 
   /**
+   * POST /api/wsim/enrollment-complete
+   *
+   * Records a successful embedded enrollment.
+   * Called by the frontend when the WSIM popup reports successful enrollment.
+   * Creates a WalletCredential record to track the enrollment on BSIM side.
+   */
+  router.post('/enrollment-complete', authMiddleware, async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.user?.userId;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      const { walletId, cardsEnrolled } = req.body as {
+        walletId: string;
+        cardsEnrolled?: number;
+      };
+
+      if (!walletId) {
+        return res.status(400).json({ error: 'walletId is required' });
+      }
+
+      // Check if user already has an active credential for this wallet
+      const existingCredential = await prisma.walletCredential.findFirst({
+        where: {
+          userId,
+          walletId,
+          revokedAt: null,
+        },
+      });
+
+      if (existingCredential) {
+        // Update existing credential
+        const updated = await prisma.walletCredential.update({
+          where: { id: existingCredential.id },
+          data: {
+            lastUsedAt: new Date(),
+            // Extend expiry if enrolling again
+            expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days
+          },
+        });
+
+        console.log(`[WSIM Enrollment] Updated existing enrollment for user ${userId.substring(0, 8)}...`);
+
+        return res.json({
+          success: true,
+          credentialId: updated.id,
+          updated: true,
+        });
+      }
+
+      // Get user's credit card IDs to store as permitted cards
+      const userCards = await prisma.creditCard.findMany({
+        where: { userId },
+        select: { id: true },
+      });
+
+      const permittedCards = userCards.map(c => c.id);
+
+      // Create a new wallet credential record
+      const credential = await prisma.walletCredential.create({
+        data: {
+          userId,
+          walletId,
+          walletName: 'Wallet Simulator',
+          credentialToken: crypto.randomUUID(), // Generate a unique token
+          permittedCards,
+          scopes: ['cards:read', 'payments:create'],
+          issuedAt: new Date(),
+          expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days
+        },
+      });
+
+      console.log(`[WSIM Enrollment] Recorded new enrollment for user ${userId.substring(0, 8)}..., walletId: ${walletId}, cards: ${cardsEnrolled || permittedCards.length}`);
+
+      res.json({
+        success: true,
+        credentialId: credential.id,
+        updated: false,
+      });
+    } catch (error) {
+      console.error('[WSIM Enrollment] Error recording enrollment:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  /**
    * GET /api/wsim/config
    *
    * Returns WSIM configuration for the frontend.
@@ -216,6 +304,98 @@ export function createWsimEnrollmentRoutes(prisma: PrismaClient): Router {
       authUrl: config.wsim.authUrl,
       bsimId: config.wsim.bsimId,
     });
+  });
+
+  /**
+   * GET /api/wsim/sso-url
+   *
+   * Generates a server-side SSO URL for opening WSIM Wallet.
+   * This provides true SSO - works on any device/browser as long as the user is logged into BSIM.
+   *
+   * Flow:
+   * 1. BSIM backend calls WSIM's /api/partner/sso-token endpoint (server-to-server)
+   * 2. WSIM validates the request and returns a short-lived SSO token
+   * 3. BSIM frontend receives the SSO URL and opens it
+   * 4. User is automatically logged into WSIM
+   */
+  router.get('/sso-url', authMiddleware, async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.user?.userId;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      // Check if user is enrolled in WSIM
+      const walletCredential = await prisma.walletCredential.findFirst({
+        where: {
+          userId,
+          revokedAt: null,
+          expiresAt: { gt: new Date() },
+        },
+      });
+
+      if (!walletCredential) {
+        return res.status(400).json({
+          error: 'Not enrolled',
+          message: 'You must be enrolled in WSIM Wallet to use SSO',
+        });
+      }
+
+      // Build the SSO request payload
+      const timestamp = Date.now();
+      const payload = {
+        bsimId: config.wsim.bsimId,
+        bsimUserId: userId,
+        timestamp,
+      };
+
+      // Generate HMAC signature
+      const signedData = JSON.stringify(payload);
+      const signature = crypto
+        .createHmac('sha256', config.wsim.sharedSecret)
+        .update(signedData)
+        .digest('hex');
+
+      // Derive the WSIM API URL from the auth URL (wsim-auth-dev.banksim.ca -> wsim-dev.banksim.ca)
+      const wsimApiUrl = config.wsim.authUrl.replace('-auth', '');
+
+      // Call WSIM's partner SSO endpoint
+      const response = await fetch(`${wsimApiUrl}/api/partner/sso-token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...payload, signature }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('[WSIM SSO] Failed to get SSO token:', response.status, errorData);
+
+        if (response.status === 404) {
+          return res.status(400).json({
+            error: 'Not enrolled in WSIM',
+            message: 'Your WSIM enrollment may have expired. Please re-enroll.',
+          });
+        }
+
+        return res.status(response.status).json({
+          error: 'SSO failed',
+          message: 'Failed to generate SSO URL. Please try again.',
+        });
+      }
+
+      const data = await response.json();
+
+      console.log(`[WSIM SSO] Generated SSO URL for user ${userId.substring(0, 8)}...`);
+
+      res.json({
+        ssoUrl: data.ssoUrl,
+        expiresIn: data.expiresIn,
+      });
+    } catch (error) {
+      console.error('[WSIM SSO] Error generating SSO URL:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
   });
 
   return router;
