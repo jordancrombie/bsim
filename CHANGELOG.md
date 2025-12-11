@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **WSIM Embedded Enrollment** - In-bank wallet enrollment for WSIM Wallet
+  - Users can enroll credit cards in WSIM Wallet directly from BSIM dashboard
+  - New Wallet Pay page at `/dashboard/wallet-pay`
+  - Popup-based enrollment flow with postMessage communication
+  - Backend endpoints: `/api/wsim/enrollment-data`, `/api/wsim/enrollment-status`, `/api/wsim/config`, `/api/wsim/enrollment-complete`
+  - Card token JWT authentication for server-to-server card fetching
+  - HMAC-SHA256 signed payloads for secure enrollment data exchange
+
+- **Server-Side SSO for WSIM Wallet** - True single sign-on across devices/browsers
+  - "Open WSIM Wallet" button automatically logs users into WSIM
+  - New `GET /api/wsim/sso-url` endpoint generates short-lived (5 min) SSO tokens
+  - Server-to-server SSO via WSIM's `POST /api/partner/sso-token` API
+  - Works on any browser/device as long as user is logged into BSIM
+  - No localStorage dependency - fully server-side token generation
+
 - **Regal Moose Production Deployment** - Second SSIM multi-tenant instance on AWS
   - Deployed `store.regalmoose.ca` as separate ECS service sharing SSIM database
   - ACM wildcard certificate `*.regalmoose.ca` added to ALB listener

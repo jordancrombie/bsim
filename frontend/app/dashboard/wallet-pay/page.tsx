@@ -20,6 +20,7 @@ export default function WalletPayPage() {
   const [enrolling, setEnrolling] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [wsimWalletUrl, setWsimWalletUrl] = useState('https://wsim-dev.banksim.ca');
 
   useEffect(() => {
     // Initialize message listener for WSIM popup communication
@@ -35,6 +36,12 @@ export default function WalletPayPage() {
 
   const loadEnrollmentStatus = async () => {
     try {
+      // Load config to get WSIM wallet URL
+      const config = await api.getWsimConfig();
+      // Derive wallet URL from auth URL (wsim-auth-dev.banksim.ca -> wsim-dev.banksim.ca)
+      const walletUrl = config.authUrl.replace('-auth', '');
+      setWsimWalletUrl(walletUrl);
+
       const status = await api.getWsimEnrollmentStatus();
       setEnrollmentStatus(status);
 
@@ -63,17 +70,31 @@ export default function WalletPayPage() {
     }
   };
 
-  const handleEnrollmentComplete = (result: EnrollmentResult) => {
+  const handleEnrollmentComplete = async (result: EnrollmentResult) => {
     setEnrolling(false);
     setShowPrompt(false);
 
-    if (result.success) {
-      setSuccessMessage(
-        result.cardsEnrolled
-          ? `Successfully enrolled ${result.cardsEnrolled} card(s) in Wallet Pay!`
-          : 'Successfully enrolled in Wallet Pay!'
-      );
-      // Reload enrollment status
+    if (result.success && result.walletId) {
+      try {
+        // Record the enrollment on BSIM side
+        await api.recordWsimEnrollment(result.walletId, result.cardsEnrolled);
+
+        setSuccessMessage(
+          result.cardsEnrolled
+            ? `Successfully enrolled ${result.cardsEnrolled} card(s) in Wallet Pay!`
+            : 'Successfully enrolled in Wallet Pay!'
+        );
+        // Reload enrollment status to show updated state
+        loadEnrollmentStatus();
+      } catch (err) {
+        console.error('Failed to record enrollment:', err);
+        // Still show success since WSIM enrollment worked
+        setSuccessMessage('Successfully enrolled in Wallet Pay!');
+        loadEnrollmentStatus();
+      }
+    } else if (result.success) {
+      // Success without walletId (shouldn't happen but handle gracefully)
+      setSuccessMessage('Successfully enrolled in Wallet Pay!');
       loadEnrollmentStatus();
     } else if (result.code !== 'CANCELLED' && result.code !== 'POPUP_CLOSED') {
       setError(result.error || 'Enrollment failed');
@@ -87,6 +108,18 @@ export default function WalletPayPage() {
   const handleResetPrompt = () => {
     clearEnrollmentPromptDismissal();
     setShowPrompt(true);
+  };
+
+  const handleOpenWallet = async () => {
+    try {
+      // Get SSO URL from server (server-to-server SSO token generation)
+      const { ssoUrl } = await api.getWsimSsoUrl();
+      window.open(ssoUrl, '_blank', 'noopener,noreferrer');
+    } catch (err) {
+      console.error('Failed to get SSO URL:', err);
+      // Fall back to base URL if SSO fails
+      window.open(wsimWalletUrl, '_blank', 'noopener,noreferrer');
+    }
   };
 
   const formatDate = (dateString?: string) => {
@@ -202,11 +235,10 @@ export default function WalletPayPage() {
 
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <button
-                  onClick={handleEnroll}
-                  disabled={enrolling}
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleOpenWallet}
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
                 >
-                  {enrolling ? 'Opening...' : 'Manage Enrolled Cards'}
+                  Open WSIM Wallet
                 </button>
               </div>
             </div>

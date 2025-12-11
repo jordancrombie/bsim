@@ -150,6 +150,20 @@ function handleWsimMessage(event: MessageEvent): void {
     case 'wsim:already-enrolled':
       // User was already enrolled
       console.log('[WSIM] User already enrolled:', data.walletId);
+
+      // Store the session token for SSO (now included for already-enrolled users too)
+      if (data.sessionToken) {
+        try {
+          localStorage.setItem('wsim_session_token', data.sessionToken);
+          localStorage.setItem(
+            'wsim_session_expires',
+            String(Date.now() + (data.sessionTokenExpiresIn || 2592000) * 1000)
+          );
+        } catch (e) {
+          console.warn('[WSIM] Could not store session token:', e);
+        }
+      }
+
       enrollmentPopup?.close();
       enrollmentPopup = null;
 
@@ -157,6 +171,8 @@ function handleWsimMessage(event: MessageEvent): void {
         enrollmentResolve({
           success: true,
           walletId: data.walletId,
+          sessionToken: data.sessionToken,
+          sessionTokenExpiresIn: data.sessionTokenExpiresIn,
         });
         enrollmentResolve = null;
         enrollmentReject = null;
@@ -214,13 +230,18 @@ export async function openWsimEnrollment(): Promise<EnrollmentResult> {
   const wsimAuthUrl = enrollmentData.wsimAuthUrl || WSIM_AUTH_URL;
   const bankOrigin = window.location.origin;
 
-  // Open WSIM enrollment popup
+  // Open WSIM enrollment popup centered on screen
   const popupUrl = `${wsimAuthUrl}/enroll/embed?origin=${encodeURIComponent(bankOrigin)}`;
+
+  const popupWidth = 450;
+  const popupHeight = 650;
+  const left = Math.max(0, (window.screen.width - popupWidth) / 2 + (window.screenX || window.screenLeft || 0));
+  const top = Math.max(0, (window.screen.height - popupHeight) / 2 + (window.screenY || window.screenTop || 0));
 
   enrollmentPopup = window.open(
     popupUrl,
     'wsim-enrollment',
-    'width=450,height=650,scrollbars=yes,resizable=yes'
+    `width=${popupWidth},height=${popupHeight},left=${left},top=${top},scrollbars=yes,resizable=yes`
   );
 
   if (!enrollmentPopup) {
@@ -282,4 +303,45 @@ export function dismissEnrollmentPrompt(permanent: boolean): void {
 export function clearEnrollmentPromptDismissal(): void {
   if (typeof window === 'undefined') return;
   localStorage.removeItem('wsim-enrollment-dismissed');
+}
+
+/**
+ * Get a valid WSIM session token if one exists and hasn't expired
+ */
+export function getWsimSessionToken(): string | null {
+  if (typeof window === 'undefined') return null;
+
+  const token = localStorage.getItem('wsim_session_token');
+  const expiresStr = localStorage.getItem('wsim_session_expires');
+
+  if (!token || !expiresStr) return null;
+
+  const expires = parseInt(expiresStr, 10);
+  if (isNaN(expires) || Date.now() > expires) {
+    // Token expired, clean up
+    localStorage.removeItem('wsim_session_token');
+    localStorage.removeItem('wsim_session_expires');
+    return null;
+  }
+
+  return token;
+}
+
+/**
+ * Build the WSIM Wallet URL, using SSO if a valid session token exists
+ * @param wsimWalletUrl - The base WSIM wallet URL (e.g., https://wsim-dev.banksim.ca)
+ * @returns The URL to open (with SSO token if available, or just the base URL)
+ */
+export function getWsimWalletUrl(wsimWalletUrl: string): string {
+  const sessionToken = getWsimSessionToken();
+
+  if (sessionToken) {
+    // Use SSO endpoint for seamless login
+    const ssoUrl = new URL('/api/auth/sso', wsimWalletUrl);
+    ssoUrl.searchParams.set('token', sessionToken);
+    return ssoUrl.toString();
+  }
+
+  // No valid token, just return the base URL (user will need to log in)
+  return wsimWalletUrl;
 }
