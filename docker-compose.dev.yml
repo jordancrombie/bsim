@@ -19,9 +19,11 @@ services:
   backend:
     environment:
       DOMAIN: dev.banksim.ca
-      CORS_ORIGIN: https://localhost,https://dev.banksim.ca,https://admin-dev.banksim.ca,https://auth-dev.banksim.ca,https://openbanking-dev.banksim.ca,https://ssim-dev.banksim.ca,http://frontend:3000
+      CORS_ORIGIN: https://localhost,https://dev.banksim.ca,https://admin-dev.banksim.ca,https://auth-dev.banksim.ca,https://openbanking-dev.banksim.ca,https://ssim-dev.banksim.ca,https://wsim-dev.banksim.ca,https://wsim-auth-dev.banksim.ca,http://frontend:3000
       RP_ID: dev.banksim.ca
       ORIGIN: https://dev.banksim.ca
+      # WSIM Embedded Enrollment - dev configuration
+      WSIM_AUTH_URL: https://wsim-auth-dev.banksim.ca
 
   # Frontend - dev domain configuration
   frontend:
@@ -30,6 +32,7 @@ services:
         NEXT_PUBLIC_API_URL: https://dev.banksim.ca/api
         NEXT_PUBLIC_DOMAIN: dev.banksim.ca
         NEXT_PUBLIC_BACKEND_PORT: 443
+        NEXT_PUBLIC_WSIM_AUTH_URL: https://wsim-auth-dev.banksim.ca
 
   # Admin Interface - dev domain configuration
   admin:
@@ -61,7 +64,7 @@ services:
       APP_URL: https://wsim-dev.banksim.ca
       FRONTEND_URL: https://wsim-dev.banksim.ca
       AUTH_SERVER_URL: https://wsim-auth-dev.banksim.ca
-      CORS_ORIGINS: https://wsim-dev.banksim.ca,https://wsim-auth-dev.banksim.ca,https://ssim-dev.banksim.ca,https://dev.banksim.ca
+      CORS_ORIGINS: https://wsim-dev.banksim.ca,https://wsim-auth-dev.banksim.ca,https://ssim-dev.banksim.ca,https://dev.banksim.ca,https://regalmoose.ca
       BSIM_PROVIDERS: '[{"bsimId":"bsim","name":"Bank Simulator","issuer":"https://auth-dev.banksim.ca","apiUrl":"https://dev.banksim.ca","clientId":"wsim-wallet","clientSecret":"wsim-dev-secret"}]'
       # WebAuthn - allow both frontend and auth-server popup origins
       WEBAUTHN_ORIGINS: https://wsim-dev.banksim.ca,https://wsim-auth-dev.banksim.ca
@@ -72,12 +75,14 @@ services:
       NODE_ENV: development
       ISSUER: https://wsim-auth-dev.banksim.ca
       FRONTEND_URL: https://wsim-dev.banksim.ca
-      CORS_ORIGINS: https://wsim-dev.banksim.ca,https://ssim-dev.banksim.ca
+      CORS_ORIGINS: https://wsim-dev.banksim.ca,https://ssim-dev.banksim.ca,https://regalmoose.ca,https://dev.banksim.ca
       # WebAuthn - allow both frontend and auth-server popup origins
       WEBAUTHN_ORIGINS: https://wsim-dev.banksim.ca,https://wsim-auth-dev.banksim.ca
-      # Popup/Embed origins for dev
-      ALLOWED_POPUP_ORIGINS: https://ssim-dev.banksim.ca
-      ALLOWED_EMBED_ORIGINS: https://ssim-dev.banksim.ca
+      # Popup/Embed origins for dev (includes BSIM for embedded enrollment)
+      ALLOWED_POPUP_ORIGINS: https://ssim-dev.banksim.ca,https://regalmoose.ca,https://dev.banksim.ca
+      ALLOWED_EMBED_ORIGINS: https://ssim-dev.banksim.ca,https://regalmoose.ca,https://dev.banksim.ca
+      # BSIM API URL for server-to-server card fetch during embedded enrollment
+      BSIM_API_URL: https://dev.banksim.ca
 
   # WSIM Frontend - dev domain configuration
   wsim-frontend:
@@ -85,6 +90,34 @@ services:
       args:
         NEXT_PUBLIC_API_URL: https://wsim-dev.banksim.ca
         NEXT_PUBLIC_AUTH_URL: https://wsim-auth-dev.banksim.ca
+
+  # SSIM - dev domain configuration
+  ssim:
+    environment:
+      NODE_ENV: development
+      OIDC_PROVIDERS: '[{"id":"bsim","name":"BSIM Bank","issuer":"https://auth-dev.banksim.ca","clientId":"ssim-client","clientSecret":"ece9c837b17bface1df34fe89d8c8e13bcf4f9e77c7a7681442952ebd9dd7015","scopes":"openid profile email fdx:accountdetailed:read fdx:transactions:read"}]'
+      APP_BASE_URL: https://ssim-dev.banksim.ca
+      OPENBANKING_BASE_URL: https://openbanking-dev.banksim.ca
+      PAYMENT_API_URL: https://payment-dev.banksim.ca
+      PAYMENT_AUTH_URL: https://auth-dev.banksim.ca
+      WSIM_AUTH_URL: https://wsim-auth-dev.banksim.ca
+      WSIM_POPUP_URL: https://wsim-auth-dev.banksim.ca
+      WSIM_API_URL: https://wsim-dev.banksim.ca/api/merchant
+      STORE_DOMAIN: ssim-dev.banksim.ca
+      STORE_NAME: SSIM Dev Store
+
+  # Regalmoose - dev domain configuration
+  regalmoose:
+    environment:
+      NODE_ENV: development
+      OIDC_PROVIDERS: '[{"id":"bsim","name":"BSIM Bank","issuer":"https://auth-dev.banksim.ca","clientId":"regalmoose-client","clientSecret":"010cf66b281aba82aa8a1f64724a922163caeba84f01a8daf2fa9fbfa4c5ed8a","scopes":"openid profile email fdx:accountdetailed:read fdx:transactions:read"}]'
+      APP_BASE_URL: https://regalmoose.ca
+      OPENBANKING_BASE_URL: https://openbanking-dev.banksim.ca
+      PAYMENT_API_URL: https://payment-dev.banksim.ca
+      PAYMENT_AUTH_URL: https://auth-dev.banksim.ca
+      WSIM_AUTH_URL: https://wsim-auth-dev.banksim.ca
+      WSIM_POPUP_URL: https://wsim-auth-dev.banksim.ca
+      WSIM_API_URL: https://wsim-dev.banksim.ca/api/merchant
 
   # Nginx - use dev configuration
   nginx:

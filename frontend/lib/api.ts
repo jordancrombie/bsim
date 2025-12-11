@@ -22,6 +22,9 @@ import type {
   RefundRequest,
   NotificationsResponse,
   UnreadCountResponse,
+  WsimEnrollmentData,
+  WsimEnrollmentStatus,
+  WsimConfig,
 } from '@/types';
 
 // Get API URL from environment or use relative path as fallback
@@ -242,6 +245,27 @@ class ApiClient {
 
   async deleteNotification(notificationId: string): Promise<void> {
     await this.client.delete(`/notifications/${notificationId}`);
+  }
+
+  // WSIM Enrollment API
+  async getWsimEnrollmentData(): Promise<WsimEnrollmentData> {
+    const response = await this.client.post<WsimEnrollmentData>('/wsim/enrollment-data');
+    // Add the WSIM auth URL from config
+    const configResponse = await this.getWsimConfig();
+    return {
+      ...response.data,
+      wsimAuthUrl: configResponse.authUrl,
+    };
+  }
+
+  async getWsimEnrollmentStatus(): Promise<WsimEnrollmentStatus> {
+    const response = await this.client.get<WsimEnrollmentStatus>('/wsim/enrollment-status');
+    return response.data;
+  }
+
+  async getWsimConfig(): Promise<WsimConfig> {
+    const response = await this.client.get<WsimConfig>('/wsim/config');
+    return response.data;
   }
 }
 
