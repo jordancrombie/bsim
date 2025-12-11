@@ -39,6 +39,7 @@ import { createNotificationRoutes } from './routes/notificationRoutes';
 import { createTestCleanupRoutes } from './routes/testCleanupRoutes';
 import { createPaymentNetworkRoutes } from './routes/paymentNetworkRoutes';
 import { createWalletRoutes } from './routes/walletRoutes';
+import { createWsimEnrollmentRoutes } from './routes/wsimEnrollmentRoutes';
 
 const app = express();
 
@@ -114,6 +115,7 @@ app.use('/api/notifications', createNotificationRoutes(notificationController));
 app.use('/api/test-cleanup', createTestCleanupRoutes(prisma));
 app.use('/api/payment-network', createPaymentNetworkRoutes(prisma));
 app.use('/api/wallet', createWalletRoutes(prisma));
+app.use('/api/wsim', createWsimEnrollmentRoutes(prisma));
 
 // Health check
 app.get('/health', (req, res) => {

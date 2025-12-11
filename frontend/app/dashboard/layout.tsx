@@ -296,6 +296,16 @@ export default function DashboardLayout({
               </svg>
               Transfer
             </Link>
+
+            <Link
+              href="/dashboard/wallet-pay"
+              className="flex items-center px-4 py-3 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition-colors"
+            >
+              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              Wallet Pay
+            </Link>
           </nav>
         </aside>
 
