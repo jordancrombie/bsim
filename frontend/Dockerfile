@@ -55,6 +55,9 @@ COPY --from=builder /app/.next/static ./.next/static
 # Create .env.local placeholder (will be overridden by environment variables)
 RUN touch .env.local && chown nextjs:nodejs .env.local
 
+# Create cache directory for Next.js image optimization with proper permissions
+RUN mkdir -p .next/cache/images && chown -R nextjs:nodejs .next/cache
+
 # Switch to non-root user
 USER nextjs
 
