@@ -63,6 +63,12 @@ export default async function DashboardLayout({
                 Account Types
               </Link>
               <Link
+                href="/webauthn-origins"
+                className="hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium"
+              >
+                WebAuthn
+              </Link>
+              <Link
                 href="/settings"
                 className="hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium"
               >

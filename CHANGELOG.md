@@ -8,6 +8,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Unit Test Coverage Improvements** - Significant test suite expansion for better code quality
+  - Added 102 new unit tests across backend and admin modules
+  - **Backend**: 229 → 300 tests (+71), coverage improved 48.38% → 55.42%
+  - **Admin**: 69 → 100 tests (+31), coverage improved 24.77% → 34.89%
+  - New test files:
+    - `backend/src/__tests__/routes/wellKnownRoutes.test.ts` (10 tests) - 100% coverage
+    - `backend/src/__tests__/routes/settingsRoutes.test.ts` (6 tests) - 100% coverage
+    - `backend/src/__tests__/routes/accountRoutes.test.ts` (6 tests) - 100% coverage
+    - `backend/src/__tests__/routes/authRoutes.test.ts` (7 tests) - 100% coverage
+    - `backend/src/__tests__/routes/creditCardRoutes.test.ts` (6 tests) - 100% coverage
+    - `backend/src/__tests__/routes/creditCardTransactionRoutes.test.ts` (5 tests) - 100% coverage
+    - `backend/src/__tests__/routes/notificationRoutes.test.ts` (7 tests) - 100% coverage
+    - `backend/src/__tests__/routes/transactionRoutes.test.ts` (5 tests) - 100% coverage
+    - `backend/src/__tests__/middleware/auth.test.ts` (8 tests) - 100% coverage
+    - `backend/src/__tests__/middleware/errorHandler.test.ts` (11 tests) - 100% coverage
+    - `admin/__tests__/api/webauthn-origins.test.ts` (31 tests) - ~86% coverage
+  - Updated `admin/__tests__/mocks/mockPrisma.ts` with WebAuthnRelatedOrigin support
+  - Routes folder coverage: 2.82% → 23.58% (+21%)
+  - Middleware folder coverage: 0% → 100%
+
+- **WebAuthn Related Origins Management** - Admin-configurable cross-domain passkey authentication
+  - New `/.well-known/webauthn` endpoint served from BSIM root domain
+  - Returns list of origins allowed for WebAuthn Related Origin Requests (ROR)
+  - Enables passkeys registered on `banksim.ca` to work on merchant domains like `store.regalmoose.ca`
+  - Admin UI at `/webauthn-origins` for managing allowed origins
+  - CRUD operations: add, edit, toggle active/inactive, delete origins
+  - HTTPS-only validation for security
+  - Database model: `WebAuthnRelatedOrigin` with origin, description, isActive, sortOrder
+  - New files:
+    - `backend/src/routes/wellKnownRoutes.ts` - Public endpoint handler
+    - `admin/app/api/webauthn-origins/route.ts` - List/create API
+    - `admin/app/api/webauthn-origins/[id]/route.ts` - CRUD API
+    - `admin/app/(dashboard)/webauthn-origins/page.tsx` - Admin UI
+  - Initial origins seeded: `https://banksim.ca`, `https://store.regalmoose.ca`
+  - AWS ALB rule added for `/.well-known/*` path routing to backend
+
+- **WSIM Embedded Enrollment** - In-bank wallet enrollment for WSIM Wallet
+  - Users can enroll credit cards in WSIM Wallet directly from BSIM dashboard
+  - New Wallet Pay page at `/dashboard/wallet-pay`
+  - Popup-based enrollment flow with postMessage communication
+  - Backend endpoints: `/api/wsim/enrollment-data`, `/api/wsim/enrollment-status`, `/api/wsim/config`, `/api/wsim/enrollment-complete`
+  - Card token JWT authentication for server-to-server card fetching
+  - HMAC-SHA256 signed payloads for secure enrollment data exchange
+
+- **Server-Side SSO for WSIM Wallet** - True single sign-on across devices/browsers
+  - "Open WSIM Wallet" button automatically logs users into WSIM
+  - New `GET /api/wsim/sso-url` endpoint generates short-lived (5 min) SSO tokens
+  - Server-to-server SSO via WSIM's `POST /api/partner/sso-token` API
+  - Works on any browser/device as long as user is logged into BSIM
+  - No localStorage dependency - fully server-side token generation
+
 - **Regal Moose Production Deployment** - Second SSIM multi-tenant instance on AWS
   - Deployed `store.regalmoose.ca` as separate ECS service sharing SSIM database
   - ACM wildcard certificate `*.regalmoose.ca` added to ALB listener

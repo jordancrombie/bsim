@@ -1,8 +1,16 @@
 # BSIM Project TODO
 
-Last Updated: December 6, 2025
+Last Updated: December 12, 2025
 
 ## Completed ✅
+
+### Unit Test Coverage Improvements (December 2025)
+- [x] Add unit tests for backend wellKnownRoutes.ts (100% coverage)
+- [x] Add unit tests for admin webauthn-origins API routes (~86% coverage)
+- [x] Add unit tests for backend middleware (auth.ts, errorHandler.ts - 100% coverage)
+- [x] Add unit tests for backend route handlers (accountRoutes, authRoutes, creditCardRoutes, etc.)
+- [x] Backend test count: 229 → 300 tests, coverage: 48.38% → 55.42%
+- [x] Admin test count: 69 → 100 tests, coverage: 24.77% → 34.89%
 
 ### WSIM Integration Phase 1 (December 2025)
 - [x] Add `wallet:enroll` scope to auth-server OIDC provider

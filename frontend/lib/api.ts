@@ -22,6 +22,9 @@ import type {
   RefundRequest,
   NotificationsResponse,
   UnreadCountResponse,
+  WsimEnrollmentData,
+  WsimEnrollmentStatus,
+  WsimConfig,
 } from '@/types';
 
 // Get API URL from environment or use relative path as fallback
@@ -242,6 +245,48 @@ class ApiClient {
 
   async deleteNotification(notificationId: string): Promise<void> {
     await this.client.delete(`/notifications/${notificationId}`);
+  }
+
+  // WSIM Enrollment API
+  async getWsimEnrollmentData(): Promise<WsimEnrollmentData> {
+    const response = await this.client.post<WsimEnrollmentData>('/wsim/enrollment-data');
+    // Add the WSIM auth URL from config
+    const configResponse = await this.getWsimConfig();
+    return {
+      ...response.data,
+      wsimAuthUrl: configResponse.authUrl,
+    };
+  }
+
+  async getWsimEnrollmentStatus(): Promise<WsimEnrollmentStatus> {
+    const response = await this.client.get<WsimEnrollmentStatus>('/wsim/enrollment-status');
+    return response.data;
+  }
+
+  async getWsimConfig(): Promise<WsimConfig> {
+    const response = await this.client.get<WsimConfig>('/wsim/config');
+    return response.data;
+  }
+
+  /**
+   * Record successful WSIM enrollment
+   * Called after the WSIM popup reports successful enrollment
+   */
+  async recordWsimEnrollment(walletId: string, cardsEnrolled?: number): Promise<{ success: boolean }> {
+    const response = await this.client.post<{ success: boolean }>('/wsim/enrollment-complete', {
+      walletId,
+      cardsEnrolled,
+    });
+    return response.data;
+  }
+
+  /**
+   * Get SSO URL for opening WSIM Wallet
+   * Server-side SSO token generation - works across all browsers/devices
+   */
+  async getWsimSsoUrl(): Promise<{ ssoUrl: string; expiresIn: number }> {
+    const response = await this.client.get<{ ssoUrl: string; expiresIn: number }>('/wsim/sso-url');
+    return response.data;
   }
 }
 

@@ -242,3 +242,33 @@ export interface NotificationsResponse {
 export interface UnreadCountResponse {
   unreadCount: number;
 }
+
+// WSIM Enrollment types
+export interface WsimEnrollmentData {
+  claims: {
+    sub: string;
+    email: string;
+    given_name?: string;
+    family_name?: string;
+  };
+  cardToken: string;
+  bsimId: string;
+  signature: string;
+  timestamp: number;
+  wsimAuthUrl?: string;
+}
+
+export interface WsimEnrollmentStatus {
+  enrolled: boolean;
+  walletId?: string;
+  walletName?: string;
+  enrolledAt?: string;
+  expiresAt?: string;
+  cardCount?: number;
+  canEnroll?: boolean;
+}
+
+export interface WsimConfig {
+  authUrl: string;
+  bsimId: string;
+}
