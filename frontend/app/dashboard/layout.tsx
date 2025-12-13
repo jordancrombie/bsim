@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import BottomNav from '@/components/BottomNav';
 import type { User, Notification } from '@/types';
 
 export default function DashboardLayout({
@@ -12,11 +13,13 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -65,6 +68,18 @@ export default function DashboardLayout({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
+  const isActiveLink = (href: string, exactMatch: boolean = false) => {
+    if (exactMatch) {
+      return pathname === href;
+    }
+    return pathname.startsWith(href);
+  };
 
   const loadNotifications = async () => {
     try {
@@ -140,16 +155,16 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Top Navigation */}
-      <nav className="bg-white shadow-sm border-b border-gray-200">
+      <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
+          <div className="flex justify-between h-14 md:h-16">
             <div className="flex items-center">
               <Link href="/dashboard" className="flex items-center">
-                <span className="text-2xl font-bold text-indigo-600">BSIM</span>
+                <span className="text-xl md:text-2xl font-bold text-indigo-600">BSIM</span>
               </Link>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 md:space-x-4">
               {/* Notification Bell */}
               <div className="relative" ref={notificationRef}>
                 <button
@@ -165,7 +180,7 @@ export default function DashboardLayout({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                   </svg>
                   {unreadCount > 0 && (
-                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full">
+                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full min-w-[18px]">
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                   )}
@@ -173,7 +188,7 @@ export default function DashboardLayout({
 
                 {/* Notification Dropdown */}
                 {showNotifications && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                  <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-lg shadow-lg border border-gray-200 z-50">
                     <div className="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
                       <h3 className="font-semibold text-gray-900">Notifications</h3>
                       {unreadCount > 0 && (
@@ -239,27 +254,64 @@ export default function DashboardLayout({
                 )}
               </div>
 
-              <span className="text-sm text-gray-700">
+              {/* User name - hidden on mobile */}
+              <span className="hidden md:inline text-sm text-gray-700">
                 {user?.firstName} {user?.lastName}
               </span>
+
+              {/* Logout button - hidden on mobile */}
               <button
                 onClick={handleLogout}
-                className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors"
+                className="hidden md:block text-sm text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors"
               >
                 Logout
+              </button>
+
+              {/* Mobile menu button */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {mobileMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
               </button>
             </div>
           </div>
         </div>
+
+        {/* Mobile dropdown menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-gray-200 bg-white">
+            <div className="px-4 py-3 border-b border-gray-100">
+              <p className="text-sm font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
+              <p className="text-xs text-gray-500">{user?.email}</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-gray-50 transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        )}
       </nav>
 
       <div className="flex">
-        {/* Sidebar */}
-        <aside className="w-64 bg-white min-h-screen shadow-sm border-r border-gray-200">
+        {/* Desktop Sidebar - hidden on mobile */}
+        <aside className="hidden md:block w-64 bg-white min-h-[calc(100vh-4rem)] shadow-sm border-r border-gray-200 sticky top-16 self-start">
           <nav className="mt-8 px-4 space-y-2">
             <Link
               href="/dashboard"
-              className="flex items-center px-4 py-3 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition-colors"
+              className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
+                isActiveLink('/dashboard', true)
+                  ? 'bg-indigo-50 text-indigo-600'
+                  : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
+              }`}
             >
               <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -269,17 +321,25 @@ export default function DashboardLayout({
 
             <Link
               href="/dashboard/accounts"
-              className="flex items-center px-4 py-3 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition-colors"
+              className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
+                isActiveLink('/dashboard/accounts')
+                  ? 'bg-indigo-50 text-indigo-600'
+                  : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
+              }`}
             >
               <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
               Accounts
             </Link>
 
             <Link
               href="/dashboard/credit-cards"
-              className="flex items-center px-4 py-3 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition-colors"
+              className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
+                isActiveLink('/dashboard/credit-cards')
+                  ? 'bg-indigo-50 text-indigo-600'
+                  : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
+              }`}
             >
               <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -289,7 +349,11 @@ export default function DashboardLayout({
 
             <Link
               href="/dashboard/transfer"
-              className="flex items-center px-4 py-3 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition-colors"
+              className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
+                isActiveLink('/dashboard/transfer')
+                  ? 'bg-indigo-50 text-indigo-600'
+                  : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
+              }`}
             >
               <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
@@ -299,7 +363,11 @@ export default function DashboardLayout({
 
             <Link
               href="/dashboard/wallet-pay"
-              className="flex items-center px-4 py-3 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition-colors"
+              className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
+                isActiveLink('/dashboard/wallet-pay')
+                  ? 'bg-indigo-50 text-indigo-600'
+                  : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
+              }`}
             >
               <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -310,10 +378,13 @@ export default function DashboardLayout({
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-8">
+        <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">
           {children}
         </main>
       </div>
+
+      {/* Bottom Navigation - only visible on mobile */}
+      <BottomNav />
     </div>
   );
 }

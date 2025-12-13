@@ -14,6 +14,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Response times improved from ~2+ seconds to ~80ms for cached images
 
 ### Added
+- **Mobile-Responsive Dashboard Layout** - Complete mobile-first redesign for smartphone users
+  - New bottom navigation bar with 5 tabs (Home, Accounts, Cards, Transfer, Wallet)
+  - Bottom nav only visible on mobile (`md:hidden`), desktop keeps sidebar
+  - Mobile hamburger menu with user info dropdown and logout
+  - Dashboard quick action buttons for common tasks (Send, Transfer, Pay)
+  - Compact account/card list with chevron indicators
+  - Summary cards: 2-column grid on mobile, 4-column on desktop
+  - Safe area CSS for iPhone home indicator (`env(safe-area-inset-bottom)`)
+  - Active link highlighting with indicator bar
+  - Main content padding adjusted to avoid bottom nav overlap
+  - New files:
+    - `frontend/components/BottomNav.tsx` - Mobile bottom navigation component
+  - Modified files:
+    - `frontend/app/dashboard/layout.tsx` - Responsive sidebar/bottom nav
+    - `frontend/app/dashboard/page.tsx` - Mobile-friendly cards and quick actions
+    - `frontend/app/globals.css` - Safe area CSS utilities
+
 - **Unit Test Coverage Improvements** - Significant test suite expansion for better code quality
   - Added 102 new unit tests across backend and admin modules
   - **Backend**: 229 → 300 tests (+71), coverage improved 48.38% → 55.42%
