@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Next.js Image Optimization Cache** - Fixed permission denied errors in production
+  - Added `.next/cache/images` directory with proper `nextjs:nodejs` ownership in Dockerfile
+  - Image optimization now caches processed images correctly
+  - Response times improved from ~2+ seconds to ~80ms for cached images
+
 ### Added
 - **Unit Test Coverage Improvements** - Significant test suite expansion for better code quality
   - Added 102 new unit tests across backend and admin modules
