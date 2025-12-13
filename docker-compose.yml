@@ -42,6 +42,11 @@ services:
       ORIGIN: https://banksim.ca
       UPLOAD_DIR: /app/uploads
       TEST_CLEANUP_KEY: ${TEST_CLEANUP_KEY:-bsim-test-cleanup-secret-key}
+      # WSIM Embedded Enrollment configuration
+      BSIM_ID: bsim
+      WSIM_SHARED_SECRET: ${WSIM_SHARED_SECRET:-dev-internal-secret-change-in-production}
+      CARD_TOKEN_SECRET: ${CARD_TOKEN_SECRET:-bsim-card-token-secret-dev}
+      WSIM_AUTH_URL: https://wsim-auth.banksim.ca
     volumes:
       - uploads_data:/app/uploads
     # No exposed ports - nginx will proxy to backend:3001
@@ -67,6 +72,7 @@ services:
         NEXT_PUBLIC_API_URL: https://banksim.ca/api
         NEXT_PUBLIC_DOMAIN: banksim.ca
         NEXT_PUBLIC_BACKEND_PORT: 443
+        NEXT_PUBLIC_WSIM_AUTH_URL: https://wsim-auth.banksim.ca
     container_name: bsim-frontend
     environment:
       NODE_ENV: production
@@ -258,15 +264,23 @@ services:
       BACKEND_URL: http://wsim-backend:3003
       FRONTEND_URL: https://wsim.banksim.ca
       COOKIE_SECRET: ${WSIM_COOKIE_SECRET:-wsim-dev-cookie-secret}
-      CORS_ORIGINS: https://wsim.banksim.ca,https://ssim.banksim.ca
+      CORS_ORIGINS: https://wsim.banksim.ca,https://ssim.banksim.ca,https://banksim.ca
       # WebAuthn / Passkey configuration
       WEBAUTHN_RP_NAME: WSIM Wallet
       WEBAUTHN_RP_ID: banksim.ca
       # Multiple origins for passkey verification (frontend + auth-server popup/iframe)
-      WEBAUTHN_ORIGINS: https://wsim.banksim.ca,https://wsim-auth.banksim.ca
-      # Popup/embed origins allowed for embedded payment flow
-      ALLOWED_POPUP_ORIGINS: https://ssim.banksim.ca
-      ALLOWED_EMBED_ORIGINS: https://ssim.banksim.ca
+      WEBAUTHN_ORIGINS: https://wsim.banksim.ca,https://wsim-auth.banksim.ca,https://wsim-dev.banksim.ca,https://wsim-auth-dev.banksim.ca
+      # Popup/embed origins allowed for embedded payment/enrollment flow (includes BSIM for embedded enrollment)
+      ALLOWED_POPUP_ORIGINS: https://ssim.banksim.ca,https://banksim.ca
+      ALLOWED_EMBED_ORIGINS: https://ssim.banksim.ca,https://banksim.ca
+      # JWT secret for merchant API authentication (must match wsim-backend)
+      JWT_SECRET: ${WSIM_JWT_SECRET:-wsim-dev-jwt-secret}
+      # Admin authentication
+      AUTH_ADMIN_JWT_SECRET: ${WSIM_AUTH_ADMIN_JWT_SECRET:-wsim-admin-secret-change-in-production}
+      # Public auth server URL (for invite URLs) - use dev URL for local development
+      AUTH_SERVER_URL: https://wsim-auth-dev.banksim.ca
+      # BSIM API URL for server-to-server card fetch during embedded enrollment
+      BSIM_API_URL: https://banksim.ca
     depends_on:
       db:
         condition: service_healthy
@@ -288,6 +302,94 @@ services:
       - wsim-auth-server
     networks:
       - bsim-network
+    restart: unless-stopped
+
+  # SSIM Store Simulator
+  ssim:
+    build:
+      context: ../ssim
+      dockerfile: Dockerfile
+    container_name: bsim-ssim
+    environment:
+      NODE_ENV: production
+      PORT: 3005
+      DATABASE_URL: postgresql://bsim:bsim_dev_password@db:5432/ssim
+      SESSION_SECRET: ${SSIM_SESSION_SECRET:-ssim-session-secret-change-in-prod}
+      OIDC_PROVIDERS: '[{"id":"bsim","name":"BSIM Bank","issuer":"https://auth.banksim.ca","clientId":"ssim-client","clientSecret":"ece9c837b17bface1df34fe89d8c8e13bcf4f9e77c7a7681442952ebd9dd7015","scopes":"openid profile email fdx:accountdetailed:read fdx:transactions:read"}]'
+      APP_BASE_URL: https://ssim.banksim.ca
+      OPENBANKING_BASE_URL: https://openbanking.banksim.ca
+      TRUST_PROXY: "true"
+      PAYMENT_API_URL: https://payment.banksim.ca
+      PAYMENT_AUTH_URL: https://auth.banksim.ca
+      MERCHANT_ID: ssim-client
+      PAYMENT_CLIENT_ID: ssim-client
+      PAYMENT_CLIENT_SECRET: ece9c837b17bface1df34fe89d8c8e13bcf4f9e77c7a7681442952ebd9dd7015
+      WEBHOOK_SECRET: ${SSIM_WEBHOOK_SECRET:-ssim-webhook-secret}
+      ADMIN_ENABLED: "true"
+      ADMIN_EMAILS: ssim.adminuser@banksim.ca
+      WSIM_ENABLED: "true"
+      WSIM_AUTH_URL: https://wsim-auth.banksim.ca
+      WSIM_CLIENT_ID: ssim-merchant
+      WSIM_CLIENT_SECRET: ${SSIM_WSIM_CLIENT_SECRET:-ssim-wsim-secret}
+      WSIM_POPUP_URL: https://wsim-auth.banksim.ca
+      WSIM_API_URL: https://wsim.banksim.ca/api/merchant
+      STORE_DOMAIN: ssim.banksim.ca
+      STORE_NAME: SSIM Store
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - bsim-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3005/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Regalmoose Store (SSIM multi-tenant instance)
+  regalmoose:
+    build:
+      context: ../ssim
+      dockerfile: Dockerfile
+    container_name: bsim-regalmoose
+    environment:
+      NODE_ENV: production
+      PORT: 3005
+      DATABASE_URL: postgresql://bsim:bsim_dev_password@db:5432/ssim
+      SESSION_SECRET: ${REGALMOOSE_SESSION_SECRET:-regalmoose-session-secret-change-in-prod}
+      OIDC_PROVIDERS: '[{"id":"bsim","name":"BSIM Bank","issuer":"https://auth.banksim.ca","clientId":"regalmoose-client","clientSecret":"010cf66b281aba82aa8a1f64724a922163caeba84f01a8daf2fa9fbfa4c5ed8a","scopes":"openid profile email fdx:accountdetailed:read fdx:transactions:read"}]'
+      APP_BASE_URL: https://regalmoose.ca
+      OPENBANKING_BASE_URL: https://openbanking.banksim.ca
+      TRUST_PROXY: "true"
+      PAYMENT_API_URL: https://payment.banksim.ca
+      PAYMENT_AUTH_URL: https://auth.banksim.ca
+      MERCHANT_ID: regalmoose-merchant
+      PAYMENT_CLIENT_ID: regalmoose-client
+      PAYMENT_CLIENT_SECRET: 010cf66b281aba82aa8a1f64724a922163caeba84f01a8daf2fa9fbfa4c5ed8a
+      WEBHOOK_SECRET: ${REGALMOOSE_WEBHOOK_SECRET:-regalmoose-webhook-secret}
+      ADMIN_ENABLED: "true"
+      ADMIN_EMAILS: ssim.adminuser@banksim.ca,regalmoose.adminuser@banksim.ca
+      WSIM_ENABLED: "true"
+      WSIM_AUTH_URL: https://wsim-auth.banksim.ca
+      WSIM_CLIENT_ID: regalmoose-wsim-merchant
+      WSIM_CLIENT_SECRET: ${REGALMOOSE_WSIM_CLIENT_SECRET:-regalmoose-wsim-secret}
+      WSIM_POPUP_URL: https://wsim-auth.banksim.ca
+      WSIM_API_URL: https://wsim.banksim.ca/api/merchant
+      STORE_DOMAIN: regalmoose.ca
+      STORE_NAME: Regal Moose
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - bsim-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3005/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
     restart: unless-stopped
 
   # Nginx Reverse Proxy (SSL Termination)

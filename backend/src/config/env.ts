@@ -36,6 +36,12 @@ export const config: {
   database: {
     url: string | undefined;
   };
+  wsim: {
+    bsimId: string;
+    sharedSecret: string;
+    cardTokenSecret: string;
+    authUrl: string;
+  };
 } = {
   port: parseInt(process.env.PORT || '3001', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
@@ -48,5 +54,11 @@ export const config: {
   },
   database: {
     url: process.env.DATABASE_URL,
+  },
+  wsim: {
+    bsimId: process.env.BSIM_ID || 'bsim',
+    sharedSecret: process.env.WSIM_SHARED_SECRET || 'dev-internal-secret-change-in-production',
+    cardTokenSecret: process.env.CARD_TOKEN_SECRET || 'bsim-card-token-secret-dev',
+    authUrl: process.env.WSIM_AUTH_URL || 'https://wsim-auth-dev.banksim.ca',
   },
 };

@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import { config } from '../config/env';
 
 /**
  * Wallet API Routes
@@ -12,7 +13,9 @@ import crypto from 'crypto';
  * - Check credential status
  * - Revoke credentials
  *
- * Authentication: Bearer token with wallet_credential JWT
+ * Authentication methods:
+ * 1. WalletCredential token (for existing OIDC flow)
+ * 2. cardToken JWT (for embedded enrollment flow - server-to-server card fetch)
  */
 
 // Extend Request to include wallet credential info
@@ -23,6 +26,11 @@ interface WalletRequest extends Request {
     walletId: string;
     permittedCards: string[];
     scopes: string[];
+  };
+  // For cardToken authentication (embedded enrollment flow)
+  cardTokenAuth?: {
+    userId: string;
+    scope: string;
   };
 }
 
@@ -83,9 +91,56 @@ export function createWalletRoutes(prisma: PrismaClient): Router {
   };
 
   /**
+   * Middleware to authenticate cardToken JWT (for embedded enrollment flow)
+   * This is used when WSIM calls BSIM server-to-server to fetch cards
+   */
+  const authenticateCardToken = async (req: WalletRequest, res: Response, next: NextFunction) => {
+    try {
+      const authHeader = req.headers.authorization;
+
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'No card token provided' });
+      }
+
+      const token = authHeader.substring(7);
+
+      // Verify the cardToken JWT
+      const decoded = jwt.verify(token, config.wsim.cardTokenSecret) as {
+        sub: string;
+        type: string;
+        scope: string;
+      };
+
+      // Validate token type
+      if (decoded.type !== 'wallet_card_access') {
+        return res.status(401).json({ error: 'Invalid token type' });
+      }
+
+      // Attach auth info to request
+      req.cardTokenAuth = {
+        userId: decoded.sub,
+        scope: decoded.scope,
+      };
+
+      next();
+    } catch (error) {
+      if (error instanceof jwt.TokenExpiredError) {
+        return res.status(401).json({ error: 'Card token has expired' });
+      }
+      if (error instanceof jwt.JsonWebTokenError) {
+        return res.status(401).json({ error: 'Invalid card token' });
+      }
+      console.error('[Wallet] Card token authentication error:', error);
+      return res.status(401).json({ error: 'Authentication failed' });
+    }
+  };
+
+  /**
    * GET /api/wallet/cards
    * Get user's cards (masked) for wallet display
-   * Only returns cards the user consented to share
+   * Supports two authentication methods:
+   * 1. WalletCredential token - returns only permitted cards
+   * 2. cardToken JWT - returns all user's cards (for enrollment flow)
    */
   router.get('/cards', authenticateWalletCredential, async (req: WalletRequest, res: Response) => {
     try {
@@ -126,6 +181,54 @@ export function createWalletRoutes(prisma: PrismaClient): Router {
       res.json({ cards: maskedCards });
     } catch (error) {
       console.error('[Wallet] Get cards error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  /**
+   * GET /api/wallet/cards/enroll
+   * Get ALL user's cards for enrollment selection
+   * Uses cardToken JWT authentication (server-to-server from WSIM)
+   * This endpoint is called by WSIM during the embedded enrollment flow
+   */
+  router.get('/cards/enroll', authenticateCardToken, async (req: WalletRequest, res: Response) => {
+    try {
+      const { userId, scope } = req.cardTokenAuth!;
+
+      // Check if token has cards:read scope
+      if (!scope.includes('cards:read')) {
+        return res.status(403).json({ error: 'Token does not have permission to read cards' });
+      }
+
+      // Get ALL user's credit cards (for enrollment selection)
+      const cards = await prisma.creditCard.findMany({
+        where: { userId },
+        select: {
+          id: true,
+          cardNumber: true,
+          cardType: true,
+          cardHolder: true,
+          expiryMonth: true,
+          expiryYear: true,
+          // Don't include CVV or full card number
+        },
+      });
+
+      // Mask card numbers (show only last 4 digits)
+      const maskedCards = cards.map(card => ({
+        id: card.id,
+        cardType: card.cardType,
+        cardHolder: card.cardHolder,
+        lastFour: card.cardNumber.slice(-4),
+        expiryMonth: card.expiryMonth,
+        expiryYear: card.expiryYear,
+      }));
+
+      console.log(`[Wallet] Enrollment card fetch: ${maskedCards.length} cards for user ${userId.substring(0, 8)}...`);
+
+      res.json({ cards: maskedCards });
+    } catch (error) {
+      console.error('[Wallet] Get enrollment cards error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   });

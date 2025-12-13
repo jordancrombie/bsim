@@ -342,6 +342,7 @@ The admin interface runs as a separate Next.js application accessible at `https:
 - **User Management** - View all registered users
 - **User Details** - View user's accounts, credit cards, and passkeys
 - **Site Settings** - Configure site logo and name displayed on user login page
+- **WebAuthn Origins** - Manage cross-domain passkey authentication (Related Origin Requests)
 
 ### Access
 ```bash
