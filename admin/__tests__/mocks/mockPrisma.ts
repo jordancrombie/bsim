@@ -64,6 +64,16 @@ export interface MockAccountTypeData {
   updatedAt: Date;
 }
 
+export interface MockWebAuthnRelatedOriginData {
+  id: string;
+  origin: string;
+  description: string | null;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export function createMockPrismaClient() {
   // In-memory storage
   const adminUsers: MockAdminUserData[] = [];
@@ -71,6 +81,7 @@ export function createMockPrismaClient() {
   const users: MockUserData[] = [];
   const creditCardTypes: MockCreditCardTypeData[] = [];
   const accountTypes: MockAccountTypeData[] = [];
+  const webAuthnRelatedOrigins: MockWebAuthnRelatedOriginData[] = [];
 
   const mockPrisma = {
     adminUser: {
@@ -322,6 +333,80 @@ export function createMockPrismaClient() {
       }),
     },
 
+    webAuthnRelatedOrigin: {
+      findMany: jest.fn().mockImplementation(async (args?: any) => {
+        let result = [...webAuthnRelatedOrigins];
+        if (args?.orderBy?.sortOrder === 'asc') {
+          result.sort((a, b) => a.sortOrder - b.sortOrder);
+        }
+        if (args?.where?.isActive !== undefined) {
+          result = result.filter((o) => o.isActive === args.where.isActive);
+        }
+        if (args?.select) {
+          return result.map((o) => {
+            const selected: any = {};
+            Object.keys(args.select).forEach((key: string) => {
+              if (args.select[key]) selected[key] = (o as any)[key];
+            });
+            return selected;
+          });
+        }
+        return result;
+      }),
+
+      findUnique: jest.fn().mockImplementation(async (args: any) => {
+        const { where } = args;
+        return webAuthnRelatedOrigins.find((o) => {
+          if (where.id && o.id !== where.id) return false;
+          if (where.origin && o.origin !== where.origin) return false;
+          return true;
+        }) || null;
+      }),
+
+      findFirst: jest.fn().mockImplementation(async (args: any) => {
+        const { where } = args;
+        return webAuthnRelatedOrigins.find((o) => {
+          if (where.origin && o.origin !== where.origin) return false;
+          if (where.NOT?.id && o.id === where.NOT.id) return false;
+          return true;
+        }) || null;
+      }),
+
+      create: jest.fn().mockImplementation(async (args: any) => {
+        const { data } = args;
+        // Check for duplicate origin
+        if (webAuthnRelatedOrigins.some((o) => o.origin === data.origin)) {
+          const error: any = new Error('Unique constraint failed');
+          error.code = 'P2002';
+          throw error;
+        }
+        const newOrigin: MockWebAuthnRelatedOriginData = {
+          id: `origin-${Date.now()}`,
+          ...data,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        webAuthnRelatedOrigins.push(newOrigin);
+        return newOrigin;
+      }),
+
+      update: jest.fn().mockImplementation(async (args: any) => {
+        const { where, data } = args;
+        const index = webAuthnRelatedOrigins.findIndex((o) => o.id === where.id);
+        if (index < 0) throw new Error('Not found');
+        webAuthnRelatedOrigins[index] = { ...webAuthnRelatedOrigins[index], ...data, updatedAt: new Date() };
+        return webAuthnRelatedOrigins[index];
+      }),
+
+      delete: jest.fn().mockImplementation(async (args: any) => {
+        const { where } = args;
+        const index = webAuthnRelatedOrigins.findIndex((o) => o.id === where.id);
+        if (index < 0) throw new Error('Not found');
+        const deleted = webAuthnRelatedOrigins.splice(index, 1)[0];
+        return deleted;
+      }),
+    },
+
     // Helper methods for test setup
     _addAdminUser: (admin: MockAdminUserData) => {
       adminUsers.push(admin);
@@ -338,18 +423,23 @@ export function createMockPrismaClient() {
     _addAccountType: (type: MockAccountTypeData) => {
       accountTypes.push(type);
     },
+    _addWebAuthnRelatedOrigin: (origin: MockWebAuthnRelatedOriginData) => {
+      webAuthnRelatedOrigins.push(origin);
+    },
     _clear: () => {
       adminUsers.length = 0;
       adminPasskeys.length = 0;
       users.length = 0;
       creditCardTypes.length = 0;
       accountTypes.length = 0;
+      webAuthnRelatedOrigins.length = 0;
     },
     _getAdminUsers: () => adminUsers,
     _getAdminPasskeys: () => adminPasskeys,
     _getUsers: () => users,
     _getCreditCardTypes: () => creditCardTypes,
     _getAccountTypes: () => accountTypes,
+    _getWebAuthnRelatedOrigins: () => webAuthnRelatedOrigins,
   };
 
   return mockPrisma;
