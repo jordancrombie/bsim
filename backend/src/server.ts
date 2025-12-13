@@ -40,6 +40,7 @@ import { createTestCleanupRoutes } from './routes/testCleanupRoutes';
 import { createPaymentNetworkRoutes } from './routes/paymentNetworkRoutes';
 import { createWalletRoutes } from './routes/walletRoutes';
 import { createWsimEnrollmentRoutes } from './routes/wsimEnrollmentRoutes';
+import { createWellKnownRoutes } from './routes/wellKnownRoutes';
 
 const app = express();
 
@@ -116,6 +117,9 @@ app.use('/api/test-cleanup', createTestCleanupRoutes(prisma));
 app.use('/api/payment-network', createPaymentNetworkRoutes(prisma));
 app.use('/api/wallet', createWalletRoutes(prisma));
 app.use('/api/wsim', createWsimEnrollmentRoutes(prisma));
+
+// Well-known routes (served at root level, not under /api)
+app.use('/.well-known', createWellKnownRoutes(prisma));
 
 // Health check
 app.get('/health', (req, res) => {

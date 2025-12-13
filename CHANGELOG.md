@@ -8,6 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **WebAuthn Related Origins Management** - Admin-configurable cross-domain passkey authentication
+  - New `/.well-known/webauthn` endpoint served from BSIM root domain
+  - Returns list of origins allowed for WebAuthn Related Origin Requests (ROR)
+  - Enables passkeys registered on `banksim.ca` to work on merchant domains like `store.regalmoose.ca`
+  - Admin UI at `/webauthn-origins` for managing allowed origins
+  - CRUD operations: add, edit, toggle active/inactive, delete origins
+  - HTTPS-only validation for security
+  - Database model: `WebAuthnRelatedOrigin` with origin, description, isActive, sortOrder
+  - New files:
+    - `backend/src/routes/wellKnownRoutes.ts` - Public endpoint handler
+    - `admin/app/api/webauthn-origins/route.ts` - List/create API
+    - `admin/app/api/webauthn-origins/[id]/route.ts` - CRUD API
+    - `admin/app/(dashboard)/webauthn-origins/page.tsx` - Admin UI
+  - Initial origins seeded: `https://banksim.ca`, `https://store.regalmoose.ca`
+  - AWS ALB rule added for `/.well-known/*` path routing to backend
+
 - **WSIM Embedded Enrollment** - In-bank wallet enrollment for WSIM Wallet
   - Users can enroll credit cards in WSIM Wallet directly from BSIM dashboard
   - New Wallet Pay page at `/dashboard/wallet-pay`

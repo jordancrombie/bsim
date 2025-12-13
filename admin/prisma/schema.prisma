@@ -334,3 +334,21 @@ enum NotificationType {
   PAYMENT_DUE
   SYSTEM
 }
+
+// ============================================
+// WebAuthn Related Origins
+// ============================================
+
+// Origins allowed for cross-domain passkey authentication (WebAuthn Related Origin Requests)
+// Served via /.well-known/webauthn endpoint
+model WebAuthnRelatedOrigin {
+  id          String   @id @default(uuid())
+  origin      String   @unique  // e.g., "https://store.regalmoose.ca"
+  description String?           // Optional description
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("webauthn_related_origins")
+}
