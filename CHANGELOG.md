@@ -8,6 +8,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Unit Test Coverage Improvements** - Significant test suite expansion for better code quality
+  - Added 102 new unit tests across backend and admin modules
+  - **Backend**: 229 → 300 tests (+71), coverage improved 48.38% → 55.42%
+  - **Admin**: 69 → 100 tests (+31), coverage improved 24.77% → 34.89%
+  - New test files:
+    - `backend/src/__tests__/routes/wellKnownRoutes.test.ts` (10 tests) - 100% coverage
+    - `backend/src/__tests__/routes/settingsRoutes.test.ts` (6 tests) - 100% coverage
+    - `backend/src/__tests__/routes/accountRoutes.test.ts` (6 tests) - 100% coverage
+    - `backend/src/__tests__/routes/authRoutes.test.ts` (7 tests) - 100% coverage
+    - `backend/src/__tests__/routes/creditCardRoutes.test.ts` (6 tests) - 100% coverage
+    - `backend/src/__tests__/routes/creditCardTransactionRoutes.test.ts` (5 tests) - 100% coverage
+    - `backend/src/__tests__/routes/notificationRoutes.test.ts` (7 tests) - 100% coverage
+    - `backend/src/__tests__/routes/transactionRoutes.test.ts` (5 tests) - 100% coverage
+    - `backend/src/__tests__/middleware/auth.test.ts` (8 tests) - 100% coverage
+    - `backend/src/__tests__/middleware/errorHandler.test.ts` (11 tests) - 100% coverage
+    - `admin/__tests__/api/webauthn-origins.test.ts` (31 tests) - ~86% coverage
+  - Updated `admin/__tests__/mocks/mockPrisma.ts` with WebAuthnRelatedOrigin support
+  - Routes folder coverage: 2.82% → 23.58% (+21%)
+  - Middleware folder coverage: 0% → 100%
+
 - **WebAuthn Related Origins Management** - Admin-configurable cross-domain passkey authentication
   - New `/.well-known/webauthn` endpoint served from BSIM root domain
   - Returns list of origins allowed for WebAuthn Related Origin Requests (ROR)
