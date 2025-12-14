@@ -68,6 +68,8 @@ services:
       BSIM_PROVIDERS: '[{"bsimId":"bsim","name":"Bank Simulator","issuer":"https://auth-dev.banksim.ca","apiUrl":"https://dev.banksim.ca","clientId":"wsim-wallet","clientSecret":"wsim-dev-secret"}]'
       # WebAuthn - allow both frontend and auth-server popup origins
       WEBAUTHN_ORIGINS: https://wsim-dev.banksim.ca,https://wsim-auth-dev.banksim.ca
+      # Mobile API JWT secret (Phase 1)
+      MOBILE_JWT_SECRET: wsim-dev-mobile-jwt-secret
 
   # WSIM Auth Server - dev domain configuration
   wsim-auth-server:
@@ -103,6 +105,9 @@ services:
       WSIM_AUTH_URL: https://wsim-auth-dev.banksim.ca
       WSIM_POPUP_URL: https://wsim-auth-dev.banksim.ca
       WSIM_API_URL: https://wsim-dev.banksim.ca/api/merchant
+      # Mobile wallet payment API (Phase 3)
+      WSIM_MOBILE_API_URL: https://wsim-dev.banksim.ca/api/mobile/payment
+      WSIM_API_KEY: wsim_api_ssim_dev_key
       STORE_DOMAIN: ssim-dev.banksim.ca
       STORE_NAME: SSIM Dev Store
 
@@ -118,6 +123,9 @@ services:
       WSIM_AUTH_URL: https://wsim-auth-dev.banksim.ca
       WSIM_POPUP_URL: https://wsim-auth-dev.banksim.ca
       WSIM_API_URL: https://wsim-dev.banksim.ca/api/merchant
+      # Mobile wallet payment API (Phase 3)
+      WSIM_MOBILE_API_URL: https://wsim-dev.banksim.ca/api/mobile/payment
+      WSIM_API_KEY: wsim_api_ssim_dev_key
 
   # Nginx - use dev configuration
   nginx:

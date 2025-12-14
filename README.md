@@ -173,6 +173,7 @@ WSIM is a digital wallet application that integrates with BSIM for card enrollme
   - Ephemeral payment token generation (JWT with 5-minute TTL)
   - Integration with SSIM for wallet-based checkout
   - Passkey authentication for wallet access
+  - **Mobile app payment flow** - mwsim app approval via `POST /api/wallet/request-token`
 
 **Wallet Payment Flow:**
 ```

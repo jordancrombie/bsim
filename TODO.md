@@ -1,8 +1,18 @@
 # BSIM Project TODO
 
-Last Updated: December 12, 2025
+Last Updated: December 14, 2025
 
 ## Completed ✅
+
+### Mobile Wallet Payment API (December 2025)
+- [x] Implement `POST /api/wallet/request-token` endpoint for mobile payment flow
+- [x] Add wallet credential authentication for the endpoint
+- [x] Validate card is in permitted cards list
+- [x] Generate ephemeral card tokens (5-minute expiry)
+- [x] Create PaymentConsent record for audit trail
+- [x] Add 17 unit tests for walletRoutes
+- [x] Create deployment script `LOCAL_SCRIPTS/dev_bsim_backend_deploy_code_only.sh`
+- [x] Test mobile payment flow end-to-end with WSIM and SSIM
 
 ### Unit Test Coverage Improvements (December 2025)
 - [x] Add unit tests for backend wellKnownRoutes.ts (100% coverage)
