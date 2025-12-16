@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Mobile Wallet Payment Token API** - New endpoint for WSIM mobile app payment flow
+- **Mobile Wallet Payment Flow (iOS Safari & Chrome)** - Complete mobile app checkout experience
+  - Full end-to-end mobile wallet payment flow working on iOS Safari and Chrome browsers
   - `POST /api/wallet/request-token` - Generates ephemeral card tokens for mobile payment approval
   - Authenticates using wallet credentials issued during enrollment
   - Validates card is in permitted cards list
@@ -16,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 5-minute token expiry for security
   - 17 unit tests added in `backend/src/__tests__/routes/walletRoutes.test.ts`
   - Deployment script: `LOCAL_SCRIPTS/dev_bsim_backend_deploy_code_only.sh`
+  - Browser-aware deep links with return URLs for seamless app-to-browser checkout
+  - Cross-tab order confirmation support (SSIM v1.13.3)
 
 ### Fixed
 - **Next.js Image Optimization Cache** - Fixed permission denied errors in production

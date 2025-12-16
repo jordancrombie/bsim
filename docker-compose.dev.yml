@@ -108,6 +108,7 @@ services:
       # Mobile wallet payment API (Phase 3)
       WSIM_MOBILE_API_URL: https://wsim-dev.banksim.ca/api/mobile/payment
       WSIM_API_KEY: wsim_api_ssim_dev_key
+      MWSIM_BROWSER_AWARE: "true"
       STORE_DOMAIN: ssim-dev.banksim.ca
       STORE_NAME: SSIM Dev Store
 
@@ -126,6 +127,7 @@ services:
       # Mobile wallet payment API (Phase 3)
       WSIM_MOBILE_API_URL: https://wsim-dev.banksim.ca/api/mobile/payment
       WSIM_API_KEY: wsim_api_ssim_dev_key
+      MWSIM_BROWSER_AWARE: "true"
 
   # Nginx - use dev configuration
   nginx:
