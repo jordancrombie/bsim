@@ -323,6 +323,101 @@ export function createWalletRoutes(prisma: PrismaClient): Router {
   });
 
   /**
+   * POST /api/wallet/request-token
+   * Request an ephemeral card token for mobile payment flow
+   *
+   * This endpoint is called by WSIM's mobile backend during payment approval.
+   * It generates a short-lived card token that can be used for payment authorization.
+   *
+   * Request body:
+   *   cardId: string - BSIM card ID (stored as bsimCardRef in WSIM)
+   *   merchantId?: string - Optional merchant identifier
+   *   amount?: number - Optional payment amount
+   *   currency?: string - Optional currency (defaults to CAD)
+   *
+   * Response:
+   *   cardToken: string - Ephemeral payment token (5 min lifetime)
+   */
+  router.post('/request-token', authenticateWalletCredential, async (req: WalletRequest, res: Response) => {
+    try {
+      const { userId, walletId, permittedCards, scopes } = req.walletCredential!;
+      const { cardId, merchantId, amount, currency } = req.body;
+
+      // Check if wallet has permission to create payments
+      if (!scopes.includes('payments:create')) {
+        return res.status(403).json({ error: 'Wallet does not have permission to create payments' });
+      }
+
+      // Validate required fields
+      if (!cardId) {
+        return res.status(400).json({ error: 'cardId is required' });
+      }
+
+      // Check if card is permitted
+      if (!permittedCards.includes(cardId)) {
+        console.log(`[Wallet] Card ${cardId} not in permitted cards for wallet ${walletId}`);
+        return res.status(403).json({ error: 'Card is not enrolled in this wallet' });
+      }
+
+      // Get the card
+      const card = await prisma.creditCard.findUnique({
+        where: { id: cardId, userId },
+        include: { user: { select: { fiUserRef: true } } },
+      });
+
+      if (!card) {
+        return res.status(404).json({ error: 'Card not found' });
+      }
+
+      // Generate ephemeral token (short-lived, 5 minutes)
+      const tokenPayload = {
+        type: 'wallet_payment_token',
+        cardId: card.id,
+        fiUserRef: card.user.fiUserRef,
+        walletId,
+        merchantId: merchantId || 'mobile-payment',
+        amount,
+        currency: currency || 'CAD',
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + 300, // 5 minutes
+      };
+
+      // Create a unique token ID
+      const tokenId = crypto.randomBytes(16).toString('hex');
+
+      // Create the payment token
+      const cardToken = jwt.sign(
+        { ...tokenPayload, jti: tokenId },
+        WALLET_CREDENTIAL_SECRET,
+        { algorithm: 'HS256' }
+      );
+
+      // Store a reference to this token in PaymentConsent for validation
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+      await prisma.paymentConsent.create({
+        data: {
+          cardToken: tokenId,
+          userId,
+          creditCardId: cardId,
+          merchantId: merchantId || 'mobile-payment',
+          merchantName: 'Mobile Wallet Payment',
+          expiresAt,
+        },
+      });
+
+      console.log(`[Wallet] Generated request-token for card ${cardId.substring(0, 8)}... wallet ${walletId}`);
+
+      res.json({
+        cardToken,
+      });
+    } catch (error) {
+      console.error('[Wallet] Request token error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  /**
    * GET /api/wallet/credentials/:id/status
    * Check credential validity
    */

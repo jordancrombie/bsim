@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Mobile Wallet Payment Flow (iOS Safari & Chrome)** - Complete mobile app checkout experience
+  - Full end-to-end mobile wallet payment flow working on iOS Safari and Chrome browsers
+  - `POST /api/wallet/request-token` - Generates ephemeral card tokens for mobile payment approval
+  - Authenticates using wallet credentials issued during enrollment
+  - Validates card is in permitted cards list
+  - Creates PaymentConsent record for audit trail
+  - 5-minute token expiry for security
+  - 17 unit tests added in `backend/src/__tests__/routes/walletRoutes.test.ts`
+  - Deployment script: `LOCAL_SCRIPTS/dev_bsim_backend_deploy_code_only.sh`
+  - Browser-aware deep links with return URLs for seamless app-to-browser checkout
+  - Cross-tab order confirmation support (SSIM v1.13.3)
+
 ### Fixed
 - **Next.js Image Optimization Cache** - Fixed permission denied errors in production
   - Added `.next/cache/images` directory with proper `nextjs:nodejs` ownership in Dockerfile
@@ -14,6 +27,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Response times improved from ~2+ seconds to ~80ms for cached images
 
 ### Added
+- **Mobile-Responsive Dashboard Layout** - Complete mobile-first redesign for smartphone users
+  - New bottom navigation bar with 5 tabs (Home, Accounts, Cards, Transfer, Wallet)
+  - Bottom nav only visible on mobile (`md:hidden`), desktop keeps sidebar
+  - Mobile hamburger menu with user info dropdown and logout
+  - Dashboard quick action buttons for common tasks (Send, Transfer, Pay)
+  - Compact account/card list with chevron indicators
+  - Summary cards: 2-column grid on mobile, 4-column on desktop
+  - Safe area CSS for iPhone home indicator (`env(safe-area-inset-bottom)`)
+  - Active link highlighting with indicator bar
+  - Main content padding adjusted to avoid bottom nav overlap
+  - New files:
+    - `frontend/components/BottomNav.tsx` - Mobile bottom navigation component
+  - Modified files:
+    - `frontend/app/dashboard/layout.tsx` - Responsive sidebar/bottom nav
+    - `frontend/app/dashboard/page.tsx` - Mobile-friendly cards and quick actions
+    - `frontend/app/globals.css` - Safe area CSS utilities
+
 - **Unit Test Coverage Improvements** - Significant test suite expansion for better code quality
   - Added 102 new unit tests across backend and admin modules
   - **Backend**: 229 → 300 tests (+71), coverage improved 48.38% → 55.42%

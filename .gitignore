@@ -156,5 +156,12 @@ AWS_DEPLOYMENT_NOTES.md
 # Local deployment plans (shared via filesystem, not repo)
 LOCAL_DEPLOYMENT_PLANS/
 
+# Local deployment scripts (contains AWS credentials)
+LOCAL_SCRIPTS/
+
+# AWS task definitions and scripts (contain production credentials)
+aws/
+scripts/aws-admin.sh
+
 # Claude Code hints (AI-specific, kept locally only)
 .claude/
