@@ -107,6 +107,8 @@ services:
       WSIM_API_URL: https://wsim-dev.banksim.ca/api/merchant
       # Mobile wallet payment API (Phase 3)
       WSIM_MOBILE_API_URL: https://wsim-dev.banksim.ca/api/mobile/payment
+      # QR code payment URL (Phase 4)
+      WSIM_QR_BASE_URL: https://wsim-dev.banksim.ca/pay
       WSIM_API_KEY: wsim_api_ssim_dev_key
       MWSIM_BROWSER_AWARE: "true"
       STORE_DOMAIN: ssim-dev.banksim.ca
@@ -126,6 +128,8 @@ services:
       WSIM_API_URL: https://wsim-dev.banksim.ca/api/merchant
       # Mobile wallet payment API (Phase 3)
       WSIM_MOBILE_API_URL: https://wsim-dev.banksim.ca/api/mobile/payment
+      # QR code payment URL (Phase 4)
+      WSIM_QR_BASE_URL: https://wsim-dev.banksim.ca/pay
       WSIM_API_KEY: wsim_api_ssim_dev_key
       MWSIM_BROWSER_AWARE: "true"
 
