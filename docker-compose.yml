@@ -365,7 +365,7 @@ services:
       TRUST_PROXY: "true"
       PAYMENT_API_URL: https://payment.banksim.ca
       PAYMENT_AUTH_URL: https://auth.banksim.ca
-      MERCHANT_ID: regalmoose-merchant
+      MERCHANT_ID: regalmoose-client
       PAYMENT_CLIENT_ID: regalmoose-client
       PAYMENT_CLIENT_SECRET: 010cf66b281aba82aa8a1f64724a922163caeba84f01a8daf2fa9fbfa4c5ed8a
       WEBHOOK_SECRET: ${REGALMOOSE_WEBHOOK_SECRET:-regalmoose-webhook-secret}
