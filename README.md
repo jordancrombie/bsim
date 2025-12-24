@@ -34,7 +34,7 @@ The fastest way to run the entire stack locally with dev subdomains:
 
 ```bash
 # Configure local DNS or add to /etc/hosts:
-# 127.0.0.1 dev.banksim.ca admin-dev.banksim.ca auth-dev.banksim.ca openbanking-dev.banksim.ca ssim-dev.banksim.ca wsim-dev.banksim.ca wsim-auth-dev.banksim.ca
+# 127.0.0.1 dev.banksim.ca admin-dev.banksim.ca auth-dev.banksim.ca openbanking-dev.banksim.ca ssim-dev.banksim.ca wsim-dev.banksim.ca wsim-auth-dev.banksim.ca newbank-dev.banksim.ca newbank-auth-dev.banksim.ca newbank-admin-dev.banksim.ca
 
 # Build and start all services with dev configuration
 make dev-build
@@ -60,6 +60,9 @@ Access the application (local development):
 - **Store Simulator**: https://ssim-dev.banksim.ca
 - **Wallet Simulator**: https://wsim-dev.banksim.ca
 - **Wallet Auth Server**: https://wsim-auth-dev.banksim.ca
+- **NewBank Frontend**: https://newbank-dev.banksim.ca (second BSIM instance)
+- **NewBank Auth Server**: https://newbank-auth-dev.banksim.ca
+- **NewBank Admin**: https://newbank-admin-dev.banksim.ca
 - **Database**: localhost:5432
 
 ### Option 2: Docker Compose - Production
@@ -217,6 +220,7 @@ NSIM is the payment network middleware that routes card payments between merchan
   - Authorization expiry handling (7-day default, auto-void on expiry)
   - HMAC-SHA256 webhook signature verification
   - **Wallet token support** - JWT wallet payment tokens from WSIM are decoded and validated
+  - **Multi-BSIM routing** - Routes payments to correct bank based on `bsimId` claim in wallet tokens
 
 **End-to-End Payment Flow:**
 ```
@@ -237,6 +241,50 @@ NSIM is the payment network middleware that routes card payments between merchan
 8. SSIM captures/voids payment as needed
 
 See [docs/NSIM_PRODUCTION_DEPLOYMENT.md](docs/NSIM_PRODUCTION_DEPLOYMENT.md) for AWS deployment.
+
+### Multi-BSIM / NewBank (Second Bank Instance)
+
+BSIM supports running multiple bank instances to simulate multi-bank scenarios. NewBank is a second BSIM instance configured to work alongside the main BSIM for testing:
+
+- **P2P transfers between banks** via TransferSim integration
+- **Multi-bank wallet payments** via NSIM payment routing
+- **Cross-bank card enrollment** in WSIM
+
+**Running NewBank locally:**
+```bash
+# Start all services including NewBank
+docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.newbank.yml up --build
+```
+
+**NewBank URLs (local development):**
+- Frontend: https://newbank-dev.banksim.ca
+- Auth Server: https://newbank-auth-dev.banksim.ca
+- Admin: https://newbank-admin-dev.banksim.ca
+
+**Multi-Bank Payment Flow:**
+```
+┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────────┐
+│  SSIM   │────>│  WSIM   │────>│ NewBank │     │    NSIM     │
+│(Merchant)│    │ (Wallet)│     │  (BSIM) │     │  (Network)  │
+└─────────┘     └─────────┘     └─────────┘     └─────────────┘
+     │               │               │               │
+     │ 1. Checkout   │               │               │
+     ├──────────────>│               │               │
+     │               │ 2. Get Token  │               │
+     │               ├──────────────>│ (bsimId=newbank)
+     │               │ 3. JWT Token  │               │
+     │               │<──────────────│               │
+     │ 4. Card Token │               │               │
+     │<──────────────│               │               │
+     │               │               │ 5. Authorize  │
+     ├───────────────────────────────────────────────>│
+     │               │               │ 6. Route to   │
+     │               │               │<───NewBank────│
+     │ 7. Payment OK │               │               │
+     │<──────────────────────────────────────────────│
+```
+
+The wallet payment token JWT includes a `bsimId` claim that NSIM uses to route payments to the correct bank instance.
 
 ## Project Structure
 
@@ -728,6 +776,8 @@ See [docs/AWS_DEPLOYMENT.md](docs/AWS_DEPLOYMENT.md) for complete instructions o
 - [x] Webhook system for payment notifications
 - [x] Admin E2E tests (14 tests for dashboard, users, admins, card types, account types)
 - [x] WSIM wallet integration (card enrollment, JWT payment tokens, wallet checkout flow)
+- [x] Multi-BSIM support (NewBank second instance, multi-bank payment routing via NSIM)
+- [x] TransferSim P2P integration (cross-bank transfer API)
 - [ ] CI/CD pipeline setup
 - [ ] Mobile app support
 - [ ] Client credentials grant for server-to-server

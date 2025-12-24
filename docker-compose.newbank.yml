@@ -1,0 +1,142 @@
+# Docker Compose override for NewBank (second BSIM instance)
+# For multi-bank P2P transfer testing with TransferSim
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.newbank.yml up --build
+#
+# Required DNS/hosts entries:
+#   127.0.0.1 newbank-dev.banksim.ca
+#   127.0.0.1 newbank-auth-dev.banksim.ca
+#   127.0.0.1 newbank-admin-dev.banksim.ca
+
+services:
+  # NewBank Backend API
+  newbank-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: newbank-backend
+    environment:
+      NODE_ENV: production
+      PORT: 3021
+      DATABASE_URL: postgresql://bsim:bsim_dev_password@db:5432/newbank
+      JWT_SECRET: newbank-jwt-secret-dev
+      JWT_EXPIRES_IN: 7d
+      USE_HTTPS: "false"
+      DOMAIN: newbank-dev.banksim.ca
+      FRONTEND_PORT: 443
+      CORS_ORIGIN: https://newbank-dev.banksim.ca,https://newbank-auth-dev.banksim.ca,https://newbank-admin-dev.banksim.ca,https://transfersim-dev.banksim.ca
+      RP_ID: banksim.ca
+      ORIGIN: https://newbank-dev.banksim.ca
+      UPLOAD_DIR: /app/uploads
+      BSIM_ID: newbank
+      TRANSFERSIM_API_KEY: transfersim-newbank-api-key-2024
+      BSIM_PAYMENT_API_KEY: dev-newbank-api-key
+    volumes:
+      - newbank_uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - bsim-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3021/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 30s
+      retries: 3
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        npx prisma generate &&
+        npx prisma db push --skip-generate &&
+        node dist/server.js
+      "
+
+  # NewBank Frontend
+  newbank-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: https://newbank-dev.banksim.ca/api
+        NEXT_PUBLIC_DOMAIN: newbank-dev.banksim.ca
+        NEXT_PUBLIC_BACKEND_PORT: 443
+    container_name: newbank-frontend
+    environment:
+      NODE_ENV: production
+      PORT: 3020
+    depends_on:
+      - newbank-backend
+    networks:
+      - bsim-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3020"]
+      interval: 30s
+      timeout: 3s
+      start_period: 30s
+      retries: 3
+
+  # NewBank Auth Server
+  newbank-auth-server:
+    build:
+      context: ./auth-server
+      dockerfile: Dockerfile
+    container_name: newbank-auth-server
+    environment:
+      NODE_ENV: production
+      PORT: 3022
+      DATABASE_URL: postgresql://bsim:bsim_dev_password@db:5432/newbank
+      ISSUER: https://newbank-auth-dev.banksim.ca
+      COOKIE_KEYS: newbank-cookie-key-1-32chars,newbank-cookie-key-2-32chars
+      JWKS_SECRET: newbank-jwks-secret-dev
+      CORS_ORIGIN: https://newbank-dev.banksim.ca,https://newbank-auth-dev.banksim.ca,https://transfersim-dev.banksim.ca
+      RP_ID: banksim.ca
+      AUTH_ORIGIN: https://newbank-auth-dev.banksim.ca
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - bsim-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3022/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 30s
+      retries: 3
+    command: >
+      sh -c "
+        npx prisma generate &&
+        node dist/server.js
+      "
+
+  # NewBank Admin Interface
+  newbank-admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: newbank-admin
+    user: "0:0"
+    environment:
+      NODE_ENV: production
+      PORT: 3023
+      DATABASE_URL: postgresql://bsim:bsim_dev_password@db:5432/newbank
+      UPLOAD_DIR: /app/uploads
+      RP_ID: banksim.ca
+      ADMIN_ORIGIN: https://newbank-admin-dev.banksim.ca
+      STORAGE_TYPE: local
+    volumes:
+      - newbank_uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - bsim-network
+    command: >
+      sh -c "
+        chown -R 1001:1001 /app/uploads &&
+        su -s /bin/sh nextjs -c 'node server.js'
+      "
+
+volumes:
+  newbank_uploads:
