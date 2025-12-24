@@ -41,6 +41,7 @@ import { createPaymentNetworkRoutes } from './routes/paymentNetworkRoutes';
 import { createWalletRoutes } from './routes/walletRoutes';
 import { createWsimEnrollmentRoutes } from './routes/wsimEnrollmentRoutes';
 import { createWellKnownRoutes } from './routes/wellKnownRoutes';
+import { createP2PRoutes } from './routes/p2pRoutes';
 
 const app = express();
 
@@ -117,6 +118,7 @@ app.use('/api/test-cleanup', createTestCleanupRoutes(prisma));
 app.use('/api/payment-network', createPaymentNetworkRoutes(prisma));
 app.use('/api/wallet', createWalletRoutes(prisma));
 app.use('/api/wsim', createWsimEnrollmentRoutes(prisma));
+app.use('/api/p2p', createP2PRoutes(prisma));
 
 // Well-known routes (served at root level, not under /api)
 app.use('/.well-known', createWellKnownRoutes(prisma));

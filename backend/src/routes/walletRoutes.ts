@@ -378,6 +378,7 @@ export function createWalletRoutes(prisma: PrismaClient): Router {
         merchantId: merchantId || 'mobile-payment',
         amount,
         currency: currency || 'CAD',
+        bsimId: config.wsim.bsimId, // Include BSIM ID for multi-bank payment routing
         iat: Math.floor(Date.now() / 1000),
         exp: Math.floor(Date.now() / 1000) + 300, // 5 minutes
       };

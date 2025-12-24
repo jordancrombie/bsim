@@ -19,11 +19,13 @@ services:
   backend:
     environment:
       DOMAIN: dev.banksim.ca
-      CORS_ORIGIN: https://localhost,https://dev.banksim.ca,https://admin-dev.banksim.ca,https://auth-dev.banksim.ca,https://openbanking-dev.banksim.ca,https://ssim-dev.banksim.ca,https://wsim-dev.banksim.ca,https://wsim-auth-dev.banksim.ca,http://frontend:3000
+      CORS_ORIGIN: https://localhost,https://dev.banksim.ca,https://admin-dev.banksim.ca,https://auth-dev.banksim.ca,https://openbanking-dev.banksim.ca,https://ssim-dev.banksim.ca,https://wsim-dev.banksim.ca,https://wsim-auth-dev.banksim.ca,https://transfersim-dev.banksim.ca,http://frontend:3000
       RP_ID: dev.banksim.ca
       ORIGIN: https://dev.banksim.ca
       # WSIM Embedded Enrollment - dev configuration
       WSIM_AUTH_URL: https://wsim-auth-dev.banksim.ca
+      # TransferSim P2P Integration
+      TRANSFERSIM_API_KEY: transfersim-dev-api-key-2024
 
   # Frontend - dev domain configuration
   frontend:
@@ -57,6 +59,13 @@ services:
       AUTH_SERVER_ISSUER: https://auth-dev.banksim.ca
       AUDIENCE: https://openbanking-dev.banksim.ca
 
+  # NSIM Payment Network - dev domain configuration (multi-BSIM support)
+  payment-network:
+    environment:
+      # NewBank BSIM connection for multi-bank payment routing
+      BSIM_NEWBANK_URL: https://newbank-dev.banksim.ca
+      BSIM_NEWBANK_KEY: dev-newbank-api-key
+
   # WSIM Backend - dev domain configuration
   wsim-backend:
     environment:
@@ -64,8 +73,8 @@ services:
       APP_URL: https://wsim-dev.banksim.ca
       FRONTEND_URL: https://wsim-dev.banksim.ca
       AUTH_SERVER_URL: https://wsim-auth-dev.banksim.ca
-      CORS_ORIGINS: https://wsim-dev.banksim.ca,https://wsim-auth-dev.banksim.ca,https://ssim-dev.banksim.ca,https://dev.banksim.ca,https://regalmoose.ca
-      BSIM_PROVIDERS: '[{"bsimId":"bsim","name":"Bank Simulator","issuer":"https://auth-dev.banksim.ca","apiUrl":"https://dev.banksim.ca","clientId":"wsim-wallet","clientSecret":"wsim-dev-secret"}]'
+      CORS_ORIGINS: https://wsim-dev.banksim.ca,https://wsim-auth-dev.banksim.ca,https://ssim-dev.banksim.ca,https://dev.banksim.ca,https://regalmoose.ca,https://newbank-dev.banksim.ca
+      BSIM_PROVIDERS: '[{"bsimId":"bsim","name":"Bank Simulator","issuer":"https://auth-dev.banksim.ca","apiUrl":"https://dev.banksim.ca","clientId":"wsim-wallet","clientSecret":"wsim-dev-secret"},{"bsimId":"newbank","name":"New Bank","issuer":"https://newbank-auth-dev.banksim.ca","apiUrl":"https://newbank-dev.banksim.ca","clientId":"wsim-wallet","clientSecret":"341c913561cf1a2a1bf5c60322427a9eebd19b392432adb501be35b6e6957432"}]'
       # WebAuthn - allow both frontend and auth-server popup origins
       WEBAUTHN_ORIGINS: https://wsim-dev.banksim.ca,https://wsim-auth-dev.banksim.ca
       # Mobile API JWT secret (Phase 1)

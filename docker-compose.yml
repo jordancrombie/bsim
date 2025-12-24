@@ -47,6 +47,8 @@ services:
       WSIM_SHARED_SECRET: ${WSIM_SHARED_SECRET:-dev-internal-secret-change-in-production}
       CARD_TOKEN_SECRET: ${CARD_TOKEN_SECRET:-bsim-card-token-secret-dev}
       WSIM_AUTH_URL: https://wsim-auth.banksim.ca
+      # TransferSim P2P Integration
+      TRANSFERSIM_API_KEY: ${TRANSFERSIM_API_KEY:-}
     volumes:
       - uploads_data:/app/uploads
     # No exposed ports - nginx will proxy to backend:3001

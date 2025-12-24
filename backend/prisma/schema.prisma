@@ -437,3 +437,44 @@ model WebAuthnRelatedOrigin {
 
   @@map("webauthn_related_origins")
 }
+
+// ============================================
+// P2P Transfer Models (TransferSim Integration)
+// ============================================
+
+// P2P transfers processed through this BSIM instance
+model P2PTransfer {
+  id              String          @id @default(uuid())
+  externalId      String          @unique  // TransferSim's transfer ID (for idempotency)
+  direction       P2PDirection    // DEBIT or CREDIT
+  userId          String
+  accountId       String
+  transactionId   String?         // Link to Transaction table after completion
+  amount          Decimal         @db.Decimal(12, 2)
+  currency        String          @default("CAD")
+  status          P2PStatus       @default(PENDING)
+  counterpartyAlias String?       // The other party's alias (email, phone, etc.)
+  description     String?         // User-provided memo
+  errorCode       String?         // Error code if failed
+  errorMessage    String?         // Error message if failed
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([accountId])
+  @@index([status])
+  @@index([externalId])
+  @@map("p2p_transfers")
+}
+
+enum P2PDirection {
+  DEBIT   // Outgoing transfer (money leaves this account)
+  CREDIT  // Incoming transfer (money enters this account)
+}
+
+enum P2PStatus {
+  PENDING     // Transfer initiated
+  COMPLETED   // Transfer successful
+  FAILED      // Transfer failed
+  REVERSED    // Transfer was reversed
+}

@@ -8,6 +8,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Multi-BSIM Payment Routing** - Cross-bank wallet payments via NSIM
+  - Added `bsimId` claim to wallet payment token JWT for multi-bank routing
+  - NSIM can now route payments to the correct BSIM instance based on card issuer
+  - Enables NewBank cards to be used for merchant payments alongside main BSIM cards
+  - Each BSIM instance includes its `BSIM_ID` in generated tokens
+  - File: `backend/src/routes/walletRoutes.ts` - Added `bsimId: config.wsim.bsimId` to token payload
+
+- **NewBank (Second BSIM Instance)** - Multi-bank development environment
+  - Complete second BSIM deployment at `newbank-dev.banksim.ca`
+  - Separate frontend, backend, auth-server, and admin services
+  - Shares PostgreSQL instance with isolated `newbank` database
+  - Nginx configuration for all NewBank subdomains
+  - Docker Compose overlay: `docker-compose.newbank.yml`
+  - Required hosts entries:
+    - `127.0.0.1 newbank-dev.banksim.ca`
+    - `127.0.0.1 newbank-auth-dev.banksim.ca`
+    - `127.0.0.1 newbank-admin-dev.banksim.ca`
+
+- **P2P Transfer Integration (TransferSim)** - Cross-bank peer-to-peer transfers
+  - New P2P API endpoints for TransferSim integration:
+    - `POST /api/p2p/transfer/debit` - Debit sender's account
+    - `POST /api/p2p/transfer/credit` - Credit recipient's account
+    - `POST /api/p2p/user/verify` - Verify user exists by ID
+  - API key authentication via `TRANSFERSIM_API_KEY` env var
+  - P2PTransfer model for audit/reconciliation
+  - Cross-bank transfers tested: BSIM DEV ↔ NewBank
+
 - **Mobile Wallet Payment Flow (iOS Safari & Chrome)** - Complete mobile app checkout experience
   - Full end-to-end mobile wallet payment flow working on iOS Safari and Chrome browsers
   - `POST /api/wallet/request-token` - Generates ephemeral card tokens for mobile payment approval
