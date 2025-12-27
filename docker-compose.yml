@@ -204,6 +204,8 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3006
+      # Database connection (nsim database with nsim_* prefixed tables)
+      DATABASE_URL: postgresql://bsim:bsim_dev_password@db:5432/nsim
       # BSIM Backend connection (for payment processing)
       BSIM_BASE_URL: http://backend:3001
       BSIM_API_KEY: ${BSIM_PAYMENT_API_KEY:-dev-payment-api-key}
@@ -212,8 +214,12 @@ services:
       # Authorization expiry (hours)
       AUTH_EXPIRY_HOURS: 168
     depends_on:
-      - backend
-      - redis
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_started
+      redis:
+        condition: service_healthy
     networks:
       - bsim-network
     healthcheck:
@@ -222,6 +228,11 @@ services:
       timeout: 3s
       start_period: 10s
       retries: 3
+    command: >
+      sh -c "
+        npx prisma generate &&
+        node dist/index.js
+      "
 
   # WSIM Backend (Wallet Simulator API)
   wsim-backend:
