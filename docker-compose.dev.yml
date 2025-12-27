@@ -106,7 +106,7 @@ services:
   ssim:
     environment:
       NODE_ENV: development
-      OIDC_PROVIDERS: '[{"id":"bsim","name":"BSIM Bank","issuer":"https://auth-dev.banksim.ca","clientId":"ssim-client","clientSecret":"ece9c837b17bface1df34fe89d8c8e13bcf4f9e77c7a7681442952ebd9dd7015","scopes":"openid profile email fdx:accountdetailed:read fdx:transactions:read"}]'
+      OIDC_PROVIDERS: '[{"id":"bsim","name":"BSIM Bank","issuer":"https://auth-dev.banksim.ca","clientId":"ssim-client","clientSecret":"ece9c837b17bface1df34fe89d8c8e13bcf4f9e77c7a7681442952ebd9dd7015","scopes":"openid profile email fdx:accountdetailed:read fdx:transactions:read"},{"id":"newbank","name":"NewBank","issuer":"https://newbank-auth-dev.banksim.ca","clientId":"ssim-client","clientSecret":"14eb2ea2c7ede9a9594bb5faf3714a8f1da04654a73643ba10f909a631e36502","scopes":"openid profile email fdx:accountdetailed:read fdx:transactions:read"}]'
       APP_BASE_URL: https://ssim-dev.banksim.ca
       OPENBANKING_BASE_URL: https://openbanking-dev.banksim.ca
       PAYMENT_API_URL: https://payment-dev.banksim.ca
@@ -127,7 +127,7 @@ services:
   regalmoose:
     environment:
       NODE_ENV: development
-      OIDC_PROVIDERS: '[{"id":"bsim","name":"BSIM Bank","issuer":"https://auth-dev.banksim.ca","clientId":"regalmoose-client","clientSecret":"010cf66b281aba82aa8a1f64724a922163caeba84f01a8daf2fa9fbfa4c5ed8a","scopes":"openid profile email fdx:accountdetailed:read fdx:transactions:read"}]'
+      OIDC_PROVIDERS: '[{"id":"bsim","name":"BSIM Bank","issuer":"https://auth-dev.banksim.ca","clientId":"regalmoose-client","clientSecret":"010cf66b281aba82aa8a1f64724a922163caeba84f01a8daf2fa9fbfa4c5ed8a","scopes":"openid profile email fdx:accountdetailed:read fdx:transactions:read"},{"id":"newbank","name":"NewBank","issuer":"https://newbank-auth-dev.banksim.ca","clientId":"regalmoose-client","clientSecret":"fbbb499331c04581d554630daaf1f6fa549bc63b269fd3aa88007e7b6f68f4eb","scopes":"openid profile email fdx:accountdetailed:read fdx:transactions:read"}]'
       APP_BASE_URL: https://regalmoose.ca
       OPENBANKING_BASE_URL: https://openbanking-dev.banksim.ca
       PAYMENT_API_URL: https://payment-dev.banksim.ca

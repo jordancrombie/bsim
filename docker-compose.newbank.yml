@@ -93,6 +93,7 @@ services:
       CORS_ORIGIN: https://newbank-dev.banksim.ca,https://newbank-auth-dev.banksim.ca,https://transfersim-dev.banksim.ca
       RP_ID: banksim.ca
       AUTH_ORIGIN: https://newbank-auth-dev.banksim.ca
+      OPENBANKING_AUDIENCE: https://openbanking-dev.banksim.ca
     depends_on:
       db:
         condition: service_healthy

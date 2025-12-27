@@ -4,6 +4,15 @@ Last Updated: December 27, 2025
 
 ## Completed ✅
 
+### NewBank Open Banking Integration (December 2025)
+- [x] Add NewBank as OIDC provider for SSIM in dev environment
+- [x] Add NewBank as OIDC provider for Regalmoose in dev environment
+- [x] Register ssim-client OAuth client in NewBank auth server
+- [x] Register regalmoose-client OAuth client in NewBank auth server
+- [x] Add redirect URIs for `/auth/callback/newbank` endpoints
+- [x] Fix OPENBANKING_AUDIENCE config in NewBank auth server (was missing)
+- [x] Fix scope configuration (removed `payment:authorize` from OIDC login flow)
+
 ### NSIM Database Persistence (December 2025)
 - [x] Add PostgreSQL database support to NSIM (replaces in-memory storage)
 - [x] Create `nsim` database in RDS with `nsim_*` prefixed tables
