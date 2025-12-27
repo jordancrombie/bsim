@@ -211,14 +211,16 @@ NSIM is the payment network middleware that routes card payments between merchan
 - **Repository:** https://github.com/jordancrombie/nsim
 - **Dev URL:** https://payment-dev.banksim.ca
 - **Production URL:** https://payment.banksim.ca
-- **AWS Resources:** ECS Fargate service, ElastiCache Redis, CloudWatch logs
+- **AWS Resources:** ECS Fargate service, RDS PostgreSQL (`nsim` database), ElastiCache Redis, CloudWatch logs
+- **Database Tables:** `nsim_payment_transactions`, `nsim_webhook_configs`, `nsim_webhook_deliveries`
 - **Features:**
   - Payment authorization, capture, void, and refund
+  - **PostgreSQL database persistence** for transactions and webhook configurations
   - Webhook notifications for payment events (`payment.authorized`, `payment.captured`, etc.)
   - Redis-backed job queue (BullMQ) for async webhook delivery
   - Automatic retry with exponential backoff (up to 5 retries)
   - Authorization expiry handling (7-day default, auto-void on expiry)
-  - HMAC-SHA256 webhook signature verification
+  - HMAC-SHA256 webhook signature verification (`sha256=<hex>` format)
   - **Wallet token support** - JWT wallet payment tokens from WSIM are decoded and validated
   - **Multi-BSIM routing** - Routes payments to correct bank based on `bsimId` claim in wallet tokens
 

@@ -1,8 +1,21 @@
 # BSIM Project TODO
 
-Last Updated: December 15, 2025
+Last Updated: December 27, 2025
 
 ## Completed ✅
+
+### NSIM Database Persistence (December 2025)
+- [x] Add PostgreSQL database support to NSIM (replaces in-memory storage)
+- [x] Create `nsim` database in RDS with `nsim_*` prefixed tables
+- [x] Add Prisma schema for payment transactions, webhook configs, and delivery history
+- [x] Update NSIM Dockerfile with OpenSSL for Prisma compatibility
+- [x] Deploy to production with DATABASE_URL environment variable
+- [x] Register webhooks for ssim-client and regalmoose-client in production
+- [x] Fix webhook signature format (`sha256=<hex>` prefix)
+- [x] Fix webhook payload field name (`type` instead of `event`)
+- [x] Update docker-compose.yml for local dev with database persistence
+- [x] Create `nsim` database locally and sync schema with `prisma db push`
+- [x] Register dev webhooks for ssim-client and regalmoose-client
 
 ### Mobile Wallet Payment Flow - iOS Safari & Chrome (December 2025)
 - [x] Implement `POST /api/wallet/request-token` endpoint for mobile payment flow
