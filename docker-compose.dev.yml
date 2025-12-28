@@ -13,6 +13,7 @@
 #   127.0.0.1 payment-dev.banksim.ca
 #   127.0.0.1 wsim-dev.banksim.ca
 #   127.0.0.1 wsim-auth-dev.banksim.ca
+#   127.0.0.1 transfersim-dev.banksim.ca
 
 services:
   # Backend API - dev domain configuration
@@ -141,6 +142,17 @@ services:
       WSIM_QR_BASE_URL: https://wsim-dev.banksim.ca/pay
       WSIM_API_KEY: wsim_api_ssim_dev_key
       MWSIM_BROWSER_AWARE: "true"
+
+  # TransferSim - dev domain configuration
+  transfersim:
+    environment:
+      NODE_ENV: development
+      # JWT validation for dev
+      JWT_PUBLIC_KEY_URL: http://auth-server:3003/.well-known/jwks.json
+      JWT_ISSUER: https://auth-dev.banksim.ca
+      # BSIM connections for dev
+      BSIM_DEFAULT_URL: http://backend:3001
+      BSIM_DEFAULT_API_KEY: transfersim-dev-api-key-2024
 
   # Nginx - use dev configuration
   nginx:
