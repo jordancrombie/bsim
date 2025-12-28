@@ -405,6 +405,54 @@ services:
       retries: 3
     restart: unless-stopped
 
+  # TransferSim P2P Transfer Network
+  transfersim:
+    build:
+      context: ../transferSim
+      dockerfile: Dockerfile
+    container_name: bsim-transfersim
+    environment:
+      NODE_ENV: production
+      PORT: 3010
+      # Database connection (transfersim database)
+      DATABASE_URL: postgresql://bsim:bsim_dev_password@db:5432/transfersim
+      # Redis for job queue (use common BSIM Redis)
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # Admin API key
+      ADMIN_API_KEY: ${TRANSFERSIM_ADMIN_API_KEY:-transfersim-admin-key-dev}
+      # BSIM connection (configured via admin API, this is default fallback)
+      BSIM_DEFAULT_URL: http://backend:3001
+      BSIM_DEFAULT_API_KEY: ${TRANSFERSIM_API_KEY:-dev-payment-api-key}
+      # JWT validation (for BSIM auth tokens)
+      JWT_PUBLIC_KEY_URL: http://auth-server:3003/.well-known/jwks.json
+      JWT_ISSUER: https://auth.banksim.ca
+      # Transfer limits
+      DEFAULT_TRANSFER_LIMIT: 10000
+      DEFAULT_DAILY_LIMIT: 50000
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    networks:
+      - bsim-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3010/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+    restart: unless-stopped
+    command: >
+      sh -c "
+        npx prisma generate &&
+        npx prisma db push --skip-generate &&
+        node dist/index.js
+      "
+
   # Nginx Reverse Proxy (SSL Termination)
   nginx:
     image: nginx:alpine
@@ -424,6 +472,7 @@ services:
       - wsim-backend
       - wsim-frontend
       - wsim-auth-server
+      - transfersim
     networks:
       - bsim-network
     healthcheck:
