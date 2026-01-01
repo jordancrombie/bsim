@@ -142,6 +142,14 @@ Last Updated: December 29, 2025
 
 ## Planned 📋
 
+### Open Banking API Cleanup (Future)
+- [ ] **Deprecate legacy `/users/:fiUserRef/accounts` endpoint** - Non-FDX-compliant endpoint
+  - Proposal document: `transferSim/LOCAL_DEPLOYMENT_PLANS/BSIM_OPENBANKING_DEPRECATION_PROPOSAL.md`
+  - Verify SSIM has migrated to FDX-compliant `GET /accounts` endpoint
+  - Verify Regalmoose has migrated (if applicable)
+  - Add deprecation warning header to legacy endpoint
+  - Remove `userController.ts` and `userRoutes.ts` after clients migrate
+
 ### Micro Merchant Fee Enhancements (Future)
 - [ ] Per-BSIM admin pricing configuration (allow each bank to set its own fee structure)
 - [ ] Prepaid transaction bundles (e.g., 25 transactions @ $0.20 = $5.00)
