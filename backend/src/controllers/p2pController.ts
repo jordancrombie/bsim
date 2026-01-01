@@ -22,7 +22,26 @@ const creditSchema = z.object({
   currency: z.string().default('CAD'),
   senderAlias: z.string().optional(),
   description: z.string().optional(),
-});
+  // Micro Merchant fee collection (optional)
+  feeAmount: z.number().positive().optional(),
+  feeAccountId: z.string().uuid().optional(),
+  merchantName: z.string().optional(), // For fee transaction description
+}).refine(
+  (data) => {
+    // If feeAmount is provided, feeAccountId must also be provided (and vice versa)
+    if (data.feeAmount !== undefined && data.feeAccountId === undefined) return false;
+    if (data.feeAccountId !== undefined && data.feeAmount === undefined) return false;
+    return true;
+  },
+  { message: 'feeAmount and feeAccountId must both be provided for fee collection' }
+).refine(
+  (data) => {
+    // Fee amount must be less than gross amount
+    if (data.feeAmount !== undefined && data.feeAmount >= data.amount) return false;
+    return true;
+  },
+  { message: 'feeAmount must be less than the gross amount' }
+);
 
 const verifySchema = z.object({
   userId: z.string().uuid('Invalid user ID').optional(),
@@ -186,6 +205,11 @@ export class P2PController {
    * POST /api/p2p/transfer/credit
    * Credit a user's account for an incoming P2P transfer.
    * Called by TransferSim when completing a transfer to a recipient.
+   *
+   * For Micro Merchant transfers, also handles fee collection:
+   * - feeAmount: The fee to collect (e.g., $0.25)
+   * - feeAccountId: The system fee collection account
+   * - merchantName: Name for fee transaction description
    */
   credit = async (req: P2PRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -268,40 +292,64 @@ export class P2PController {
         return;
       }
 
-      // Perform the credit in a transaction
-      const amount = Number(data.amount);
+      // Check if this is a Micro Merchant transaction with fee collection
+      const hasFee = data.feeAmount !== undefined && data.feeAccountId !== undefined;
+      let feeAccount = null;
+
+      if (hasFee) {
+        // Verify fee account exists
+        feeAccount = await this.prisma.account.findUnique({
+          where: { id: data.feeAccountId },
+        });
+
+        if (!feeAccount) {
+          res.status(400).json({
+            success: false,
+            error: 'FEE_ACCOUNT_NOT_FOUND',
+            message: 'Fee collection account not found',
+          });
+          return;
+        }
+      }
+
+      // Calculate amounts
+      const grossAmount = Number(data.amount);
+      const feeAmount = hasFee ? Number(data.feeAmount) : 0;
+      const netAmount = grossAmount - feeAmount;
       const currentBalance = Number(account.balance);
 
+      // Perform the credit (and optional fee) in a single transaction
       const result = await this.prisma.$transaction(async (tx) => {
-        const newBalance = currentBalance + amount;
+        // 1. Credit the merchant's net amount
+        const newMerchantBalance = currentBalance + netAmount;
 
         await tx.account.update({
           where: { id: targetAccountId },
-          data: { balance: newBalance },
+          data: { balance: newMerchantBalance },
         });
 
-        // Create transaction record
-        const transaction = await tx.transaction.create({
+        // Create merchant's transaction record
+        const merchantTransaction = await tx.transaction.create({
           data: {
             type: TransactionType.DEPOSIT,
-            amount: data.amount,
-            balanceAfter: newBalance,
+            amount: netAmount,
+            balanceAfter: newMerchantBalance,
             description: data.senderAlias
-              ? `P2P Transfer from ${data.senderAlias}${data.description ? ': ' + data.description : ''}`
-              : `P2P Transfer${data.description ? ': ' + data.description : ''}`,
+              ? `P2P Transfer from ${data.senderAlias}${data.description ? ': ' + data.description : ''}${hasFee ? ` (Fee: $${feeAmount.toFixed(2)})` : ''}`
+              : `P2P Transfer${data.description ? ': ' + data.description : ''}${hasFee ? ` (Fee: $${feeAmount.toFixed(2)})` : ''}`,
             accountId: targetAccountId!,
           },
         });
 
-        // Create P2P transfer record
+        // Create P2P transfer record for merchant
         const p2pTransfer = await tx.p2PTransfer.create({
           data: {
             externalId: data.transferId,
             direction: P2PDirection.CREDIT,
             userId: data.userId,
             accountId: targetAccountId!,
-            transactionId: transaction.id,
-            amount: data.amount,
+            transactionId: merchantTransaction.id,
+            amount: netAmount, // Store net amount (after fee)
             currency: data.currency,
             status: P2PStatus.COMPLETED,
             counterpartyAlias: data.senderAlias,
@@ -309,15 +357,55 @@ export class P2PController {
           },
         });
 
-        return { transaction, p2pTransfer, newBalance };
+        // 2. If fee collection, credit the fee account
+        let feeTransaction = null;
+        if (hasFee && feeAccount) {
+          const currentFeeBalance = Number(feeAccount.balance);
+          const newFeeBalance = currentFeeBalance + feeAmount;
+
+          await tx.account.update({
+            where: { id: data.feeAccountId },
+            data: { balance: newFeeBalance },
+          });
+
+          // Create fee transaction record
+          feeTransaction = await tx.transaction.create({
+            data: {
+              type: TransactionType.FEE,
+              amount: feeAmount,
+              balanceAfter: newFeeBalance,
+              description: `Micro Merchant Fee: ${data.merchantName || 'Unknown'} (Transfer: ${data.transferId})`,
+              accountId: data.feeAccountId!,
+            },
+          });
+        }
+
+        return {
+          merchantTransaction,
+          feeTransaction,
+          p2pTransfer,
+          newMerchantBalance,
+          netAmount,
+          feeAmount: hasFee ? feeAmount : undefined,
+        };
       });
 
-      res.status(200).json({
+      // Build response
+      const response: Record<string, unknown> = {
         success: true,
-        transactionId: result.transaction.id,
+        transactionId: result.merchantTransaction.id,
         transferId: data.transferId,
-        newBalance: result.newBalance,
-      });
+        newBalance: result.newMerchantBalance,
+      };
+
+      // Add fee-related fields if applicable
+      if (hasFee) {
+        response.netAmount = result.netAmount;
+        response.feeAmount = result.feeAmount;
+        response.feeTransactionId = result.feeTransaction?.id;
+      }
+
+      res.status(200).json(response);
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json({
@@ -327,6 +415,107 @@ export class P2PController {
         });
         return;
       }
+      next(error);
+    }
+  };
+
+  /**
+   * GET /api/p2p/config/fee-account
+   * Get the configured fee collection account ID for this BSIM.
+   * Called by TransferSim to know where to direct Micro Merchant fees.
+   */
+  getFeeAccount = async (req: P2PRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const config = await this.prisma.systemConfig.findUnique({
+        where: { key: 'P2P_FEE_ACCOUNT_ID' },
+      });
+
+      if (!config) {
+        res.status(404).json({
+          success: false,
+          error: 'NOT_CONFIGURED',
+          message: 'P2P fee account not configured',
+        });
+        return;
+      }
+
+      // Verify the account still exists
+      const account = await this.prisma.account.findUnique({
+        where: { id: config.value },
+        include: { user: true },
+      });
+
+      if (!account) {
+        res.status(404).json({
+          success: false,
+          error: 'ACCOUNT_NOT_FOUND',
+          message: 'Configured fee account no longer exists',
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        feeAccountId: config.value,
+        accountNumber: account.accountNumber,
+        balance: Number(account.balance),
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * PUT /api/p2p/config/fee-account
+   * Set the fee collection account ID for this BSIM.
+   * Should be called during BSIM setup by TransferSim.
+   */
+  setFeeAccount = async (req: P2PRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { accountId } = req.body;
+
+      if (!accountId || typeof accountId !== 'string') {
+        res.status(400).json({
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'accountId is required',
+        });
+        return;
+      }
+
+      // Verify the account exists
+      const account = await this.prisma.account.findUnique({
+        where: { id: accountId },
+      });
+
+      if (!account) {
+        res.status(404).json({
+          success: false,
+          error: 'ACCOUNT_NOT_FOUND',
+          message: 'Account not found',
+        });
+        return;
+      }
+
+      // Upsert the config
+      await this.prisma.systemConfig.upsert({
+        where: { key: 'P2P_FEE_ACCOUNT_ID' },
+        create: {
+          key: 'P2P_FEE_ACCOUNT_ID',
+          value: accountId,
+          description: 'Account ID for collecting Micro Merchant P2P fees',
+        },
+        update: {
+          value: accountId,
+        },
+      });
+
+      res.status(200).json({
+        success: true,
+        feeAccountId: accountId,
+        message: 'Fee account configured successfully',
+      });
+    } catch (error) {
       next(error);
     }
   };

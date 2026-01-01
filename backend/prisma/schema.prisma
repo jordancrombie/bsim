@@ -123,6 +123,7 @@ enum TransactionType {
   DEPOSIT
   WITHDRAWAL
   TRANSFER
+  FEE          // P2P Micro Merchant fee collection
 }
 
 enum AccountType {
@@ -477,4 +478,20 @@ enum P2PStatus {
   COMPLETED   // Transfer successful
   FAILED      // Transfer failed
   REVERSED    // Transfer was reversed
+}
+
+// ============================================
+// System Configuration
+// ============================================
+
+// Key-value configuration for system settings
+// Used for storing P2P fee account ID and other configurable values
+model SystemConfig {
+  key         String    @id
+  value       String
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("system_config")
 }

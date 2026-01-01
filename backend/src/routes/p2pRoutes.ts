@@ -17,5 +17,9 @@ export const createP2PRoutes = (prisma: PrismaClient): Router => {
   // User verification endpoint
   router.post('/user/verify', p2pController.verify);
 
+  // Fee account configuration (for Micro Merchant support)
+  router.get('/config/fee-account', p2pController.getFeeAccount);
+  router.put('/config/fee-account', p2pController.setFeeAccount);
+
   return router;
 };

@@ -7,7 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Open Banking API fiUserRef lookup** - Fixed accounts endpoint returning empty results
+  - The `/accounts` endpoint was incorrectly using the token's `sub` claim (fiUserRef) as the internal userId
+  - Now properly looks up the user by `fiUserRef` first, then queries accounts by internal userId
+  - Affects: `GET /accounts`, `GET /accounts/:accountId`, `GET /accounts/:accountId/transactions`
+  - File: `openbanking/src/controllers/accountController.ts`
+
 ### Added
+- **Micro Merchant Fee Collection** - P2P fee collection for TransferSim integration
+  - Added `FEE` transaction type to TransactionType enum
+  - Added `SystemConfig` model for key-value system configuration (fee account ID storage)
+  - Extended `POST /api/p2p/transfer/credit` with optional fee parameters:
+    - `feeAmount`: Fee amount to collect (must be less than gross amount)
+    - `feeAccountId`: UUID of the fee collection account
+    - `merchantName`: Optional merchant name for transaction description
+  - Atomic transaction ensures merchant net amount and fee account are credited together
+  - New endpoints for fee account configuration:
+    - `GET /api/p2p/config/fee-account` - Get configured fee account
+    - `PUT /api/p2p/config/fee-account` - Configure fee account (requires accountId)
+  - Fee transactions create `FEE` type entries with description format: `Micro Merchant Fee: {merchantName} (Transfer: {transferId})`
+  - Validation: feeAmount and feeAccountId must both be provided together
+
 - **Multi-BSIM Payment Routing** - Cross-bank wallet payments via NSIM
   - Added `bsimId` claim to wallet payment token JWT for multi-bank routing
   - NSIM can now route payments to the correct BSIM instance based on card issuer
