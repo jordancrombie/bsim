@@ -246,11 +246,13 @@ export function createOidcProvider(prisma: PrismaClient): Provider {
               extraClaims.card_token = payload.cardToken;
             }
 
-            // Wallet flow - add wallet credential and fi_user_ref
+            // Wallet flow - add wallet credential, fi_user_ref, and bsim_user_id
             if (payload.walletCredentialToken) {
               console.log('[OIDC] Adding wallet_credential to access token');
               extraClaims.wallet_credential = payload.walletCredentialToken;
               extraClaims.fi_user_ref = payload.fiUserRef;
+              // Include internal user ID for P2P transfers - BSIM accounts are owned by this ID
+              extraClaims.bsim_user_id = payload.bsimUserId;
             }
 
             return extraClaims;

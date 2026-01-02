@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **P2P User ID in OIDC Tokens** - Added `bsim_user_id` claim for P2P transfer compatibility
+  - BSIM auth-server now includes `bsim_user_id` (internal user ID) in access tokens during wallet enrollment
+  - This is the ID that owns accounts in BSIM, required for TransferSim P2P account validation
+  - Previously only `fi_user_ref` (external pseudonymous ID) was included, causing P2P transfers to fail
+  - Files modified:
+    - `auth-server/src/routes/interaction.ts` - Store `bsimUserId` in grant payload
+    - `auth-server/src/config/oidc.ts` - Include `bsim_user_id` in access token claims
+
 ### Fixed
 - **P2P Transfer Database Schema** - Added missing `p2p_transfers` table to BSIM database
   - TransferSim P2P debit/credit operations were failing with "table does not exist" error

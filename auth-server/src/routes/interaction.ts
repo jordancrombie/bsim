@@ -365,6 +365,8 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
             payload.walletCredentialToken = walletCredentialToken;
             payload.walletCredentialId = walletCredentialId;
             payload.fiUserRef = user.fiUserRef;
+            // Include internal user ID for P2P transfers - BSIM accounts are owned by this ID
+            payload.bsimUserId = user.id;
             console.log('[Interaction] Wallet credential stored in grant payload');
           }
           await prisma.oidcPayload.update({
