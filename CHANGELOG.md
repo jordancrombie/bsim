@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **P2P Transfer Database Schema** - Added missing `p2p_transfers` table to BSIM database
+  - TransferSim P2P debit/credit operations were failing with "table does not exist" error
+  - Applied `prisma db push` to create the `P2PTransfer` model table
+  - Required for TransferSim to process P2P transfers through BSIM
+
 - **Open Banking API fiUserRef lookup** - Fixed accounts endpoint returning empty results
   - The `/accounts` endpoint was incorrectly using the token's `sub` claim (fiUserRef) as the internal userId
   - Now properly looks up the user by `fiUserRef` first, then queries accounts by internal userId
