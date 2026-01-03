@@ -102,12 +102,17 @@ app.use('/administration', createAdminAuthRoutes(prisma));
 const requireAdminAuth = createAdminAuthMiddleware(prisma);
 app.use('/administration', requireAdminAuth, createAdminRoutes(prisma));
 
-// Health check with memory stats
+// Health check with memory stats and version info
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const packageJson = require('../package.json');
+
 app.get('/health', (req, res) => {
   const mem = process.memoryUsage();
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
+    service: 'bsim-auth-server',
+    version: packageJson.version,
     memory: {
       heapUsedMB: Math.round(mem.heapUsed / 1024 / 1024),
       heapTotalMB: Math.round(mem.heapTotal / 1024 / 1024),

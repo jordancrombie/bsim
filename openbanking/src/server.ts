@@ -36,16 +36,24 @@ app.use('/customers', createCustomerRoutes(customerController));
 app.use('/accounts', createAccountRoutes(accountController));
 app.use('/users', createUserRoutes(userController));
 
-// Health check
+// Health check with version info
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const packageJson = require('../package.json');
+
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    service: 'bsim-openbanking',
+    version: packageJson.version
+  });
 });
 
 // API info endpoint
 app.get('/', (req, res) => {
   res.json({
     name: 'BSIM Open Banking API',
-    version: '0.1.0',
+    version: packageJson.version,
     standard: 'FDX-inspired',
     endpoints: {
       customers: '/customers/current',

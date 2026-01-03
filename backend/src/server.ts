@@ -123,9 +123,22 @@ app.use('/api/p2p', createP2PRoutes(prisma));
 // Well-known routes (served at root level, not under /api)
 app.use('/.well-known', createWellKnownRoutes(prisma));
 
-// Health check
+// Health check with version info
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const packageJson = require('../package.json');
+
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    service: 'bsim-backend',
+    version: packageJson.version,
+    compatibility: {
+      wsim: { minimum: '0.4.0' },
+      transferSim: { minimum: '0.2.0' },
+      mwsim: { minimum: '0.3.0' }
+    }
+  });
 });
 
 // Error handler (must be last)
