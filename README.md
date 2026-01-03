@@ -178,6 +178,8 @@ WSIM is a digital wallet application that integrates with BSIM for card enrollme
   - Passkey authentication for wallet access
   - **Mobile app payment flow** - mwsim app approval via `POST /api/wallet/request-token`
   - **iOS Safari & Chrome support** - Full mobile checkout on both browsers with browser-aware deep links
+  - **P2P transfers** - Send money to other users via TransferSim network
+  - **Refresh token support** - Long-lived sessions with `offline_access` scope (30-day refresh tokens)
 
 **Wallet Payment Flow:**
 ```
@@ -780,6 +782,8 @@ See [docs/AWS_DEPLOYMENT.md](docs/AWS_DEPLOYMENT.md) for complete instructions o
 - [x] WSIM wallet integration (card enrollment, JWT payment tokens, wallet checkout flow)
 - [x] Multi-BSIM support (NewBank second instance, multi-bank payment routing via NSIM)
 - [x] TransferSim P2P integration (cross-bank transfer API)
+- [x] Same-bank P2P transfers (compound unique constraint fix)
+- [x] Micro Merchant fee collection (atomic fee transactions)
 - [ ] CI/CD pipeline setup
 - [ ] Mobile app support
 - [ ] Client credentials grant for server-to-server
