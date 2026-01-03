@@ -7,6 +7,7 @@ import { compare } from 'bcrypt';
 // FDX-inspired scopes + Payment scopes + Wallet scopes
 const SCOPES = [
   'openid',
+  'offline_access',     // Standard OIDC scope for refresh tokens
   'profile',
   'email',
   'fdx:accountdetailed:read',
@@ -21,6 +22,7 @@ const SCOPES = [
 // Claims mapping for each scope
 const CLAIMS = {
   openid: ['sub'],
+  offline_access: [],  // No claims, just enables refresh tokens
   profile: ['name', 'family_name', 'given_name', 'birthdate'],
   email: ['email', 'email_verified'],
   'fdx:accountdetailed:read': [],

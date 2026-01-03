@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Refresh Token Support (offline_access scope)** - Enable long-lived wallet sessions
+  - Added `offline_access` to supported OIDC scopes in auth-server
+  - Allows WSIM to request refresh tokens during wallet enrollment
+  - Refresh tokens valid for 30 days, access tokens for 1 hour
+  - Fixes token expiry issues preventing account fetches after 1 hour
+  - File: `auth-server/src/config/oidc.ts`
+  - **Note**: WSIM must also request `offline_access` scope during enrollment
+
 - **P2P User ID in OIDC Tokens** - Added `bsim_user_id` claim for P2P transfer compatibility
   - BSIM auth-server now includes `bsim_user_id` (internal user ID) in access tokens during wallet enrollment
   - This is the ID that owns accounts in BSIM, required for TransferSim P2P account validation
