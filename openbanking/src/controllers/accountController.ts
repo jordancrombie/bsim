@@ -12,14 +12,27 @@ export class AccountController {
   // GET /accounts - List accounts (only consented ones)
   async listAccounts(req: Request, res: Response) {
     try {
-      const userId = req.token?.sub;
-      // Note: In a real implementation, we'd extract client_id from the token
-      // For simplicity, we'll return all user's accounts that match consent
+      const fiUserRef = req.token?.sub;
+      // Note: The token's 'sub' claim contains the fiUserRef (external identifier),
+      // not the internal userId. We need to look up the user first.
 
-      if (!userId) {
+      if (!fiUserRef) {
         return res.status(401).json({
           error: 'unauthorized',
           error_description: 'Invalid token',
+        });
+      }
+
+      // Look up user by fiUserRef (the external identifier in the token's sub claim)
+      const user = await this.prisma.user.findUnique({
+        where: { fiUserRef: fiUserRef },
+        select: { id: true },
+      });
+
+      if (!user) {
+        return res.status(401).json({
+          error: 'unauthorized',
+          error_description: 'User not found',
         });
       }
 
@@ -29,7 +42,7 @@ export class AccountController {
 
       // Get all user accounts (in production, filter by consented accounts)
       const accounts = await this.prisma.account.findMany({
-        where: { userId },
+        where: { userId: user.id },
         skip: offset,
         take: limit + 1, // Fetch one extra to check if there are more
         orderBy: { createdAt: 'desc' },
@@ -96,20 +109,33 @@ export class AccountController {
   // GET /accounts/:accountId - Get account details
   async getAccount(req: Request, res: Response) {
     try {
-      const userId = req.token?.sub;
+      const fiUserRef = req.token?.sub;
       const { accountId } = req.params;
 
-      if (!userId) {
+      if (!fiUserRef) {
         return res.status(401).json({
           error: 'unauthorized',
           error_description: 'Invalid token',
         });
       }
 
+      // Look up user by fiUserRef
+      const user = await this.prisma.user.findUnique({
+        where: { fiUserRef: fiUserRef },
+        select: { id: true },
+      });
+
+      if (!user) {
+        return res.status(401).json({
+          error: 'unauthorized',
+          error_description: 'User not found',
+        });
+      }
+
       const account = await this.prisma.account.findFirst({
         where: {
           id: accountId,
-          userId, // Ensure account belongs to the authenticated user
+          userId: user.id, // Ensure account belongs to the authenticated user
         },
         select: {
           id: true,
@@ -170,13 +196,26 @@ export class AccountController {
   // GET /accounts/:accountId/transactions - Get transaction history
   async getTransactions(req: Request, res: Response) {
     try {
-      const userId = req.token?.sub;
+      const fiUserRef = req.token?.sub;
       const { accountId } = req.params;
 
-      if (!userId) {
+      if (!fiUserRef) {
         return res.status(401).json({
           error: 'unauthorized',
           error_description: 'Invalid token',
+        });
+      }
+
+      // Look up user by fiUserRef
+      const user = await this.prisma.user.findUnique({
+        where: { fiUserRef: fiUserRef },
+        select: { id: true },
+      });
+
+      if (!user) {
+        return res.status(401).json({
+          error: 'unauthorized',
+          error_description: 'User not found',
         });
       }
 
@@ -184,7 +223,7 @@ export class AccountController {
       const account = await this.prisma.account.findFirst({
         where: {
           id: accountId,
-          userId,
+          userId: user.id,
         },
       });
 

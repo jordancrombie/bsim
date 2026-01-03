@@ -7,6 +7,7 @@ import { compare } from 'bcrypt';
 // FDX-inspired scopes + Payment scopes + Wallet scopes
 const SCOPES = [
   'openid',
+  'offline_access',     // Standard OIDC scope for refresh tokens
   'profile',
   'email',
   'fdx:accountdetailed:read',
@@ -21,6 +22,7 @@ const SCOPES = [
 // Claims mapping for each scope
 const CLAIMS = {
   openid: ['sub'],
+  offline_access: [],  // No claims, just enables refresh tokens
   profile: ['name', 'family_name', 'given_name', 'birthdate'],
   email: ['email', 'email_verified'],
   'fdx:accountdetailed:read': [],
@@ -246,11 +248,13 @@ export function createOidcProvider(prisma: PrismaClient): Provider {
               extraClaims.card_token = payload.cardToken;
             }
 
-            // Wallet flow - add wallet credential and fi_user_ref
+            // Wallet flow - add wallet credential, fi_user_ref, and bsim_user_id
             if (payload.walletCredentialToken) {
               console.log('[OIDC] Adding wallet_credential to access token');
               extraClaims.wallet_credential = payload.walletCredentialToken;
               extraClaims.fi_user_ref = payload.fiUserRef;
+              // Include internal user ID for P2P transfers - BSIM accounts are owned by this ID
+              extraClaims.bsim_user_id = payload.bsimUserId;
             }
 
             return extraClaims;

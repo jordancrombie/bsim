@@ -1,8 +1,17 @@
 # BSIM Project TODO
 
-Last Updated: December 27, 2025
+Last Updated: December 29, 2025
 
 ## Completed ✅
+
+### Micro Merchant Fee Collection (December 2025)
+- [x] Add `FEE` transaction type to TransactionType enum
+- [x] Add `SystemConfig` model for key-value configuration
+- [x] Extend P2P credit API with fee parameters (`feeAmount`, `feeAccountId`, `merchantName`)
+- [x] Implement atomic fee collection (merchant net + fee account credited together)
+- [x] Add fee account configuration endpoints (GET/PUT /api/p2p/config/fee-account)
+- [x] Create system user and fee account for dev environment
+- [x] Configure fee account via API
 
 ### NewBank Open Banking Integration (December 2025)
 - [x] Add NewBank as OIDC provider for SSIM in dev environment
@@ -132,6 +141,20 @@ Last Updated: December 27, 2025
 - [ ] Add sequence diagrams for complete payment flows
 
 ## Planned 📋
+
+### Open Banking API Cleanup (Future)
+- [ ] **Deprecate legacy `/users/:fiUserRef/accounts` endpoint** - Non-FDX-compliant endpoint
+  - Proposal document: `transferSim/LOCAL_DEPLOYMENT_PLANS/BSIM_OPENBANKING_DEPRECATION_PROPOSAL.md`
+  - Verify SSIM has migrated to FDX-compliant `GET /accounts` endpoint
+  - Verify Regalmoose has migrated (if applicable)
+  - Add deprecation warning header to legacy endpoint
+  - Remove `userController.ts` and `userRoutes.ts` after clients migrate
+
+### Micro Merchant Fee Enhancements (Future)
+- [ ] Per-BSIM admin pricing configuration (allow each bank to set its own fee structure)
+- [ ] Prepaid transaction bundles (e.g., 25 transactions @ $0.20 = $5.00)
+- [ ] Fee reconciliation reporting endpoint
+- [ ] Fee collection analytics dashboard
 
 ### Payment Processing Enhancements
 - [ ] Add payment history tracking per user

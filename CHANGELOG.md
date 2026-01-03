@@ -7,7 +7,71 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **WSIM OAuth Client Missing Refresh Token Support** - Fixed token expiry causing `bsim_unauthorized` errors
+  - The `wsim-wallet` OAuth client was missing `refresh_token` grant type and `offline_access` scope
+  - Without refresh tokens, access tokens expired after 1 hour with no way to renew
+  - Fix: Updated OAuth client configuration in database:
+    - Added `refresh_token` to `grantTypes`
+    - Added `offline_access` to `scope`
+  - **Action Required**: Users must log out and re-enroll to get a refresh token
+  - **Note**: This is a database configuration change, no code changes required
+
 ### Added
+- **Refresh Token Support (offline_access scope)** - Enable long-lived wallet sessions
+  - Added `offline_access` to supported OIDC scopes in auth-server
+  - Allows WSIM to request refresh tokens during wallet enrollment
+  - Refresh tokens valid for 30 days, access tokens for 1 hour
+  - Fixes token expiry issues preventing account fetches after 1 hour
+  - File: `auth-server/src/config/oidc.ts`
+  - **Note**: WSIM must also request `offline_access` scope during enrollment
+
+- **P2P User ID in OIDC Tokens** - Added `bsim_user_id` claim for P2P transfer compatibility
+  - BSIM auth-server now includes `bsim_user_id` (internal user ID) in access tokens during wallet enrollment
+  - This is the ID that owns accounts in BSIM, required for TransferSim P2P account validation
+  - Previously only `fi_user_ref` (external pseudonymous ID) was included, causing P2P transfers to fail
+  - Files modified:
+    - `auth-server/src/routes/interaction.ts` - Store `bsimUserId` in grant payload
+    - `auth-server/src/config/oidc.ts` - Include `bsim_user_id` in access token claims
+
+### Fixed
+- **Same-Bank P2P Transfer Credits Not Applied** - Fixed credits not being applied for transfers within the same bank
+  - Root cause: The idempotency check in `POST /api/p2p/transfer/credit` was finding the DEBIT record instead of a CREDIT record
+  - Both DEBIT and CREDIT operations use the same TransferSim `transferId` (externalId), but `externalId` had a unique constraint
+  - For same-bank transfers (sender and recipient at same BSIM), the credit would return the debit's transactionId without actually crediting the recipient
+  - Fix: Changed the unique constraint from `externalId` to compound `(externalId, direction)`
+  - Updated both debit and credit endpoints to query by `externalId_direction` compound key
+  - Files modified:
+    - `backend/prisma/schema.prisma` - Changed P2PTransfer unique constraint
+    - `backend/src/controllers/p2pController.ts` - Updated idempotency checks
+  - **Migration**: `20260103_p2p_compound_unique` - Run `prisma migrate deploy` before deploying backend
+
+- **P2P Transfer Database Schema** - Added missing `p2p_transfers` table to BSIM database
+  - TransferSim P2P debit/credit operations were failing with "table does not exist" error
+  - Applied `prisma db push` to create the `P2PTransfer` model table
+  - Required for TransferSim to process P2P transfers through BSIM
+
+- **Open Banking API fiUserRef lookup** - Fixed accounts endpoint returning empty results
+  - The `/accounts` endpoint was incorrectly using the token's `sub` claim (fiUserRef) as the internal userId
+  - Now properly looks up the user by `fiUserRef` first, then queries accounts by internal userId
+  - Affects: `GET /accounts`, `GET /accounts/:accountId`, `GET /accounts/:accountId/transactions`
+  - File: `openbanking/src/controllers/accountController.ts`
+
+### Added
+- **Micro Merchant Fee Collection** - P2P fee collection for TransferSim integration
+  - Added `FEE` transaction type to TransactionType enum
+  - Added `SystemConfig` model for key-value system configuration (fee account ID storage)
+  - Extended `POST /api/p2p/transfer/credit` with optional fee parameters:
+    - `feeAmount`: Fee amount to collect (must be less than gross amount)
+    - `feeAccountId`: UUID of the fee collection account
+    - `merchantName`: Optional merchant name for transaction description
+  - Atomic transaction ensures merchant net amount and fee account are credited together
+  - New endpoints for fee account configuration:
+    - `GET /api/p2p/config/fee-account` - Get configured fee account
+    - `PUT /api/p2p/config/fee-account` - Configure fee account (requires accountId)
+  - Fee transactions create `FEE` type entries with description format: `Micro Merchant Fee: {merchantName} (Transfer: {transferId})`
+  - Validation: feeAmount and feeAccountId must both be provided together
+
 - **Multi-BSIM Payment Routing** - Cross-bank wallet payments via NSIM
   - Added `bsimId` claim to wallet payment token JWT for multi-bank routing
   - NSIM can now route payments to the correct BSIM instance based on card issuer

@@ -123,6 +123,7 @@ enum TransactionType {
   DEPOSIT
   WITHDRAWAL
   TRANSFER
+  FEE          // P2P Micro Merchant fee collection
 }
 
 enum AccountType {
@@ -445,7 +446,7 @@ model WebAuthnRelatedOrigin {
 // P2P transfers processed through this BSIM instance
 model P2PTransfer {
   id              String          @id @default(uuid())
-  externalId      String          @unique  // TransferSim's transfer ID (for idempotency)
+  externalId      String          // TransferSim's transfer ID (for idempotency)
   direction       P2PDirection    // DEBIT or CREDIT
   userId          String
   accountId       String
@@ -460,6 +461,7 @@ model P2PTransfer {
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
+  @@unique([externalId, direction])  // Allow both DEBIT and CREDIT for same transfer (same-bank transfers)
   @@index([userId])
   @@index([accountId])
   @@index([status])
@@ -477,4 +479,20 @@ enum P2PStatus {
   COMPLETED   // Transfer successful
   FAILED      // Transfer failed
   REVERSED    // Transfer was reversed
+}
+
+// ============================================
+// System Configuration
+// ============================================
+
+// Key-value configuration for system settings
+// Used for storing P2P fee account ID and other configurable values
+model SystemConfig {
+  key         String    @id
+  value       String
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("system_config")
 }
