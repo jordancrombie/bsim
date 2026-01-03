@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **WSIM OAuth Client Missing Refresh Token Support** - Fixed token expiry causing `bsim_unauthorized` errors
+  - The `wsim-wallet` OAuth client was missing `refresh_token` grant type and `offline_access` scope
+  - Without refresh tokens, access tokens expired after 1 hour with no way to renew
+  - Fix: Updated OAuth client configuration in database:
+    - Added `refresh_token` to `grantTypes`
+    - Added `offline_access` to `scope`
+  - **Action Required**: Users must log out and re-enroll to get a refresh token
+  - **Note**: This is a database configuration change, no code changes required
+
 ### Added
 - **Refresh Token Support (offline_access scope)** - Enable long-lived wallet sessions
   - Added `offline_access` to supported OIDC scopes in auth-server
