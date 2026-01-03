@@ -25,6 +25,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `auth-server/src/config/oidc.ts` - Include `bsim_user_id` in access token claims
 
 ### Fixed
+- **Same-Bank P2P Transfer Credits Not Applied** - Fixed credits not being applied for transfers within the same bank
+  - Root cause: The idempotency check in `POST /api/p2p/transfer/credit` was finding the DEBIT record instead of a CREDIT record
+  - Both DEBIT and CREDIT operations use the same TransferSim `transferId` (externalId), but `externalId` had a unique constraint
+  - For same-bank transfers (sender and recipient at same BSIM), the credit would return the debit's transactionId without actually crediting the recipient
+  - Fix: Changed the unique constraint from `externalId` to compound `(externalId, direction)`
+  - Updated both debit and credit endpoints to query by `externalId_direction` compound key
+  - Files modified:
+    - `backend/prisma/schema.prisma` - Changed P2PTransfer unique constraint
+    - `backend/src/controllers/p2pController.ts` - Updated idempotency checks
+  - **Migration**: `20260103_p2p_compound_unique` - Run `prisma migrate deploy` before deploying backend
+
 - **P2P Transfer Database Schema** - Added missing `p2p_transfers` table to BSIM database
   - TransferSim P2P debit/credit operations were failing with "table does not exist" error
   - Applied `prisma db push` to create the `P2PTransfer` model table

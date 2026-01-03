@@ -62,9 +62,16 @@ export class P2PController {
     try {
       const data = debitSchema.parse(req.body);
 
-      // Check for idempotency - if we've already processed this transfer, return the existing result
+      // Check for idempotency - if we've already processed this DEBIT transfer, return the existing result
+      // Use compound unique key (externalId, direction) to support same-bank transfers where both
+      // DEBIT and CREDIT have the same externalId
       const existingTransfer = await this.prisma.p2PTransfer.findUnique({
-        where: { externalId: data.transferId },
+        where: {
+          externalId_direction: {
+            externalId: data.transferId,
+            direction: P2PDirection.DEBIT,
+          },
+        },
       });
 
       if (existingTransfer) {
@@ -215,9 +222,16 @@ export class P2PController {
     try {
       const data = creditSchema.parse(req.body);
 
-      // Check for idempotency
+      // Check for idempotency - if we've already processed this CREDIT transfer, return the existing result
+      // Use compound unique key (externalId, direction) to support same-bank transfers where both
+      // DEBIT and CREDIT have the same externalId
       const existingTransfer = await this.prisma.p2PTransfer.findUnique({
-        where: { externalId: data.transferId },
+        where: {
+          externalId_direction: {
+            externalId: data.transferId,
+            direction: P2PDirection.CREDIT,
+          },
+        },
       });
 
       if (existingTransfer) {
