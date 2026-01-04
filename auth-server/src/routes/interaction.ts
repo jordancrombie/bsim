@@ -222,13 +222,17 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
       const paymentFlow = isPaymentFlow(requestedScopes);
       const walletFlow = isWalletFlow(requestedScopes);
 
-      // Check if offline_access was requested (may be in prompt.details.missingOIDCScope)
-      // Note: missingOIDCScope can be a Set or an Array depending on oidc-provider version
+      // Check if offline_access was requested
+      // Note: oidc-provider filters offline_access from params.scope and missingOIDCScope
+      // For wallet enrollment flows, we always grant offline_access since wallets need
+      // refresh tokens to update account data over time
       const missingOIDCScope = prompt.details?.missingOIDCScope;
       const missingScopes: string[] = missingOIDCScope
         ? (missingOIDCScope instanceof Set ? Array.from(missingOIDCScope) : Array.isArray(missingOIDCScope) ? missingOIDCScope : [])
         : [];
-      const hasOfflineAccessRequested = missingScopes.includes('offline_access') ||
+      // Grant offline_access for wallet flows (always need refresh tokens) or if explicitly in scopes
+      const hasOfflineAccessRequested = walletFlow ||
+        missingScopes.includes('offline_access') ||
         requestedScopes.includes('offline_access');
 
       // Generate a grant ID
@@ -237,8 +241,11 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
       // session.accountId is now the fiUserRef (external identifier)
       console.log('[Interaction] Session accountId (fiUserRef):', session?.accountId);
       console.log('[Interaction] Client ID:', params.client_id);
+      console.log('[Interaction] params.scope (raw):', params.scope);
       console.log('[Interaction] Requested scopes:', requestedScopes);
       console.log('[Interaction] Missing OIDC scopes:', missingScopes);
+      console.log('[Interaction] prompt.details keys:', Object.keys(prompt.details || {}));
+      console.log('[Interaction] All params keys:', Object.keys(params || {}));
       console.log('[Interaction] offline_access requested:', hasOfflineAccessRequested);
       console.log('[Interaction] Payment flow:', paymentFlow);
       console.log('[Interaction] Wallet flow:', walletFlow);
