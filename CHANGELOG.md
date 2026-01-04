@@ -5,6 +5,21 @@ All notable changes to the BSIM Banking Simulator project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2026-01-04
+
+### Fixed
+- **Refresh Token Not Issued (offline_access scope)** - Fixed auth-server not issuing refresh tokens
+  - Root cause: `oidc-provider` requires explicit `issueRefreshToken` configuration to issue refresh tokens
+  - Even though `offline_access` was in the URL, the scope was being filtered by oidc-provider
+  - Added `issueRefreshToken` function to OIDC configuration that checks for `offline_access` scope
+  - Updated interaction handler to detect `offline_access` in `prompt.details.missingOIDCScope`
+  - Grant now explicitly includes `offline_access` when requested
+  - Files modified:
+    - `auth-server/src/config/oidc.ts` - Added `issueRefreshToken` function
+    - `auth-server/src/routes/interaction.ts` - Handle `offline_access` scope in consent flow
+  - **Affects**: Both BSIM and NewBank auth servers (same codebase)
+  - **Testing**: Create new user enrollment to verify refresh token is returned
+
 ## [0.7.0] - 2026-01-03
 
 ### Added
@@ -424,6 +439,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## Release Notes
+
+### Version 0.7.1 - Refresh Token Fix
+
+This patch release fixes a critical issue where refresh tokens were not being issued during wallet enrollment.
+
+**Key Fix:**
+- Auth-server now correctly issues refresh tokens when `offline_access` scope is requested
+- Added explicit `issueRefreshToken` configuration for oidc-provider
+- Users must re-enroll to obtain a refresh token
 
 ### Version 0.7.0 - Health Check Versioning & P2P Fixes
 

@@ -154,6 +154,22 @@ export function createOidcProvider(prisma: PrismaClient): Provider {
       Grant: 30 * 24 * 3600, // 30 days
     },
 
+    // Issue refresh tokens when offline_access scope is requested
+    async issueRefreshToken(ctx, client, code) {
+      // Check if client is allowed to use refresh_token grant
+      if (!client.grantTypeAllowed('refresh_token')) {
+        console.log('[OIDC] Client not allowed refresh_token grant type');
+        return false;
+      }
+
+      // Check if offline_access was requested and granted
+      const hasOfflineAccess = code.scopes.has('offline_access');
+      console.log(`[OIDC] issueRefreshToken check - offline_access in scopes: ${hasOfflineAccess}`);
+      console.log(`[OIDC] issueRefreshToken - code.scopes: ${Array.from(code.scopes).join(', ')}`);
+
+      return hasOfflineAccess;
+    },
+
     // Cookies
     cookies: {
       keys: config.oidc.cookieKeys,

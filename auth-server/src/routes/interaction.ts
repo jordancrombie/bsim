@@ -215,10 +215,17 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
       const { prompt, params, session } = details;
       const { selectedAccounts, selectedCard, selectedCards, walletEnrollment } = req.body;
 
-      // Get the requested scopes
+      // Get the requested scopes from params.scope
+      // Note: oidc-provider may filter offline_access from params.scope,
+      // so we need to check prompt.details for the full scope list
       const requestedScopes = (params.scope as string)?.split(' ') || [];
       const paymentFlow = isPaymentFlow(requestedScopes);
       const walletFlow = isWalletFlow(requestedScopes);
+
+      // Check if offline_access was requested (may be in prompt.details.missingOIDCScope)
+      const missingOIDCScope = (prompt.details?.missingOIDCScope as Set<string>) || new Set();
+      const hasOfflineAccessRequested = missingOIDCScope.has('offline_access') ||
+        requestedScopes.includes('offline_access');
 
       // Generate a grant ID
       const grantId = crypto.randomUUID();
@@ -227,6 +234,8 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
       console.log('[Interaction] Session accountId (fiUserRef):', session?.accountId);
       console.log('[Interaction] Client ID:', params.client_id);
       console.log('[Interaction] Requested scopes:', requestedScopes);
+      console.log('[Interaction] Missing OIDC scopes:', Array.from(missingOIDCScope));
+      console.log('[Interaction] offline_access requested:', hasOfflineAccessRequested);
       console.log('[Interaction] Payment flow:', paymentFlow);
       console.log('[Interaction] Wallet flow:', walletFlow);
 
@@ -319,7 +328,9 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
           grantId,
           userId: user.id, // Use internal ID for database relation
           clientId: params.client_id as string,
-          scopes: requestedScopes,
+          scopes: hasOfflineAccessRequested && !requestedScopes.includes('offline_access')
+            ? [...requestedScopes, 'offline_access']
+            : requestedScopes,
           accountIds: consentAccountIds,
           expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
         },
@@ -333,15 +344,23 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
         clientId: params.client_id as string,
       });
 
+      // Build the full scope list including offline_access if requested
+      const grantScopes = [...requestedScopes];
+      if (hasOfflineAccessRequested && !grantScopes.includes('offline_access')) {
+        grantScopes.push('offline_access');
+        console.log('[Interaction] Adding offline_access to grant scopes');
+      }
+
       // Add scopes to grant
-      grant.addOIDCScope(requestedScopes.join(' '));
+      console.log('[Interaction] Grant scopes:', grantScopes);
+      grant.addOIDCScope(grantScopes.join(' '));
 
       // Add resource server scopes - must include ALL scopes for the resource indicator
       // When using resource indicators, oidc-provider expects all requested scopes
       // to be granted for that resource, not just the FDX-specific ones
       grant.addResourceScope(
         config.openbanking.audience,
-        requestedScopes.join(' ')
+        grantScopes.join(' ')
       );
 
       console.log('[Interaction] Saving grant...');
