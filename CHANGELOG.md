@@ -5,6 +5,15 @@ All notable changes to the BSIM Banking Simulator project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.4] - 2026-01-04
+
+### Fixed
+- **issueRefreshToken for wallet flows** - Check for `wallet:enroll` scope to issue refresh tokens
+  - Root cause: Even with `offline_access` added to grant, oidc-provider filters it from `code.scopes`
+  - The `issueRefreshToken` function couldn't detect `offline_access` was requested
+  - Solution: Also check for `wallet:enroll` scope in `issueRefreshToken` since wallet flows always need refresh tokens
+  - Files modified: `auth-server/src/config/oidc.ts`
+
 ## [0.7.3] - 2026-01-04
 
 ### Fixed
