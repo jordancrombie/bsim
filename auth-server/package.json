@@ -1,6 +1,6 @@
 {
   "name": "bsim-auth-server",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "BSIM OpenID Connect Authorization Server",
   "main": "dist/server.js",
   "scripts": {

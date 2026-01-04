@@ -223,8 +223,12 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
       const walletFlow = isWalletFlow(requestedScopes);
 
       // Check if offline_access was requested (may be in prompt.details.missingOIDCScope)
-      const missingOIDCScope = (prompt.details?.missingOIDCScope as Set<string>) || new Set();
-      const hasOfflineAccessRequested = missingOIDCScope.has('offline_access') ||
+      // Note: missingOIDCScope can be a Set or an Array depending on oidc-provider version
+      const missingOIDCScope = prompt.details?.missingOIDCScope;
+      const missingScopes: string[] = missingOIDCScope
+        ? (missingOIDCScope instanceof Set ? Array.from(missingOIDCScope) : Array.isArray(missingOIDCScope) ? missingOIDCScope : [])
+        : [];
+      const hasOfflineAccessRequested = missingScopes.includes('offline_access') ||
         requestedScopes.includes('offline_access');
 
       // Generate a grant ID
@@ -234,7 +238,7 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
       console.log('[Interaction] Session accountId (fiUserRef):', session?.accountId);
       console.log('[Interaction] Client ID:', params.client_id);
       console.log('[Interaction] Requested scopes:', requestedScopes);
-      console.log('[Interaction] Missing OIDC scopes:', Array.from(missingOIDCScope));
+      console.log('[Interaction] Missing OIDC scopes:', missingScopes);
       console.log('[Interaction] offline_access requested:', hasOfflineAccessRequested);
       console.log('[Interaction] Payment flow:', paymentFlow);
       console.log('[Interaction] Wallet flow:', walletFlow);
