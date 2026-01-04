@@ -149,6 +149,7 @@ certs/*.csr
 !certs/.gitkeep
 certs/*.bak
 certs/*.intermediates
+certs/*.ca-bundle
 
 # AWS Deployment Notes (contains sensitive info)
 AWS_DEPLOYMENT_NOTES.md
