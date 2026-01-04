@@ -71,6 +71,7 @@ export async function verifyAdminRegistration(
     expectedChallenge: challenge,
     expectedOrigin: [ORIGIN, 'https://localhost', `https://${RP_ID}`, 'https://admin-dev.banksim.ca'],
     expectedRPID: RP_ID,
+    requireUserVerification: false,
   });
 
   if (!verification.verified || !verification.registrationInfo) {

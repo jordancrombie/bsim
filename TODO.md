@@ -142,6 +142,12 @@ Last Updated: December 29, 2025
 
 ## Planned 📋
 
+### Open Banking Service Improvements (Future)
+- [ ] **Add health/cache-clear endpoint to openbanking service**
+  - Add `POST /health/clear-cache` endpoint to clear JWKS cache on demand
+  - Useful when auth-server is restarted/rebuilt and JWKS may be stale
+  - Alternative: Configure shorter JWKS cache TTL (currently uses library defaults)
+
 ### Open Banking API Cleanup (Future)
 - [ ] **Deprecate legacy `/users/:fiUserRef/accounts` endpoint** - Non-FDX-compliant endpoint
   - Proposal document: `transferSim/LOCAL_DEPLOYMENT_PLANS/BSIM_OPENBANKING_DEPRECATION_PROPOSAL.md`

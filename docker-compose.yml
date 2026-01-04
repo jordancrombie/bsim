@@ -336,7 +336,7 @@ services:
       PAYMENT_AUTH_URL: https://auth.banksim.ca
       MERCHANT_ID: ssim-client
       PAYMENT_CLIENT_ID: ssim-client
-      PAYMENT_CLIENT_SECRET: ece9c837b17bface1df34fe89d8c8e13bcf4f9e77c7a7681442952ebd9dd7015
+      PAYMENT_CLIENT_SECRET: 02c4bb7d4b2a97b0d562756897c9c7eafb4ef75bda1ab5e203befa168cb63468
       WEBHOOK_SECRET: ${SSIM_WEBHOOK_SECRET:-ssim-webhook-secret}
       ADMIN_ENABLED: "true"
       ADMIN_EMAILS: ssim.adminuser@banksim.ca
@@ -346,6 +346,12 @@ services:
       WSIM_CLIENT_SECRET: ${SSIM_WSIM_CLIENT_SECRET:-ssim-wsim-secret}
       WSIM_POPUP_URL: https://wsim-auth.banksim.ca
       WSIM_API_URL: https://wsim.banksim.ca/api/merchant
+      # Mobile wallet payment API (Phase 3)
+      WSIM_MOBILE_API_URL: https://wsim.banksim.ca/api/mobile/payment
+      # QR code payment URL (Phase 4)
+      WSIM_QR_BASE_URL: https://wsim.banksim.ca/pay
+      WSIM_API_KEY: ${SSIM_WSIM_API_KEY:-wsim_api_e9da3d7ab1a8bfe90f976a7e5f831244}
+      MWSIM_BROWSER_AWARE: "true"
       STORE_DOMAIN: ssim.banksim.ca
       STORE_NAME: SSIM Store
     depends_on:
@@ -380,7 +386,7 @@ services:
       PAYMENT_AUTH_URL: https://auth.banksim.ca
       MERCHANT_ID: regalmoose-client
       PAYMENT_CLIENT_ID: regalmoose-client
-      PAYMENT_CLIENT_SECRET: 010cf66b281aba82aa8a1f64724a922163caeba84f01a8daf2fa9fbfa4c5ed8a
+      PAYMENT_CLIENT_SECRET: 30e37dd2ed2a02f6cf59787961f7e4761276160f22d40b2ca82ab262fcb5189d
       WEBHOOK_SECRET: ${REGALMOOSE_WEBHOOK_SECRET:-regalmoose-webhook-secret}
       ADMIN_ENABLED: "true"
       ADMIN_EMAILS: ssim.adminuser@banksim.ca,regalmoose.adminuser@banksim.ca
@@ -390,6 +396,12 @@ services:
       WSIM_CLIENT_SECRET: ${REGALMOOSE_WSIM_CLIENT_SECRET:-regalmoose-wsim-secret}
       WSIM_POPUP_URL: https://wsim-auth.banksim.ca
       WSIM_API_URL: https://wsim.banksim.ca/api/merchant
+      # Mobile wallet payment API (Phase 3)
+      WSIM_MOBILE_API_URL: https://wsim.banksim.ca/api/mobile/payment
+      # QR code payment URL (Phase 4)
+      WSIM_QR_BASE_URL: https://wsim.banksim.ca/pay
+      WSIM_API_KEY: ${REGALMOOSE_WSIM_API_KEY:-wsim_api_34f2725a1f64bab779200aaa190b18f7}
+      MWSIM_BROWSER_AWARE: "true"
       STORE_DOMAIN: regalmoose.ca
       STORE_NAME: Regal Moose
     depends_on:
