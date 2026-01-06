@@ -11,14 +11,31 @@ describe('AccountController', () => {
   let mockResponse: Partial<Response>;
 
   const testUserId = 'user-123';
+  const testFiUserRef = 'fi-user-ref-123'; // External identifier in token's sub claim
 
   beforeEach(() => {
     mockPrisma = createMockPrismaClient();
     accountController = new AccountController(mockPrisma as unknown as PrismaClient);
 
+    // Add user with fiUserRef matching the token's sub claim
+    mockPrisma._addUser({
+      id: testUserId,
+      fiUserRef: testFiUserRef,
+      firstName: 'Test',
+      lastName: 'User',
+      email: 'test@example.com',
+      phone: null,
+      address: null,
+      city: null,
+      state: null,
+      postalCode: null,
+      country: null,
+      dateOfBirth: null,
+    });
+
     mockRequest = {
       token: {
-        sub: testUserId,
+        sub: testFiUserRef, // Token's sub contains fiUserRef, not internal userId
         scope: 'fdx:accounts:read',
         scopes: ['fdx:accounts:read'],
         aud: 'https://openbanking.banksim.ca',
@@ -333,6 +350,22 @@ describe('AccountController', () => {
 
     it('should return 404 when account belongs to different user', async () => {
       mockPrisma._clear();
+      // Re-add the requesting user (cleared above)
+      mockPrisma._addUser({
+        id: testUserId,
+        fiUserRef: testFiUserRef,
+        firstName: 'Test',
+        lastName: 'User',
+        email: 'test@example.com',
+        phone: null,
+        address: null,
+        city: null,
+        state: null,
+        postalCode: null,
+        country: null,
+        dateOfBirth: null,
+      });
+      // Add account owned by a different user
       mockPrisma._addAccount({
         id: 'account-1',
         userId: 'other-user',
