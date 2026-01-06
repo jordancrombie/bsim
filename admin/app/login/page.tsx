@@ -11,9 +11,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [needsSetup, setNeedsSetup] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [siteName, setSiteName] = useState('BSIM');
 
   useEffect(() => {
     checkSetupStatus();
+    // Fetch site settings for branding
+    fetch('/api/settings')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.siteName) setSiteName(data.siteName);
+      })
+      .catch(() => {}); // Ignore errors, use default
   }, []);
 
   const checkSetupStatus = async () => {
@@ -107,7 +115,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">BSIM Admin</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{siteName} Admin</h1>
           <p className="text-gray-600 mt-2">Sign in with your passkey</p>
         </div>
 

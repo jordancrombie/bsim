@@ -5,6 +5,26 @@ All notable changes to the BSIM Banking Simulator project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.7] - 2026-01-06
+
+### Added
+- **Dynamic Admin Branding** - Admin interface now displays configurable site name from database
+  - Dashboard header shows site name (e.g., "NewBank Admin" instead of hardcoded "BSIM Admin")
+  - Login page fetches site name from `/api/settings` endpoint
+  - Files modified: `admin/app/(dashboard)/layout.tsx`, `admin/app/login/page.tsx`
+
+### Fixed
+- **Logo Upload Not Working** - Fixed nginx missing `/uploads` route for admin interfaces
+  - Requests to `/uploads/*` were going to frontend instead of backend
+  - Added `/uploads` location blocks to nginx configs for all admin subdomains
+  - Files modified: `nginx/nginx.conf`, `nginx/nginx.dev.conf`
+
+- **NewBank Admin Empty Config Tables** - Seeded missing card types and account types
+  - NewBank database had empty `credit_card_type_configs` and `account_type_configs` tables
+  - Admin console showed no card types or account types despite users having accounts
+  - Seeded 5 credit card types (VISA, VISA Debit, Mastercard, Mastercard Debit, AMEX)
+  - Seeded 4 account types (Checking, Savings, Money Market, Certificate of Deposit)
+
 ## [0.7.6] - 2026-01-06
 
 ### Added
