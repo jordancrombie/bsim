@@ -5,6 +5,26 @@ All notable changes to the BSIM Banking Simulator project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.6] - 2026-01-06
+
+### Added
+- **Buildkite Build Status Badge** - Added build status badge to README
+- **Separate Production Pipelines** - Created dedicated `pipeline-prod.yaml` for manual production deployments
+  - BSIM, WSIM, SSIM, TransferSim all have separate production pipelines
+  - Production pipelines verify ECR images exist before deploying
+  - Triggered manually via Buildkite UI/API (not on push)
+
+### Changed
+- **Pipeline Strategy Update** - Separated dev and prod deployment workflows
+  - `pipeline-full.yaml` now only deploys to dev (removed production block/deploy steps)
+  - `pipeline-prod.yaml` is the new manual production deployment pipeline
+  - This prevents builds from hanging indefinitely waiting for approval
+
+### Fixed
+- **Docker Compose Dependency Conflicts** - Added `--no-deps` to dev deployment commands
+  - SSIM, WSIM, TransferSim pipelines now use `--no-deps` to avoid recreating shared infrastructure
+  - Fixes "container name already in use" errors when bsim-db already exists
+
 ## [0.7.5] - 2026-01-05
 
 ### Added

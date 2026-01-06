@@ -1,8 +1,16 @@
 # BSIM Project TODO
 
-Last Updated: January 5, 2026
+Last Updated: January 6, 2026
 
 ## Completed ✅
+
+### CI/CD Pipeline Improvements (January 2026)
+- [x] Create separate `pipeline-prod.yaml` for manual production deployments (BSIM, WSIM, SSIM, TransferSim)
+- [x] Update `pipeline-full.yaml` to only deploy to dev (removed production block/deploy steps)
+- [x] Add `--no-deps` flag to prevent shared infrastructure conflicts
+- [x] Add Buildkite build status badge to README
+- [x] Fix SSIM/WSIM/TransferSim pipelines to use BSIM docker-compose infrastructure
+- [x] Fix ECR repository paths (use `bsim/` namespace consistently)
 
 ### Buildkite CI/CD Pipelines (January 2026)
 - [x] Create `pipeline.yaml` with full build, test, and deploy workflow
