@@ -2,6 +2,8 @@
   <img src="docs/images/bsim-logo.png" alt="BSIM Logo" width="400">
 </p>
 
+[![Build status](https://badge.buildkite.com/2b2657083e7a295a5f9a2ee5a3cbe9d39d7cc2894a40fe3a8a.svg)](https://buildkite.com/jordancrombie/bsim)
+
 # BSIM - Banking Simulator
 
 A full-stack banking simulator application with passwordless authentication (WebAuthn/passkeys), account management, and transaction processing. Built with TypeScript, Express.js, PostgreSQL, and Next.js.
