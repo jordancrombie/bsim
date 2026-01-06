@@ -80,6 +80,16 @@ services:
       WEBAUTHN_ORIGINS: https://wsim-dev.banksim.ca,https://wsim-auth-dev.banksim.ca
       # Mobile API JWT secret (Phase 1)
       MOBILE_JWT_SECRET: wsim-dev-mobile-jwt-secret
+      # APNs configuration for iOS push notifications (v0.6.0)
+      APNS_KEY_ID: 28BT962RB9
+      APNS_TEAM_ID: ZJHD6JAC94
+      APNS_KEY_PATH: /app/certs/AuthKey.p8
+      APNS_BUNDLE_ID: com.banksim.wsim
+      APNS_PRODUCTION: "true"
+      # TransferSim webhook secret for signature verification (must match TransferSim's WSIM_WEBHOOK_SECRET)
+      TRANSFERSIM_WEBHOOK_SECRET: ac63f4cbe9f717bbcde7d84f62fa0429d23da1045c979a5cb12d5cf6996eed76
+    volumes:
+      - ./certs/apns/AuthKey_28BT962RB9.p8:/app/certs/AuthKey.p8:ro
 
   # WSIM Auth Server - dev domain configuration
   wsim-auth-server:
@@ -153,6 +163,9 @@ services:
       # BSIM connections for dev
       BSIM_DEFAULT_URL: http://backend:3001
       BSIM_DEFAULT_API_KEY: transfersim-dev-api-key-2024
+      # WSIM webhook for push notifications (v0.3.0)
+      WSIM_WEBHOOK_URL: http://wsim-backend:3003/api/webhooks/transfersim
+      WSIM_WEBHOOK_SECRET: ac63f4cbe9f717bbcde7d84f62fa0429d23da1045c979a5cb12d5cf6996eed76
 
   # Nginx - use dev configuration
   nginx:

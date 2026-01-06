@@ -5,6 +5,30 @@ All notable changes to the BSIM Banking Simulator project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.5] - 2026-01-05
+
+### Added
+- **Buildkite CI/CD Pipelines** - Created CI/CD pipeline configurations for automated builds
+  - `pipeline.yaml` - Full pipeline with tests, Docker builds, ECR push, and manual deploy gate
+  - `pipeline-build.yaml` - Build-only pipeline (tests + ECR push, no deployment)
+  - `pipeline-dev.yaml` - Development pipeline (tests + local docker compose deployment)
+  - All pipelines use `Buildkite-selfhosted` agent queue
+  - Deployment via AWS SSM to EC2 instance
+  - Note: Pipeline files are gitignored (`.buildkite/`) as they are managed separately
+
+### Changed
+- **Docker Compose Development Configuration** - Updated for TransferSim and APNs integration
+  - Added TransferSim P2P network services to dev environment
+  - Configured WSIM webhook secrets for TransferSim integration
+  - Added APNs production configuration for push notifications
+  - Updated volume mounts for APNs certificate
+
+### Fixed
+- **APNs Key File Permissions** - Fixed push notification failures in production
+  - APNs key file had `600` permissions (root only), but container runs as `wsim` user (uid 1001)
+  - Fixed with `chmod 644` on the AuthKey.p8 file
+  - Affects: WSIM push notifications to enrolled mobile wallets
+
 ## [0.7.4] - 2026-01-04
 
 ### Fixed

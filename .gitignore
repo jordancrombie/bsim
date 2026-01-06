@@ -166,3 +166,6 @@ scripts/aws-admin.sh
 
 # Claude Code hints (AI-specific, kept locally only)
 .claude/
+
+# Buildkite pipeline (managed separately from repo)
+.buildkite/
