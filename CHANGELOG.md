@@ -12,8 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `pipeline.yaml` - Full pipeline with tests, Docker builds, ECR push, and manual deploy gate
   - `pipeline-build.yaml` - Build-only pipeline (tests + ECR push, no deployment)
   - `pipeline-dev.yaml` - Development pipeline (tests + local docker compose deployment)
+  - `pipeline-full.yaml` - Hybrid pipeline (auto dev deploy + manual prod gate)
   - All pipelines use `Buildkite-selfhosted` agent queue
   - Deployment via AWS SSM to EC2 instance
+  - Post-deployment health checks and version verification
+  - Automated database migrations via `prisma migrate deploy` before service restart
   - Note: Pipeline files are gitignored (`.buildkite/`) as they are managed separately
 
 ### Changed
@@ -24,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated volume mounts for APNs certificate
 
 ### Fixed
+- **OpenBanking AccountController Tests** - Updated tests to match fiUserRef lookup behavior
+  - Tests now create user with `fiUserRef` matching the token's `sub` claim
+  - Fixed test that clears mock data to re-add the requesting user
+  - All 74 OpenBanking tests now pass
 - **APNs Key File Permissions** - Fixed push notification failures in production
   - APNs key file had `600` permissions (root only), but container runs as `wsim` user (uid 1001)
   - Fixed with `chmod 644` on the AuthKey.p8 file
