@@ -8,12 +8,17 @@ Last Updated: January 5, 2026
 - [x] Create `pipeline.yaml` with full build, test, and deploy workflow
 - [x] Create `pipeline-build.yaml` for build-only (no deployment)
 - [x] Create `pipeline-dev.yaml` for local development deployment
+- [x] Create `pipeline-full.yaml` hybrid pipeline (auto dev + manual prod gate)
 - [x] Configure `Buildkite-selfhosted` agent queue for all jobs
 - [x] Add manual deploy gate (block step) for production deployments
 - [x] Configure AWS ECR push for Docker images
 - [x] Configure EC2 deployment via AWS SSM
+- [x] Add post-deployment health checks and version verification
+- [x] Add automated database migrations (`prisma migrate deploy`) to deploy step
+- [x] Add `BSIM_DATABASE_URL` to Buildkite agent environment hooks
 - [x] Add `.buildkite/` to `.gitignore` (pipelines managed separately)
 - [x] Update shared documentation with Buildkite pipeline guide
+- [x] Fix OpenBanking AccountController tests for fiUserRef lookup
 
 ### TransferSim Integration (January 2026)
 - [x] Add TransferSim services to docker-compose.dev.yml
