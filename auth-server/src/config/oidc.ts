@@ -154,6 +154,28 @@ export function createOidcProvider(prisma: PrismaClient): Provider {
       Grant: 30 * 24 * 3600, // 30 days
     },
 
+    // Issue refresh tokens when offline_access scope is requested
+    async issueRefreshToken(ctx, client, code) {
+      // Check if client is allowed to use refresh_token grant
+      if (!client.grantTypeAllowed('refresh_token')) {
+        console.log('[OIDC] Client not allowed refresh_token grant type');
+        return false;
+      }
+
+      // Check if offline_access was requested and granted
+      // Note: oidc-provider filters offline_access from code.scopes, so we also check for
+      // wallet:enroll scope which always requires refresh tokens
+      const hasOfflineAccess = code.scopes.has('offline_access');
+      const isWalletEnrollment = code.scopes.has('wallet:enroll');
+      const shouldIssue = hasOfflineAccess || isWalletEnrollment;
+
+      console.log(`[OIDC] issueRefreshToken check - offline_access: ${hasOfflineAccess}, wallet:enroll: ${isWalletEnrollment}`);
+      console.log(`[OIDC] issueRefreshToken - code.scopes: ${Array.from(code.scopes).join(', ')}`);
+      console.log(`[OIDC] issueRefreshToken - will issue: ${shouldIssue}`);
+
+      return shouldIssue;
+    },
+
     // Cookies
     cookies: {
       keys: config.oidc.cookieKeys,

@@ -1,8 +1,25 @@
 # BSIM Project TODO
 
-Last Updated: December 29, 2025
+Last Updated: January 5, 2026
 
 ## Completed ✅
+
+### Buildkite CI/CD Pipelines (January 2026)
+- [x] Create `pipeline.yaml` with full build, test, and deploy workflow
+- [x] Create `pipeline-build.yaml` for build-only (no deployment)
+- [x] Create `pipeline-dev.yaml` for local development deployment
+- [x] Configure `Buildkite-selfhosted` agent queue for all jobs
+- [x] Add manual deploy gate (block step) for production deployments
+- [x] Configure AWS ECR push for Docker images
+- [x] Configure EC2 deployment via AWS SSM
+- [x] Add `.buildkite/` to `.gitignore` (pipelines managed separately)
+- [x] Update shared documentation with Buildkite pipeline guide
+
+### TransferSim Integration (January 2026)
+- [x] Add TransferSim services to docker-compose.dev.yml
+- [x] Configure WSIM webhook secrets for TransferSim P2P notifications
+- [x] Fix APNs key file permissions for push notifications
+- [x] Configure APNs production environment variables
 
 ### Micro Merchant Fee Collection (December 2025)
 - [x] Add `FEE` transaction type to TransactionType enum
@@ -142,6 +159,12 @@ Last Updated: December 29, 2025
 
 ## Planned 📋
 
+### Open Banking Service Improvements (Future)
+- [ ] **Add health/cache-clear endpoint to openbanking service**
+  - Add `POST /health/clear-cache` endpoint to clear JWKS cache on demand
+  - Useful when auth-server is restarted/rebuilt and JWKS may be stale
+  - Alternative: Configure shorter JWKS cache TTL (currently uses library defaults)
+
 ### Open Banking API Cleanup (Future)
 - [ ] **Deprecate legacy `/users/:fiUserRef/accounts` endpoint** - Non-FDX-compliant endpoint
   - Proposal document: `transferSim/LOCAL_DEPLOYMENT_PLANS/BSIM_OPENBANKING_DEPRECATION_PROPOSAL.md`
@@ -178,7 +201,7 @@ Last Updated: December 29, 2025
 - [ ] Local development docker-compose with all services
 - [ ] Mock payment network for testing
 - [ ] Postman/Bruno collection for API testing
-- [ ] CI/CD pipeline improvements
+- [x] CI/CD pipeline improvements (Buildkite pipelines created)
 
 ## Architecture Notes
 

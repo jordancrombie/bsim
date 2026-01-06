@@ -1,6 +1,6 @@
 {
   "name": "bsim-admin",
-  "version": "0.1.0",
+  "version": "0.7.0",
   "description": "BSIM Banking Simulator - Admin Interface",
   "private": true,
   "scripts": {

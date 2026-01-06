@@ -1,6 +1,6 @@
 {
   "name": "bsim-openbanking",
-  "version": "0.1.0",
+  "version": "0.7.0",
   "description": "BSIM Open Banking Resource Server (FDX-style API)",
   "main": "dist/server.js",
   "scripts": {
