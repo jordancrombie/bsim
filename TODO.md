@@ -1,6 +1,6 @@
 # BSIM Project TODO
 
-Last Updated: January 6, 2026
+Last Updated: January 7, 2026
 
 ## Completed ✅
 
@@ -171,6 +171,17 @@ Last Updated: January 6, 2026
 - [ ] Add sequence diagrams for complete payment flows
 
 ## Planned 📋
+
+### Dynamic Card/Account Types (Future)
+- [ ] **Make card/account types fully dynamic from admin config tables**
+  - Currently the user portal uses hardcoded Prisma enums (`CreditCardType`, `AccountType`)
+  - The admin config tables (`credit_card_type_configs`, `account_type_configs`) are only for display
+  - Need to integrate so new types defined in admin appear in user portal dropdowns
+  - Changes required:
+    - Frontend: Fetch available types from API instead of hardcoded options
+    - Backend: Validate card/account types against config table instead of enum
+    - Prisma schema: Change `cardType`/`accountType` from enum to string field
+  - This enables banks to customize available card/account types without code changes
 
 ### Open Banking Service Improvements (Future)
 - [ ] **Add health/cache-clear endpoint to openbanking service**

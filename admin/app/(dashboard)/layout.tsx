@@ -21,6 +21,10 @@ export default async function DashboardLayout({
     redirect('/login');
   }
 
+  // Get site settings for dynamic branding
+  const siteSettings = await prisma.siteSettings.findFirst();
+  const siteName = siteSettings?.siteName || 'BSIM';
+
   return (
     <>
       <nav className="bg-gray-900 text-white">
@@ -28,7 +32,7 @@ export default async function DashboardLayout({
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
               <Link href="/" className="text-xl font-bold">
-                BSIM Admin
+                {siteName} Admin
               </Link>
             </div>
             <div className="flex items-center space-x-4">
