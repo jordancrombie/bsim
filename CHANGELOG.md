@@ -5,6 +5,31 @@ All notable changes to the BSIM Banking Simulator project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.8] - 2026-01-07
+
+### Changed
+- **APNS Dev Mode** - Changed `APNS_PRODUCTION` to `false` for dev environment
+  - WSIM push notifications in dev now use APNs sandbox environment
+  - Updated in `docker-compose.dev.yml` and Buildkite dev pipelines
+
+### Fixed
+- **Buildkite Pipeline Build/Push Chaining** - Fixed production pipelines failing silently on build errors
+  - Docker build and push commands now chained with `&&` so build failures stop execution before push
+  - Previously, if build failed silently, push would still run and fail with "tag does not exist"
+  - Fixed across all production pipelines: BSIM, WSIM, TransferSim, SSIM
+  - Files modified:
+    - `.buildkite/pipeline-prod.yaml` (BSIM)
+    - WSIM `.buildkite/pipeline-prod.yaml`
+    - TransferSim `.buildkite/pipeline-prod.yaml`
+    - SSIM `.buildkite/pipeline-prod.yaml`
+
+### Changed
+- **CLAUDE.md Documentation Updates** - Improved EC2 deployment and logging documentation
+  - Added TransferSim to ECR repository table
+  - New "Viewing Production Logs (EC2 via SSM)" section with SSM commands for retrieving Docker logs
+  - New "Buildkite CI/CD Pipelines" section documenting pipeline types and features
+  - Container name to service mapping table for log retrieval
+
 ## [0.7.7] - 2026-01-06
 
 ### Added

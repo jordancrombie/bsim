@@ -85,7 +85,7 @@ services:
       APNS_TEAM_ID: ZJHD6JAC94
       APNS_KEY_PATH: /app/certs/AuthKey.p8
       APNS_BUNDLE_ID: com.banksim.wsim
-      APNS_PRODUCTION: "true"
+      APNS_PRODUCTION: "false"
       # TransferSim webhook secret for signature verification (must match TransferSim's WSIM_WEBHOOK_SECRET)
       TRANSFERSIM_WEBHOOK_SECRET: ac63f4cbe9f717bbcde7d84f62fa0429d23da1045c979a5cb12d5cf6996eed76
     volumes:
