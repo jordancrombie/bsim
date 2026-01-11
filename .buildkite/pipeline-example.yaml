@@ -1,0 +1,151 @@
+# BSIM Buildkite Pipeline - Example Template
+#
+# This is an EXAMPLE pipeline configuration. Copy and customize for your environment.
+# DO NOT commit actual secrets or credentials to version control.
+#
+# Required Buildkite Secrets (configure in Buildkite UI):
+#   - AWS_ACCESS_KEY_ID
+#   - AWS_SECRET_ACCESS_KEY
+#
+# For production deployments, use Buildkite's secret management or AWS IAM roles.
+
+env:
+  NODE_VERSION: "20"
+  AWS_REGION: "ca-central-1"
+  # ECR_REGISTRY: "your-account-id.dkr.ecr.region.amazonaws.com"
+
+steps:
+  # ============================================================================
+  # Stage 1: Run Tests (parallel)
+  # ============================================================================
+  - group: ":test_tube: Tests"
+    key: "tests"
+    steps:
+      - label: ":nodejs: Unit Tests"
+        key: "test-unit"
+        agents:
+          queue: "your-queue-name"
+        commands:
+          - "echo '--- :nodejs: Setting up Node.js'"
+          - "node --version"
+          - "echo '--- :npm: Installing dependencies'"
+          - "npm ci"
+          - "echo '--- :prisma: Generating Prisma client'"
+          - "npx prisma generate"
+          - "echo '--- :test_tube: Running tests'"
+          - "npm test"
+
+      - label: ":hammer: TypeScript Check"
+        key: "typecheck"
+        agents:
+          queue: "your-queue-name"
+        commands:
+          - "npm ci"
+          - "npx prisma generate"
+          - "npx tsc --noEmit"
+
+      - label: ":eslint: Lint Check"
+        key: "lint"
+        agents:
+          queue: "your-queue-name"
+        commands:
+          - "npm ci"
+          - "npm run lint"
+
+  # ============================================================================
+  # Stage 2: Build Docker Image
+  # ============================================================================
+  - wait
+
+  - label: ":docker: Build Docker Image"
+    key: "build"
+    agents:
+      queue: "your-queue-name"
+    commands:
+      - "echo '--- :docker: Building image'"
+      - "docker build --no-cache -t your-service:$$BUILDKITE_COMMIT -t your-service:latest ."
+
+  # ============================================================================
+  # Stage 3: Deploy (Environment-specific)
+  # ============================================================================
+  - wait
+
+  # Option A: Deploy to local Docker environment
+  - label: ":rocket: Deploy to Dev (Docker)"
+    key: "deploy-dev-docker"
+    agents:
+      queue: "your-queue-name"
+    commands:
+      - "echo '--- :docker: Deploying to dev environment'"
+      - "docker stop your-service 2>/dev/null || true"
+      - "docker rm your-service 2>/dev/null || true"
+      - |
+        docker run -d --name your-service \
+          --network your-network \
+          -p 3000:3000 \
+          -e NODE_ENV=development \
+          -e PORT=3000 \
+          -e DATABASE_URL=postgresql://user:password@db-host:5432/dbname \
+          your-service:latest
+      - "echo '--- :white_check_mark: Verifying deployment'"
+      - "sleep 10"
+      - "curl -sf http://localhost:3000/health || exit 1"
+
+  # Option B: Push to ECR and deploy to AWS EC2 via SSM
+  # Uncomment and configure for production
+  #
+  # - label: ":aws: Push to ECR"
+  #   key: "push-ecr"
+  #   agents:
+  #     queue: "your-queue-name"
+  #   commands:
+  #     - "echo '--- :aws: Logging into ECR'"
+  #     - "aws ecr get-login-password --region $$AWS_REGION | docker login --username AWS --password-stdin $$ECR_REGISTRY"
+  #     - "echo '--- :docker: Tagging and pushing'"
+  #     - "docker tag your-service:latest $$ECR_REGISTRY/your-service:$$BUILDKITE_COMMIT"
+  #     - "docker tag your-service:latest $$ECR_REGISTRY/your-service:latest"
+  #     - "docker push $$ECR_REGISTRY/your-service:$$BUILDKITE_COMMIT"
+  #     - "docker push $$ECR_REGISTRY/your-service:latest"
+  #
+  # - wait
+  #
+  # - label: ":ec2: Deploy to EC2 via SSM"
+  #   key: "deploy-ec2"
+  #   agents:
+  #     queue: "your-queue-name"
+  #   commands:
+  #     - "echo '--- :ec2: Deploying via SSM'"
+  #     - |
+  #       DEPLOY_CMD=$(cat << 'SCRIPT'
+  #       set -e
+  #       cd /opt/your-app
+  #       aws ecr get-login-password --region ca-central-1 | docker login --username AWS --password-stdin YOUR_ECR_REGISTRY
+  #       docker pull YOUR_ECR_REGISTRY/your-service:latest
+  #       docker stop your-service 2>/dev/null || true
+  #       docker rm your-service 2>/dev/null || true
+  #       docker run -d --name your-service \
+  #         --network your-network \
+  #         -p 3000:3000 \
+  #         -e NODE_ENV=production \
+  #         YOUR_ECR_REGISTRY/your-service:latest
+  #       echo "Deployment complete!"
+  #       SCRIPT
+  #       )
+  #     - "ENCODED_CMD=$$(echo \"$$DEPLOY_CMD\" | base64)"
+  #     - "aws ssm send-command --instance-ids 'i-your-instance-id' --document-name 'AWS-RunShellScript' --parameters \"{\\\"commands\\\":[\\\"echo $$ENCODED_CMD | base64 -d | bash\\\"]}\" --region ca-central-1"
+  #     - "sleep 60"
+  #     - "echo '--- :white_check_mark: Verifying deployment'"
+  #     - "curl -sf https://your-domain.com/health || exit 1"
+
+  # Option C: Deploy to ECS Fargate
+  # Uncomment and configure for Fargate deployments
+  #
+  # - label: ":ecs: Deploy to ECS Fargate"
+  #   key: "deploy-ecs"
+  #   agents:
+  #     queue: "your-queue-name"
+  #   commands:
+  #     - "echo '--- :ecs: Updating ECS service'"
+  #     - "aws ecs update-service --cluster your-cluster --service your-service --force-new-deployment --region $$AWS_REGION"
+  #     - "echo '--- :hourglass: Waiting for deployment'"
+  #     - "aws ecs wait services-stable --cluster your-cluster --services your-service --region $$AWS_REGION"

@@ -167,5 +167,6 @@ scripts/aws-admin.sh
 # Claude Code hints (AI-specific, kept locally only)
 .claude/
 
-# Buildkite pipeline (managed separately from repo)
-.buildkite/
+# Buildkite pipelines - actual pipelines gitignored, only example committed
+.buildkite/*
+!.buildkite/pipeline-example.yaml

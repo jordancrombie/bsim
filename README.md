@@ -21,7 +21,9 @@ A full-stack banking simulator application with passwordless authentication (Web
 - 📱 **Digital Wallet Support** - Card enrollment API for wallet providers (WSIM)
 - 🗄️ PostgreSQL database with Prisma ORM
 - 🐳 **Full Docker containerization** for development and production
-- 🚀 **AWS ECS Fargate deployment ready** with ElastiCache Redis
+- 🚀 **AWS deployment ready** - Supports EC2 with Docker Compose or ECS Fargate
+- 📡 **BLE Proximity Discovery** - Bluetooth-based P2P transfer initiation
+- 🖼️ **Profile Images** - User and merchant logo support via S3/CloudFront
 - 🏗️ Clean architecture with repository pattern
 - 🔒 HTTPS support with configurable domain names and wildcard subdomains
 - 🌐 Dynamic subdomain support (works with any *.domain.com)
@@ -247,6 +249,61 @@ NSIM is the payment network middleware that routes card payments between merchan
 8. SSIM captures/voids payment as needed
 
 See [docs/NSIM_PRODUCTION_DEPLOYMENT.md](docs/NSIM_PRODUCTION_DEPLOYMENT.md) for AWS deployment.
+
+### TransferSim - P2P Transfer Network
+
+TransferSim is the peer-to-peer transfer infrastructure that enables instant money transfers between users across different banks (BSIM instances). It supports both individual P2P transfers and merchant (Micro Merchant) payments.
+
+- **Repository:** https://github.com/jordancrombie/transferSim
+- **Dev URL:** https://transfersim-dev.banksim.ca
+- **Production URL:** https://transfer.banksim.ca
+- **AWS Resources:** Docker container on EC2, RDS PostgreSQL (`transfersim` database), ElastiCache Redis
+- **Features:**
+  - **P2P Transfers** - Send money to any user by alias (email, phone, username)
+  - **Micro Merchants** - Small business payment acceptance with QR codes
+  - **BLE Proximity Discovery** - Bluetooth beacon-based recipient discovery for contactless P2P
+  - **Profile Images** - User and merchant logo support via S3/CloudFront CDN
+  - **Multi-bank routing** - Transfers between BSIM and NewBank instances
+  - **Webhook notifications** - Real-time transfer status updates to WSIM/mwsim
+  - **QR Code payments** - Generate and scan payment tokens
+
+**P2P Transfer Flow:**
+```
+┌─────────┐     ┌─────────────┐     ┌─────────┐     ┌─────────┐
+│  mwsim  │────>│ TransferSim │────>│  BSIM   │     │  BSIM   │
+│ (Sender)│     │  (Network)  │     │(Sender) │     │(Recvr)  │
+└─────────┘     └─────────────┘     └─────────┘     └─────────┘
+     │               │                   │               │
+     │ 1. Initiate   │                   │               │
+     ├──────────────>│                   │               │
+     │               │ 2. Debit Sender   │               │
+     │               ├──────────────────>│               │
+     │               │ 3. Credit Recvr   │               │
+     │               ├──────────────────────────────────>│
+     │               │ 4. Webhook        │               │
+     │<──────────────│                   │               │
+     │ 5. Confirmed  │                   │               │
+```
+
+**BLE Proximity Discovery:**
+- Users broadcast iBeacon signals with their TransferSim token
+- Nearby users can discover and initiate transfers without typing aliases
+- Supports both P2P and merchant receive contexts
+
+### mwsim - Mobile Wallet App
+
+mwsim is the native mobile wallet application (React Native) that integrates with WSIM backend and TransferSim for payments and P2P transfers.
+
+- **Repository:** https://github.com/jordancrombie/mwsim
+- **Platforms:** iOS, Android
+- **Features:**
+  - Card enrollment and wallet management
+  - P2P transfers via TransferSim
+  - BLE proximity discovery for nearby payments
+  - QR code scanning and generation
+  - Push notifications for payment events
+  - Biometric authentication
+  - Merchant mode for Micro Merchants
 
 ### Multi-BSIM / NewBank (Second Bank Instance)
 
@@ -757,7 +814,75 @@ When `STORAGE_TYPE` is not set or set to `local`, files are stored in the contai
 
 ## Deployment
 
-See [docs/AWS_DEPLOYMENT.md](docs/AWS_DEPLOYMENT.md) for complete instructions on deploying to AWS ECS Fargate.
+BSIM supports multiple deployment options:
+
+### Option 1: AWS EC2 with Docker Compose (Recommended for Production)
+
+All services run on a single EC2 instance using Docker Compose. This is the current production setup.
+
+- **Instance Type:** t3.large (2 vCPU, 8 GB RAM) or larger
+- **Database:** AWS RDS PostgreSQL
+- **Cache:** AWS ElastiCache Redis
+- **Storage:** S3 for profile images, CloudFront CDN
+- **Deployment:** SSM commands to pull from ECR and restart containers
+
+### Option 2: AWS ECS Fargate
+
+Services run as individual Fargate tasks for automatic scaling.
+
+See [docs/AWS_DEPLOYMENT.md](docs/AWS_DEPLOYMENT.md) for detailed instructions.
+
+### Option 3: Local Docker Compose
+
+For development or self-hosted deployments, use Docker Compose directly:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+```
+
+## CI/CD with Buildkite
+
+BSIM uses Buildkite for continuous integration and deployment. Each service has its own pipeline configuration.
+
+### Pipeline Structure
+
+```
+.buildkite/
+├── pipeline-example.yaml    # Example template (safe to commit)
+├── pipeline-dev.yaml        # Development pipeline (gitignored)
+└── pipeline-prod.yaml       # Production pipeline (gitignored)
+```
+
+### Example Pipeline
+
+See [.buildkite/pipeline-example.yaml](.buildkite/pipeline-example.yaml) for a complete example including:
+
+- Parallel test execution (unit tests, TypeScript check, linting)
+- Docker image building with `--no-cache` for production
+- Deployment options for Docker, EC2 via SSM, or ECS Fargate
+- Health check verification after deployment
+
+### Pipeline Features
+
+| Feature | Description |
+|---------|-------------|
+| Parallel tests | Unit tests, TypeScript, and linting run concurrently |
+| Docker builds | `--no-cache` ensures latest code is always included |
+| ECR push | Images tagged with commit SHA and `latest` |
+| SSM deployment | Deploy to EC2 without SSH access |
+| Health checks | Automated verification with retries |
+| Version logging | Deployed version logged from `/health` endpoint |
+
+### Required Secrets
+
+Configure these in Buildkite's secret management:
+
+| Secret | Purpose |
+|--------|---------|
+| `AWS_ACCESS_KEY_ID` | ECR push, SSM commands |
+| `AWS_SECRET_ACCESS_KEY` | ECR push, SSM commands |
+
+**Note:** Actual pipeline files with environment-specific values are gitignored. Only the example template is committed.
 
 ## Roadmap
 
@@ -786,8 +911,11 @@ See [docs/AWS_DEPLOYMENT.md](docs/AWS_DEPLOYMENT.md) for complete instructions o
 - [x] TransferSim P2P integration (cross-bank transfer API)
 - [x] Same-bank P2P transfers (compound unique constraint fix)
 - [x] Micro Merchant fee collection (atomic fee transactions)
-- [ ] CI/CD pipeline setup
-- [ ] Mobile app support
+- [x] CI/CD pipeline setup (Buildkite with parallel tests, ECR push, SSM deployment)
+- [x] Mobile app support (mwsim React Native app for iOS/Android)
+- [x] BLE Proximity Discovery (beacon-based P2P transfer initiation)
+- [x] Profile images (user avatars and merchant logos via S3/CloudFront)
+- [x] API specifications (OpenAPI 3.1 and AsyncAPI 3.0 documentation)
 - [ ] Client credentials grant for server-to-server
 - [ ] Additional banking features (loans, investments, etc.)
 
