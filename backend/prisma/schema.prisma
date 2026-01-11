@@ -1,7 +1,7 @@
 // Prisma schema for BSIM Banking Simulator
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
@@ -11,28 +11,28 @@ datasource db {
 }
 
 model User {
-  id          String       @id @default(uuid())
-  email       String       @unique
-  password    String
-  firstName   String
-  lastName    String
+  id                String             @id @default(uuid())
+  email             String             @unique
+  password          String
+  firstName         String
+  lastName          String
   // FI User Reference Number - unique identifier for Open Banking
-  fiUserRef   String       @unique @default(uuid()) @map("fi_user_ref")
+  fiUserRef         String             @unique @default(uuid()) @map("fi_user_ref")
   // Customer Information File (CIF) fields
-  phone       String?
-  address     String?
-  city        String?
-  state       String?
-  postalCode  String?
-  country     String?      @default("Canada")
-  dateOfBirth DateTime?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  accounts    Account[]
-  passkeys    Passkey[]
-  creditCards CreditCard[]
-  consents    Consent[]
-  notifications Notification[]
+  phone             String?
+  address           String?
+  city              String?
+  state             String?
+  postalCode        String?
+  country           String?            @default("Canada")
+  dateOfBirth       DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  accounts          Account[]
+  passkeys          Passkey[]
+  creditCards       CreditCard[]
+  consents          Consent[]
+  notifications     Notification[]
   walletCredentials WalletCredential[]
 
   @@map("users")
@@ -48,6 +48,7 @@ model Account {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   transactions  Transaction[]
+  escrowHolds   EscrowHold[]
 
   @@map("accounts")
 }
@@ -66,55 +67,55 @@ model Transaction {
 }
 
 model Passkey {
-  id                String   @id @default(uuid())
-  userId            String
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  credentialId      String   @unique
+  id                  String    @id @default(uuid())
+  userId              String
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialId        String    @unique
   credentialPublicKey Bytes
-  counter           BigInt
-  deviceType        String
-  backedUp          Boolean
-  transports        String[]
-  createdAt         DateTime @default(now())
-  lastUsedAt        DateTime?
+  counter             BigInt
+  deviceType          String
+  backedUp            Boolean
+  transports          String[]
+  createdAt           DateTime  @default(now())
+  lastUsedAt          DateTime?
 
   @@map("passkeys")
 }
 
 model CreditCard {
-  id              String               @id @default(uuid())
-  cardNumber      String               @unique
-  cardType        CreditCardType       @default(VISA) @map("card_type")
+  id              String                  @id @default(uuid())
+  cardNumber      String                  @unique
+  cardType        CreditCardType          @default(VISA) @map("card_type")
   cardHolder      String
   expiryMonth     Int
   expiryYear      Int
   cvv             String
-  creditLimit     Decimal              @db.Decimal(15, 2)
-  availableCredit Decimal              @db.Decimal(15, 2)
+  creditLimit     Decimal                 @db.Decimal(15, 2)
+  availableCredit Decimal                 @db.Decimal(15, 2)
   userId          String
-  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
+  user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
   transactions    CreditCardTransaction[]
 
   @@map("credit_cards")
 }
 
 model CreditCardTransaction {
-  id              String                     @id @default(uuid())
+  id              String                    @id @default(uuid())
   type            CreditCardTransactionType
-  amount          Decimal                    @db.Decimal(15, 2)
-  availableAfter  Decimal                    @db.Decimal(15, 2)
+  amount          Decimal                   @db.Decimal(15, 2)
+  availableAfter  Decimal                   @db.Decimal(15, 2)
   description     String?
   // Merchant details
   merchantName    String?
-  merchantId      String?                    // Merchant identifier
-  mccCode         String?                    // Merchant Category Code (e.g., "5411" for grocery stores)
+  merchantId      String? // Merchant identifier
+  mccCode         String? // Merchant Category Code (e.g., "5411" for grocery stores)
   // Transaction timing
-  transactionDate DateTime                   @default(now()) @map("transaction_date")
+  transactionDate DateTime                  @default(now()) @map("transaction_date")
   creditCardId    String
-  creditCard      CreditCard                 @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
-  createdAt       DateTime                   @default(now())
+  creditCard      CreditCard                @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
+  createdAt       DateTime                  @default(now())
 
   @@map("credit_card_transactions")
 }
@@ -123,7 +124,10 @@ enum TransactionType {
   DEPOSIT
   WITHDRAWAL
   TRANSFER
-  FEE          // P2P Micro Merchant fee collection
+  FEE // P2P Micro Merchant fee collection
+  ESCROW_HOLD // Funds held in escrow for ContractSim
+  ESCROW_RELEASE // Escrow released for settlement
+  ESCROW_RETURN // Escrow returned (cancelled/expired)
 }
 
 enum AccountType {
@@ -159,17 +163,17 @@ model SiteSettings {
 
 // Configurable Credit Card Types
 model CreditCardTypeConfig {
-  id              String   @id @default(uuid())
-  code            String   @unique  // e.g., "VISA", "MC", "AMEX"
-  name            String            // Display name, e.g., "VISA", "Mastercard"
-  cardNumberPrefix String           // e.g., "4" for Visa, "51-55" for MC, "34,37" for AMEX
-  cardNumberLength Int     @default(16)  // 16 for most, 15 for AMEX
-  cvvLength       Int     @default(3)    // 3 for most, 4 for AMEX
-  isDebit         Boolean @default(false)
-  isActive        Boolean @default(true)
-  sortOrder       Int     @default(0)    // For display ordering
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id               String   @id @default(uuid())
+  code             String   @unique // e.g., "VISA", "MC", "AMEX"
+  name             String // Display name, e.g., "VISA", "Mastercard"
+  cardNumberPrefix String // e.g., "4" for Visa, "51-55" for MC, "34,37" for AMEX
+  cardNumberLength Int      @default(16) // 16 for most, 15 for AMEX
+  cvvLength        Int      @default(3) // 3 for most, 4 for AMEX
+  isDebit          Boolean  @default(false)
+  isActive         Boolean  @default(true)
+  sortOrder        Int      @default(0) // For display ordering
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@map("credit_card_type_configs")
 }
@@ -177,11 +181,11 @@ model CreditCardTypeConfig {
 // Configurable Account Types
 model AccountTypeConfig {
   id          String   @id @default(uuid())
-  code        String   @unique  // e.g., "CHECKING", "SAVINGS"
-  name        String            // Display name, e.g., "Checking Account"
-  description String?           // Optional description
-  isActive    Boolean @default(true)
-  sortOrder   Int     @default(0)    // For display ordering
+  code        String   @unique // e.g., "CHECKING", "SAVINGS"
+  name        String // Display name, e.g., "Checking Account"
+  description String? // Optional description
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0) // For display ordering
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -227,18 +231,18 @@ enum AdminRole {
 
 // Admin invitations for new administrator signups
 model AdminInvite {
-  id          String            @id @default(uuid())
-  code        String            @unique // The invite code shared with the invitee
-  email       String?           // Optional: restrict invite to specific email
-  role        AdminRole         @default(ADMIN)
+  id          String     @id @default(uuid())
+  code        String     @unique // The invite code shared with the invitee
+  email       String? // Optional: restrict invite to specific email
+  role        AdminRole  @default(ADMIN)
   createdById String
-  createdBy   AdminUser         @relation("InviteCreator", fields: [createdById], references: [id], onDelete: Cascade)
-  usedById    String?           @unique
-  usedBy      AdminUser?        @relation("InviteUsed", fields: [usedById], references: [id], onDelete: SetNull)
+  createdBy   AdminUser  @relation("InviteCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  usedById    String?    @unique
+  usedBy      AdminUser? @relation("InviteUsed", fields: [usedById], references: [id], onDelete: SetNull)
   usedAt      DateTime?
   expiresAt   DateTime
   revokedAt   DateTime?
-  createdAt   DateTime          @default(now())
+  createdAt   DateTime   @default(now())
 
   @@map("admin_invites")
 }
@@ -249,57 +253,57 @@ model AdminInvite {
 
 // OAuth 2.0 / OIDC Clients (Third-party applications)
 model OAuthClient {
-  id            String    @id @default(uuid())
-  clientId      String    @unique
-  clientSecret            String    // plaintext (oidc-provider does direct comparison)
-  clientName    String
-  redirectUris  String[]  // Array of allowed redirect URIs
-  postLogoutRedirectUris  String[]  @default([]) // For RP-Initiated Logout
-  grantTypes    String[]  @default(["authorization_code"])
-  responseTypes String[]  @default(["code"])
-  scope         String    // Space-separated allowed scopes
-  logoUri       String?
-  policyUri     String?
-  tosUri        String?
-  contacts      String[]
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                     String   @id @default(uuid())
+  clientId               String   @unique
+  clientSecret           String // plaintext (oidc-provider does direct comparison)
+  clientName             String
+  redirectUris           String[] // Array of allowed redirect URIs
+  postLogoutRedirectUris String[] @default([]) // For RP-Initiated Logout
+  grantTypes             String[] @default(["authorization_code"])
+  responseTypes          String[] @default(["code"])
+  scope                  String // Space-separated allowed scopes
+  logoUri                String?
+  policyUri              String?
+  tosUri                 String?
+  contacts               String[]
+  isActive               Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 
-  consents      Consent[]
+  consents Consent[]
 
   @@map("oauth_clients")
 }
 
 // User consents for third-party access
 model Consent {
-  id            String      @id @default(uuid())
-  grantId       String      @unique // Used by oidc-provider
-  userId        String
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  clientId      String
-  client        OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
-  scopes        String[]    // Granted scopes
-  accountIds    String[]    // Specific accounts user consented to share
-  expiresAt     DateTime?   // Consent expiration
-  revokedAt     DateTime?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id         String      @id @default(uuid())
+  grantId    String      @unique // Used by oidc-provider
+  userId     String
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientId   String
+  client     OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  scopes     String[] // Granted scopes
+  accountIds String[] // Specific accounts user consented to share
+  expiresAt  DateTime? // Consent expiration
+  revokedAt  DateTime?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
 
   @@map("consents")
 }
 
 // OIDC Provider storage for tokens, sessions, etc.
 model OidcPayload {
-  id            String    @id
-  type          String    // 'Session', 'AccessToken', 'AuthorizationCode', etc.
-  payload       Json
-  grantId       String?
-  userCode      String?
-  uid           String?
-  expiresAt     DateTime?
-  consumedAt    DateTime?
-  createdAt     DateTime  @default(now())
+  id         String    @id
+  type       String // 'Session', 'AccessToken', 'AuthorizationCode', etc.
+  payload    Json
+  grantId    String?
+  userCode   String?
+  uid        String?
+  expiresAt  DateTime?
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
 
   @@index([grantId])
   @@index([userCode])
@@ -318,7 +322,7 @@ model Notification {
   type      NotificationType
   title     String
   message   String
-  data      Json?            // Additional data (e.g., amount, sender email)
+  data      Json? // Additional data (e.g., amount, sender email)
   read      Boolean          @default(false)
   createdAt DateTime         @default(now())
 
@@ -342,17 +346,17 @@ enum NotificationType {
 
 // Payment consent from user for a specific card and merchant
 model PaymentConsent {
-  id            String    @id @default(uuid())
-  cardToken     String    @unique  // Token issued to merchant/network
-  userId        String
-  creditCardId  String
-  merchantId    String
-  merchantName  String
-  maxAmount     Decimal?  @db.Decimal(15, 2)  // Optional per-transaction limit
-  expiresAt     DateTime
-  revokedAt     DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id           String    @id @default(uuid())
+  cardToken    String    @unique // Token issued to merchant/network
+  userId       String
+  creditCardId String
+  merchantId   String
+  merchantName String
+  maxAmount    Decimal?  @db.Decimal(15, 2) // Optional per-transaction limit
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   authorizations PaymentAuthorization[]
 
@@ -364,21 +368,21 @@ model PaymentConsent {
 
 // Payment authorization hold on a card
 model PaymentAuthorization {
-  id                String                      @id @default(uuid())
-  authorizationCode String                      @unique
+  id                String                     @id @default(uuid())
+  authorizationCode String                     @unique
   consentId         String
-  consent           PaymentConsent              @relation(fields: [consentId], references: [id])
-  amount            Decimal                     @db.Decimal(15, 2)
-  currency          String                      @default("CAD")
+  consent           PaymentConsent             @relation(fields: [consentId], references: [id])
+  amount            Decimal                    @db.Decimal(15, 2)
+  currency          String                     @default("CAD")
   merchantId        String
   merchantName      String
   orderId           String
-  status            PaymentAuthorizationStatus  @default(PENDING)
-  capturedAmount    Decimal                     @default(0) @db.Decimal(15, 2)
+  status            PaymentAuthorizationStatus @default(PENDING)
+  capturedAmount    Decimal                    @default(0) @db.Decimal(15, 2)
   declineReason     String?
   expiresAt         DateTime
-  createdAt         DateTime                    @default(now())
-  updatedAt         DateTime                    @updatedAt
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
 
   @@index([consentId])
   @@index([status])
@@ -401,13 +405,13 @@ enum PaymentAuthorizationStatus {
 // Wallet credential issued to digital wallet providers (e.g., WSIM)
 model WalletCredential {
   id              String    @id @default(uuid())
-  credentialToken String    @unique  // Long-lived JWT for wallet API access
+  credentialToken String    @unique // Long-lived JWT for wallet API access
   userId          String
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  walletId        String    // WSIM's identifier
-  walletName      String    // e.g., "WSIM Wallet"
-  permittedCards  String[]  // Array of credit card IDs user consented to share
-  scopes          String[]  // Permitted operations: ["cards:read", "payments:create"]
+  walletId        String // WSIM's identifier
+  walletName      String // e.g., "WSIM Wallet"
+  permittedCards  String[] // Array of credit card IDs user consented to share
+  scopes          String[] // Permitted operations: ["cards:read", "payments:create"]
   issuedAt        DateTime  @default(now())
   expiresAt       DateTime
   revokedAt       DateTime?
@@ -429,8 +433,8 @@ model WalletCredential {
 // Served via /.well-known/webauthn endpoint
 model WebAuthnRelatedOrigin {
   id          String   @id @default(uuid())
-  origin      String   @unique  // e.g., "https://store.regalmoose.ca"
-  description String?           // Optional description
+  origin      String   @unique // e.g., "https://store.regalmoose.ca"
+  description String? // Optional description
   isActive    Boolean  @default(true)
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
@@ -445,23 +449,23 @@ model WebAuthnRelatedOrigin {
 
 // P2P transfers processed through this BSIM instance
 model P2PTransfer {
-  id              String          @id @default(uuid())
-  externalId      String          // TransferSim's transfer ID (for idempotency)
-  direction       P2PDirection    // DEBIT or CREDIT
-  userId          String
-  accountId       String
-  transactionId   String?         // Link to Transaction table after completion
-  amount          Decimal         @db.Decimal(12, 2)
-  currency        String          @default("CAD")
-  status          P2PStatus       @default(PENDING)
-  counterpartyAlias String?       // The other party's alias (email, phone, etc.)
-  description     String?         // User-provided memo
-  errorCode       String?         // Error code if failed
-  errorMessage    String?         // Error message if failed
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  id                String       @id @default(uuid())
+  externalId        String // TransferSim's transfer ID (for idempotency)
+  direction         P2PDirection // DEBIT or CREDIT
+  userId            String
+  accountId         String
+  transactionId     String? // Link to Transaction table after completion
+  amount            Decimal      @db.Decimal(12, 2)
+  currency          String       @default("CAD")
+  status            P2PStatus    @default(PENDING)
+  counterpartyAlias String? // The other party's alias (email, phone, etc.)
+  description       String? // User-provided memo
+  errorCode         String? // Error code if failed
+  errorMessage      String? // Error message if failed
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 
-  @@unique([externalId, direction])  // Allow both DEBIT and CREDIT for same transfer (same-bank transfers)
+  @@unique([externalId, direction]) // Allow both DEBIT and CREDIT for same transfer (same-bank transfers)
   @@index([userId])
   @@index([accountId])
   @@index([status])
@@ -470,15 +474,15 @@ model P2PTransfer {
 }
 
 enum P2PDirection {
-  DEBIT   // Outgoing transfer (money leaves this account)
-  CREDIT  // Incoming transfer (money enters this account)
+  DEBIT // Outgoing transfer (money leaves this account)
+  CREDIT // Incoming transfer (money enters this account)
 }
 
 enum P2PStatus {
-  PENDING     // Transfer initiated
-  COMPLETED   // Transfer successful
-  FAILED      // Transfer failed
-  REVERSED    // Transfer was reversed
+  PENDING // Transfer initiated
+  COMPLETED // Transfer successful
+  FAILED // Transfer failed
+  REVERSED // Transfer was reversed
 }
 
 // ============================================
@@ -488,11 +492,66 @@ enum P2PStatus {
 // Key-value configuration for system settings
 // Used for storing P2P fee account ID and other configurable values
 model SystemConfig {
-  key         String    @id
+  key         String   @id
   value       String
   description String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@map("system_config")
+}
+
+// ============================================
+// Escrow Models (ContractSim Integration)
+// ============================================
+
+// Escrow holds for ContractSim conditional payments
+model EscrowHold {
+  id        String  @id @default(uuid())
+  userId    String
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  // Contract reference (from ContractSim)
+  contractId      String @map("contract_id")
+  contractService String @default("contractsim") @map("contract_service")
+
+  // Amount held
+  amount   Decimal @db.Decimal(12, 2)
+  currency String  @default("CAD")
+
+  // Status tracking
+  status EscrowStatus @default(HELD)
+
+  // Timestamps
+  createdAt  DateTime  @default(now()) @map("created_at")
+  heldAt     DateTime? @map("held_at")
+  releasedAt DateTime? @map("released_at")
+  expiresAt  DateTime  @map("expires_at")
+
+  // Release details
+  releaseType       String? @map("release_type") // 'settlement', 'return', 'expired'
+  transferReference String? @map("transfer_reference")
+
+  // Description for transaction history
+  description String?
+
+  // Audit fields
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([contractId, userId])
+  @@index([userId])
+  @@index([accountId])
+  @@index([contractId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("escrow_holds")
+}
+
+enum EscrowStatus {
+  PENDING // Hold requested, not yet confirmed
+  HELD // Funds actively held
+  RELEASED // Released for settlement
+  RETURNED // Returned to user (cancelled/expired)
+  EXPIRED // Auto-expired
 }
