@@ -127,7 +127,8 @@ app.use('/.well-known', createWellKnownRoutes(prisma));
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const packageJson = require('../package.json');
 
-app.get('/health', (req, res) => {
+// Health check handler
+const healthHandler = (req: express.Request, res: express.Response) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
@@ -139,7 +140,11 @@ app.get('/health', (req, res) => {
       mwsim: { minimum: '0.3.0' }
     }
   });
-});
+};
+
+// Support both /health and /api/health for ALB routing compatibility
+app.get('/health', healthHandler);
+app.get('/api/health', healthHandler);
 
 // Error handler (must be last)
 app.use(errorHandler);
