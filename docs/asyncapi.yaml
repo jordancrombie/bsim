@@ -1,0 +1,470 @@
+asyncapi: 3.0.0
+info:
+  title: BSIM Banking Simulator Event API
+  version: 1.0.0
+  description: |
+    Event-driven interfaces for the Bank Simulator (BSIM) platform.
+
+    ## Overview
+
+    BSIM participates in event-driven architectures through:
+
+    1. **Webhook Receivers**: BSIM exposes REST endpoints that receive webhook callbacks
+       from external services (TransferSim, NSIM, etc.)
+
+    2. **Internal Events**: BSIM generates notifications and events stored in the database
+       for frontend consumption.
+
+    ## Integration Patterns
+
+    ### P2P Transfers (TransferSim)
+    TransferSim calls BSIM's P2P API endpoints to:
+    - Debit sender accounts (`/api/p2p/transfer/debit`)
+    - Credit recipient accounts (`/api/p2p/transfer/credit`)
+    - Verify users exist (`/api/p2p/user/verify`)
+
+    ### Payment Processing (NSIM)
+    NSIM calls BSIM's Payment Network API to:
+    - Authorize payments (`/api/payment-network/authorize`)
+    - Capture payments (`/api/payment-network/capture`)
+    - Void authorizations (`/api/payment-network/void`)
+    - Process refunds (`/api/payment-network/refund`)
+
+    ### Wallet Integration (WSIM)
+    WSIM calls BSIM's Wallet API to:
+    - Fetch enrolled cards (`/api/wallet/cards`)
+    - Request payment tokens (`/api/wallet/request-token`)
+
+    Note: These are synchronous REST calls documented in the OpenAPI spec.
+    This AsyncAPI document focuses on the event semantics and payload structures.
+
+servers:
+  production:
+    host: banksim.ca
+    protocol: https
+    description: Production BSIM server
+  development:
+    host: dev.banksim.ca
+    protocol: https
+    description: Development BSIM server
+
+channels:
+  # ============================================================================
+  # P2P Transfer Events (from TransferSim)
+  # ============================================================================
+  p2p/transfer/debit:
+    address: /api/p2p/transfer/debit
+    title: P2P Debit Request
+    description: |
+      TransferSim sends this event when a user initiates an outgoing P2P transfer.
+      BSIM debits the sender's account and returns the result.
+    messages:
+      p2pDebitRequest:
+        $ref: '#/components/messages/P2PDebitRequest'
+
+  p2p/transfer/credit:
+    address: /api/p2p/transfer/credit
+    title: P2P Credit Request
+    description: |
+      TransferSim sends this event when a P2P transfer should credit a recipient.
+      BSIM credits the recipient's account and returns the result.
+    messages:
+      p2pCreditRequest:
+        $ref: '#/components/messages/P2PCreditRequest'
+
+  p2p/user/verify:
+    address: /api/p2p/user/verify
+    title: P2P User Verification
+    description: |
+      TransferSim verifies a recipient exists before initiating a transfer.
+    messages:
+      p2pUserVerifyRequest:
+        $ref: '#/components/messages/P2PUserVerifyRequest'
+
+  # ============================================================================
+  # Payment Network Events (from NSIM)
+  # ============================================================================
+  payment/authorize:
+    address: /api/payment-network/authorize
+    title: Payment Authorization Request
+    description: |
+      NSIM sends this when a merchant requests payment authorization.
+      BSIM validates the card token, checks available credit, and holds the funds.
+    messages:
+      paymentAuthorizeRequest:
+        $ref: '#/components/messages/PaymentAuthorizeRequest'
+
+  payment/capture:
+    address: /api/payment-network/capture
+    title: Payment Capture Request
+    description: |
+      NSIM sends this to capture (settle) a previously authorized payment.
+    messages:
+      paymentCaptureRequest:
+        $ref: '#/components/messages/PaymentCaptureRequest'
+
+  payment/void:
+    address: /api/payment-network/void
+    title: Payment Void Request
+    description: |
+      NSIM sends this to void (cancel) a pending authorization.
+    messages:
+      paymentVoidRequest:
+        $ref: '#/components/messages/PaymentVoidRequest'
+
+  payment/refund:
+    address: /api/payment-network/refund
+    title: Payment Refund Request
+    description: |
+      NSIM sends this to refund a captured payment.
+    messages:
+      paymentRefundRequest:
+        $ref: '#/components/messages/PaymentRefundRequest'
+
+  # ============================================================================
+  # Internal Notification Events (stored in database)
+  # ============================================================================
+  notifications:
+    address: internal://notifications
+    title: User Notifications
+    description: |
+      Internal events stored in the notifications table.
+      Retrieved by frontend via `/api/notifications` endpoint.
+    messages:
+      notification:
+        $ref: '#/components/messages/Notification'
+
+operations:
+  receiveP2PDebit:
+    action: receive
+    channel:
+      $ref: '#/channels/p2p~1transfer~1debit'
+    summary: Receive P2P debit request from TransferSim
+    messages:
+      - $ref: '#/channels/p2p~1transfer~1debit/messages/p2pDebitRequest'
+
+  receiveP2PCredit:
+    action: receive
+    channel:
+      $ref: '#/channels/p2p~1transfer~1credit'
+    summary: Receive P2P credit request from TransferSim
+    messages:
+      - $ref: '#/channels/p2p~1transfer~1credit/messages/p2pCreditRequest'
+
+  receivePaymentAuthorize:
+    action: receive
+    channel:
+      $ref: '#/channels/payment~1authorize'
+    summary: Receive payment authorization request from NSIM
+    messages:
+      - $ref: '#/channels/payment~1authorize/messages/paymentAuthorizeRequest'
+
+  publishNotification:
+    action: send
+    channel:
+      $ref: '#/channels/notifications'
+    summary: Publish notification to user
+    messages:
+      - $ref: '#/channels/notifications/messages/notification'
+
+components:
+  messages:
+    P2PDebitRequest:
+      name: P2PDebitRequest
+      title: P2P Debit Request
+      summary: Request to debit funds from sender's account
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/P2PDebitPayload'
+
+    P2PCreditRequest:
+      name: P2PCreditRequest
+      title: P2P Credit Request
+      summary: Request to credit funds to recipient's account
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/P2PCreditPayload'
+
+    P2PUserVerifyRequest:
+      name: P2PUserVerifyRequest
+      title: P2P User Verify Request
+      summary: Request to verify user exists for P2P transfer
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/P2PUserVerifyPayload'
+
+    PaymentAuthorizeRequest:
+      name: PaymentAuthorizeRequest
+      title: Payment Authorization Request
+      summary: Request to authorize a credit card payment
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PaymentAuthorizePayload'
+
+    PaymentCaptureRequest:
+      name: PaymentCaptureRequest
+      title: Payment Capture Request
+      summary: Request to capture an authorized payment
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PaymentCapturePayload'
+
+    PaymentVoidRequest:
+      name: PaymentVoidRequest
+      title: Payment Void Request
+      summary: Request to void a pending authorization
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PaymentVoidPayload'
+
+    PaymentRefundRequest:
+      name: PaymentRefundRequest
+      title: Payment Refund Request
+      summary: Request to refund a captured payment
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PaymentRefundPayload'
+
+    Notification:
+      name: Notification
+      title: User Notification
+      summary: Notification event for user
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/NotificationPayload'
+
+  schemas:
+    P2PDebitPayload:
+      type: object
+      required:
+        - externalId
+        - userEmail
+        - amount
+      properties:
+        externalId:
+          type: string
+          description: TransferSim's unique transfer ID (for idempotency)
+          example: "xfer_abc123"
+        userEmail:
+          type: string
+          format: email
+          description: Email of the sender
+        accountId:
+          type: string
+          format: uuid
+          description: Specific account to debit (uses default if not provided)
+        amount:
+          type: number
+          minimum: 0.01
+          description: Amount to debit
+          example: 100.00
+        currency:
+          type: string
+          default: CAD
+          description: Currency code
+        description:
+          type: string
+          description: User-provided memo
+          example: "Payment for dinner"
+        counterpartyAlias:
+          type: string
+          description: Recipient's identifier (email/phone)
+          example: "jane@example.com"
+
+    P2PCreditPayload:
+      type: object
+      required:
+        - externalId
+        - userEmail
+        - amount
+      properties:
+        externalId:
+          type: string
+          description: TransferSim's unique transfer ID
+        userEmail:
+          type: string
+          format: email
+          description: Email of the recipient
+        accountId:
+          type: string
+          format: uuid
+          description: Specific account to credit
+        amount:
+          type: number
+          minimum: 0.01
+          description: Amount to credit
+        currency:
+          type: string
+          default: CAD
+        description:
+          type: string
+          description: Transfer description/memo
+        counterpartyAlias:
+          type: string
+          description: Sender's identifier
+
+    P2PUserVerifyPayload:
+      type: object
+      required:
+        - alias
+        - aliasType
+      properties:
+        alias:
+          type: string
+          description: User identifier to verify
+          example: "jane@example.com"
+        aliasType:
+          type: string
+          enum: [email, phone]
+          description: Type of alias
+
+    PaymentAuthorizePayload:
+      type: object
+      required:
+        - cardToken
+        - amount
+        - merchantId
+        - orderId
+      properties:
+        cardToken:
+          type: string
+          description: Ephemeral card token from wallet
+        amount:
+          type: number
+          minimum: 0.01
+          description: Amount to authorize
+          example: 49.99
+        currency:
+          type: string
+          default: CAD
+        merchantId:
+          type: string
+          description: Merchant identifier
+          example: "merch_regalmoose"
+        merchantName:
+          type: string
+          description: Display name of merchant
+          example: "Regal Moose Store"
+        orderId:
+          type: string
+          description: Merchant's order ID
+          example: "order_12345"
+        description:
+          type: string
+          description: Transaction description
+
+    PaymentCapturePayload:
+      type: object
+      required:
+        - authorizationCode
+        - amount
+      properties:
+        authorizationCode:
+          type: string
+          description: Authorization code from authorize response
+        amount:
+          type: number
+          description: Amount to capture (can be less than authorized)
+
+    PaymentVoidPayload:
+      type: object
+      required:
+        - authorizationCode
+      properties:
+        authorizationCode:
+          type: string
+          description: Authorization code to void
+
+    PaymentRefundPayload:
+      type: object
+      required:
+        - authorizationCode
+        - amount
+      properties:
+        authorizationCode:
+          type: string
+          description: Authorization code of captured payment
+        amount:
+          type: number
+          description: Amount to refund
+
+    NotificationPayload:
+      type: object
+      required:
+        - userId
+        - type
+        - title
+        - message
+      properties:
+        userId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - TRANSFER_RECEIVED
+            - TRANSFER_SENT
+            - ACCOUNT_CREATED
+            - CREDIT_CARD_CREATED
+            - PAYMENT_DUE
+            - SYSTEM
+        title:
+          type: string
+          example: "Transfer Received"
+        message:
+          type: string
+          example: "You received $100.00 from john@example.com"
+        data:
+          type: object
+          description: Additional context-specific data
+          additionalProperties: true
+        read:
+          type: boolean
+          default: false
+        createdAt:
+          type: string
+          format: date-time
+
+    P2PTransferResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        transferId:
+          type: string
+          description: BSIM's internal transfer record ID
+        transactionId:
+          type: string
+          description: Associated transaction ID
+        newBalance:
+          type: number
+          description: Account balance after transfer
+        errorCode:
+          type: string
+          description: Error code if failed
+          enum:
+            - INSUFFICIENT_FUNDS
+            - USER_NOT_FOUND
+            - ACCOUNT_NOT_FOUND
+            - TRANSFER_LIMIT_EXCEEDED
+        errorMessage:
+          type: string
+          description: Human-readable error message
+
+    PaymentAuthorizationResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [approved, declined, error]
+        authorizationCode:
+          type: string
+          description: Code to use for capture/void/refund
+        declineReason:
+          type: string
+          description: Reason if declined
+          enum:
+            - INSUFFICIENT_CREDIT
+            - CARD_EXPIRED
+            - INVALID_TOKEN
+            - LIMIT_EXCEEDED

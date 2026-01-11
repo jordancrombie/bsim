@@ -1,0 +1,1340 @@
+openapi: 3.1.0
+info:
+  title: BSIM Banking Simulator API
+  description: |
+    REST API for the Bank Simulator (BSIM) platform.
+
+    ## Authentication Methods
+
+    BSIM uses different authentication methods depending on the API:
+
+    - **User API** (Bearer Token): JWT tokens obtained via `/api/auth/login` or passkey authentication
+    - **P2P API** (API Key): Service-to-service calls using `X-API-Key` header
+    - **Payment Network API** (API Key): NSIM integration using `X-API-Key` header
+    - **Wallet API** (Wallet Credential): Long-lived tokens for digital wallet providers
+    - **OpenBanking API** (OAuth 2.0): Access tokens with FDX scopes
+
+  version: 1.0.0
+  contact:
+    name: BSIM Team
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://banksim.ca/api
+    description: Production
+  - url: https://dev.banksim.ca/api
+    description: Development
+
+tags:
+  - name: Authentication
+    description: User authentication and passkey management
+  - name: Accounts
+    description: Bank account operations
+  - name: Transactions
+    description: Deposit, withdraw, and transfer operations
+  - name: Credit Cards
+    description: Credit card management
+  - name: P2P Transfers
+    description: Service-to-service P2P transfer API (TransferSim integration)
+  - name: Wallet
+    description: Digital wallet integration API (WSIM integration)
+  - name: WSIM Enrollment
+    description: Embedded WSIM wallet enrollment flow
+  - name: Payment Network
+    description: Payment network integration API (NSIM integration)
+
+paths:
+  # ============================================================================
+  # Authentication Endpoints
+  # ============================================================================
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register a new user
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, firstName, lastName]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Email already exists
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login with email and password
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/me:
+    get:
+      tags: [Authentication]
+      summary: Get current user profile
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/passkey/register-options:
+    post:
+      tags: [Authentication]
+      summary: Generate passkey registration options
+      operationId: getPasskeyRegistrationOptions
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: WebAuthn registration options
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /auth/passkey/register-verify:
+    post:
+      tags: [Authentication]
+      summary: Verify passkey registration
+      operationId: verifyPasskeyRegistration
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Passkey registered successfully
+
+  /auth/passkey/login-options:
+    post:
+      tags: [Authentication]
+      summary: Generate passkey authentication options
+      operationId: getPasskeyAuthenticationOptions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: WebAuthn authentication options
+
+  /auth/passkey/login-verify:
+    post:
+      tags: [Authentication]
+      summary: Verify passkey authentication
+      operationId: verifyPasskeyAuthentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /auth/passkeys:
+    get:
+      tags: [Authentication]
+      summary: List user's passkeys
+      operationId: getUserPasskeys
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of passkeys
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Passkey'
+
+  /auth/passkeys/{passkeyId}:
+    delete:
+      tags: [Authentication]
+      summary: Delete a passkey
+      operationId: deletePasskey
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: passkeyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Passkey deleted
+
+  # ============================================================================
+  # Account Endpoints
+  # ============================================================================
+  /accounts:
+    get:
+      tags: [Accounts]
+      summary: List user's accounts
+      operationId: getAccounts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Account'
+    post:
+      tags: [Accounts]
+      summary: Create a new account
+      operationId: createAccount
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [accountType]
+              properties:
+                accountType:
+                  $ref: '#/components/schemas/AccountType'
+                initialDeposit:
+                  type: number
+                  minimum: 0
+      responses:
+        '201':
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+
+  /accounts/{accountNumber}:
+    get:
+      tags: [Accounts]
+      summary: Get account details
+      operationId: getAccount
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Account details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /accounts/{accountNumber}/transactions:
+    get:
+      tags: [Accounts]
+      summary: Get account transactions
+      operationId: getAccountTransactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountNumber
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+
+  # ============================================================================
+  # Transaction Endpoints
+  # ============================================================================
+  /transactions/deposit:
+    post:
+      tags: [Transactions]
+      summary: Deposit funds to an account
+      operationId: deposit
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [accountNumber, amount]
+              properties:
+                accountNumber:
+                  type: string
+                amount:
+                  type: number
+                  minimum: 0.01
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Deposit successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+
+  /transactions/withdraw:
+    post:
+      tags: [Transactions]
+      summary: Withdraw funds from an account
+      operationId: withdraw
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [accountNumber, amount]
+              properties:
+                accountNumber:
+                  type: string
+                amount:
+                  type: number
+                  minimum: 0.01
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Withdrawal successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          description: Insufficient funds
+
+  /transactions/transfer:
+    post:
+      tags: [Transactions]
+      summary: Transfer funds between accounts
+      operationId: transfer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fromAccountNumber, toAccountNumber, amount]
+              properties:
+                fromAccountNumber:
+                  type: string
+                toAccountNumber:
+                  type: string
+                amount:
+                  type: number
+                  minimum: 0.01
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Transfer successful
+
+  # ============================================================================
+  # Credit Card Endpoints
+  # ============================================================================
+  /credit-cards:
+    get:
+      tags: [Credit Cards]
+      summary: List user's credit cards
+      operationId: getCreditCards
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of credit cards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CreditCard'
+    post:
+      tags: [Credit Cards]
+      summary: Create a new credit card
+      operationId: createCreditCard
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cardType, creditLimit]
+              properties:
+                cardType:
+                  $ref: '#/components/schemas/CreditCardType'
+                creditLimit:
+                  type: number
+                  minimum: 100
+      responses:
+        '201':
+          description: Credit card created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditCard'
+
+  /credit-cards/{cardNumber}:
+    get:
+      tags: [Credit Cards]
+      summary: Get credit card details
+      operationId: getCreditCard
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cardNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Credit card details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditCard'
+
+  /credit-cards/{cardNumber}/transactions:
+    get:
+      tags: [Credit Cards]
+      summary: Get credit card transactions
+      operationId: getCreditCardTransactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cardNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of credit card transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CreditCardTransaction'
+
+  # ============================================================================
+  # P2P Transfer API (Service-to-Service - TransferSim Integration)
+  # ============================================================================
+  /p2p/transfer/debit:
+    post:
+      tags: [P2P Transfers]
+      summary: Debit funds from a user account (outgoing transfer)
+      description: |
+        Called by TransferSim to debit funds from a sender's account.
+        Requires API key authentication.
+      operationId: p2pDebit
+      security:
+        - apiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/P2PDebitRequest'
+      responses:
+        '200':
+          description: Debit successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/P2PTransferResponse'
+        '400':
+          description: Insufficient funds or invalid request
+        '404':
+          description: User or account not found
+
+  /p2p/transfer/credit:
+    post:
+      tags: [P2P Transfers]
+      summary: Credit funds to a user account (incoming transfer)
+      description: |
+        Called by TransferSim to credit funds to a recipient's account.
+        Requires API key authentication.
+      operationId: p2pCredit
+      security:
+        - apiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/P2PCreditRequest'
+      responses:
+        '200':
+          description: Credit successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/P2PTransferResponse'
+        '404':
+          description: User or account not found
+
+  /p2p/user/verify:
+    post:
+      tags: [P2P Transfers]
+      summary: Verify a user exists for P2P transfer
+      description: |
+        Called by TransferSim to verify a recipient exists before initiating transfer.
+      operationId: p2pVerifyUser
+      security:
+        - apiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [alias, aliasType]
+              properties:
+                alias:
+                  type: string
+                  description: User identifier (email, phone, etc.)
+                aliasType:
+                  type: string
+                  enum: [email, phone]
+      responses:
+        '200':
+          description: User verification result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  found:
+                    type: boolean
+                  userId:
+                    type: string
+                  displayName:
+                    type: string
+
+  /p2p/config/fee-account:
+    get:
+      tags: [P2P Transfers]
+      summary: Get configured fee account for Micro Merchant fees
+      operationId: getFeeAccount
+      security:
+        - apiKeyAuth: []
+      responses:
+        '200':
+          description: Fee account configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accountId:
+                    type: string
+                  accountNumber:
+                    type: string
+    put:
+      tags: [P2P Transfers]
+      summary: Set fee account for Micro Merchant fees
+      operationId: setFeeAccount
+      security:
+        - apiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [accountId]
+              properties:
+                accountId:
+                  type: string
+      responses:
+        '200':
+          description: Fee account updated
+
+  # ============================================================================
+  # Wallet API (Service-to-Service - WSIM Integration)
+  # ============================================================================
+  /wallet/cards:
+    get:
+      tags: [Wallet]
+      summary: Get user's cards for wallet display
+      description: |
+        Returns masked card information for enrolled cards.
+        Requires wallet credential token authentication.
+      operationId: getWalletCards
+      security:
+        - walletCredentialAuth: []
+      responses:
+        '200':
+          description: List of masked cards
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cards:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MaskedCard'
+
+  /wallet/cards/enroll:
+    get:
+      tags: [Wallet]
+      summary: Get all user's cards for enrollment selection
+      description: |
+        Returns all user's cards for wallet enrollment flow.
+        Requires cardToken JWT authentication.
+      operationId: getEnrollmentCards
+      security:
+        - cardTokenAuth: []
+      responses:
+        '200':
+          description: List of cards for enrollment
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cards:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MaskedCard'
+
+  /wallet/tokens:
+    post:
+      tags: [Wallet]
+      summary: Generate ephemeral payment token
+      description: |
+        Generates a short-lived (5 min) payment token for card transactions.
+      operationId: generateWalletToken
+      security:
+        - walletCredentialAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cardId]
+              properties:
+                cardId:
+                  type: string
+                merchantId:
+                  type: string
+                amount:
+                  type: number
+                currency:
+                  type: string
+                  default: CAD
+      responses:
+        '200':
+          description: Payment token generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  tokenId:
+                    type: string
+                  expiresAt:
+                    type: string
+                    format: date-time
+                  cardInfo:
+                    $ref: '#/components/schemas/MaskedCard'
+
+  /wallet/request-token:
+    post:
+      tags: [Wallet]
+      summary: Request ephemeral card token for mobile payment
+      description: |
+        Called by WSIM mobile backend during payment approval.
+      operationId: requestWalletToken
+      security:
+        - walletCredentialAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cardId]
+              properties:
+                cardId:
+                  type: string
+                merchantId:
+                  type: string
+                amount:
+                  type: number
+                currency:
+                  type: string
+      responses:
+        '200':
+          description: Card token generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cardToken:
+                    type: string
+
+  # ============================================================================
+  # WSIM Enrollment Endpoints
+  # ============================================================================
+  /wsim/enrollment-data:
+    post:
+      tags: [WSIM Enrollment]
+      summary: Generate enrollment data for embedded WSIM flow
+      operationId: getEnrollmentData
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Enrollment data with signed claims
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentData'
+
+  /wsim/enrollment-status:
+    get:
+      tags: [WSIM Enrollment]
+      summary: Check WSIM enrollment status
+      operationId: getEnrollmentStatus
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Enrollment status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  enrolled:
+                    type: boolean
+                  walletId:
+                    type: string
+                  walletName:
+                    type: string
+                  enrolledAt:
+                    type: string
+                    format: date-time
+                  cardCount:
+                    type: integer
+
+  /wsim/enrollment-complete:
+    post:
+      tags: [WSIM Enrollment]
+      summary: Record successful WSIM enrollment
+      operationId: completeEnrollment
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [walletId]
+              properties:
+                walletId:
+                  type: string
+                cardsEnrolled:
+                  type: integer
+      responses:
+        '200':
+          description: Enrollment recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  credentialId:
+                    type: string
+
+  /wsim/sso-url:
+    get:
+      tags: [WSIM Enrollment]
+      summary: Generate SSO URL for WSIM Wallet
+      operationId: getWsimSsoUrl
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: SSO URL for WSIM
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ssoUrl:
+                    type: string
+                    format: uri
+                  expiresIn:
+                    type: integer
+
+  # ============================================================================
+  # Payment Network API (Service-to-Service - NSIM Integration)
+  # ============================================================================
+  /payment-network/authorize:
+    post:
+      tags: [Payment Network]
+      summary: Authorize a payment
+      description: |
+        Called by NSIM to authorize a credit card payment.
+      operationId: authorizePayment
+      security:
+        - paymentApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentAuthorizationRequest'
+      responses:
+        '200':
+          description: Authorization result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentAuthorizationResponse'
+
+  /payment-network/capture:
+    post:
+      tags: [Payment Network]
+      summary: Capture an authorized payment
+      operationId: capturePayment
+      security:
+        - paymentApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [authorizationCode, amount]
+              properties:
+                authorizationCode:
+                  type: string
+                amount:
+                  type: number
+      responses:
+        '200':
+          description: Capture result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /payment-network/void:
+    post:
+      tags: [Payment Network]
+      summary: Void an authorization
+      operationId: voidPayment
+      security:
+        - paymentApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [authorizationCode]
+              properties:
+                authorizationCode:
+                  type: string
+      responses:
+        '200':
+          description: Void result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /payment-network/refund:
+    post:
+      tags: [Payment Network]
+      summary: Refund a captured payment
+      operationId: refundPayment
+      security:
+        - paymentApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [authorizationCode, amount]
+              properties:
+                authorizationCode:
+                  type: string
+                amount:
+                  type: number
+      responses:
+        '200':
+          description: Refund result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token from /api/auth/login or passkey authentication
+
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for P2P service-to-service calls (TransferSim)
+
+    paymentApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for payment network calls (NSIM)
+
+    walletCredentialAuth:
+      type: http
+      scheme: bearer
+      description: Long-lived wallet credential token
+
+    cardTokenAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Short-lived card access token for enrollment flow
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        fiUserRef:
+          type: string
+          description: FI User Reference Number for Open Banking
+        phone:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        postalCode:
+          type: string
+        country:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+
+    Account:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        accountNumber:
+          type: string
+        accountType:
+          $ref: '#/components/schemas/AccountType'
+        balance:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+
+    AccountType:
+      type: string
+      enum: [CHECKING, SAVINGS, MONEY_MARKET, CERTIFICATE_OF_DEPOSIT]
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/TransactionType'
+        amount:
+          type: number
+        balanceAfter:
+          type: number
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    TransactionType:
+      type: string
+      enum: [DEPOSIT, WITHDRAWAL, TRANSFER, FEE]
+
+    CreditCard:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        cardNumber:
+          type: string
+        cardType:
+          $ref: '#/components/schemas/CreditCardType'
+        cardHolder:
+          type: string
+        expiryMonth:
+          type: integer
+        expiryYear:
+          type: integer
+        creditLimit:
+          type: number
+        availableCredit:
+          type: number
+
+    CreditCardType:
+      type: string
+      enum: [VISA, VISA_DEBIT, MC, MC_DEBIT, AMEX]
+
+    CreditCardTransaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [CHARGE, PAYMENT, REFUND]
+        amount:
+          type: number
+        availableAfter:
+          type: number
+        description:
+          type: string
+        merchantName:
+          type: string
+        merchantId:
+          type: string
+        mccCode:
+          type: string
+        transactionDate:
+          type: string
+          format: date-time
+
+    Passkey:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        deviceType:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        lastUsedAt:
+          type: string
+          format: date-time
+
+    MaskedCard:
+      type: object
+      properties:
+        id:
+          type: string
+        cardType:
+          $ref: '#/components/schemas/CreditCardType'
+        cardHolder:
+          type: string
+        lastFour:
+          type: string
+        expiryMonth:
+          type: integer
+        expiryYear:
+          type: integer
+
+    P2PDebitRequest:
+      type: object
+      required: [externalId, userEmail, amount]
+      properties:
+        externalId:
+          type: string
+          description: TransferSim transfer ID
+        userEmail:
+          type: string
+          format: email
+        accountId:
+          type: string
+          description: Specific account to debit (optional, uses default if not provided)
+        amount:
+          type: number
+          minimum: 0.01
+        currency:
+          type: string
+          default: CAD
+        description:
+          type: string
+        counterpartyAlias:
+          type: string
+          description: Recipient identifier
+
+    P2PCreditRequest:
+      type: object
+      required: [externalId, userEmail, amount]
+      properties:
+        externalId:
+          type: string
+          description: TransferSim transfer ID
+        userEmail:
+          type: string
+          format: email
+        accountId:
+          type: string
+          description: Specific account to credit (optional)
+        amount:
+          type: number
+          minimum: 0.01
+        currency:
+          type: string
+          default: CAD
+        description:
+          type: string
+        counterpartyAlias:
+          type: string
+          description: Sender identifier
+
+    P2PTransferResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        transferId:
+          type: string
+        transactionId:
+          type: string
+        newBalance:
+          type: number
+        errorCode:
+          type: string
+        errorMessage:
+          type: string
+
+    EnrollmentData:
+      type: object
+      properties:
+        claims:
+          type: object
+          properties:
+            sub:
+              type: string
+            email:
+              type: string
+            given_name:
+              type: string
+            family_name:
+              type: string
+        cardToken:
+          type: string
+          description: Short-lived JWT for card fetch
+        bsimId:
+          type: string
+          description: Bank identifier
+        signature:
+          type: string
+          description: HMAC-SHA256 signature
+        timestamp:
+          type: integer
+
+    PaymentAuthorizationRequest:
+      type: object
+      required: [cardToken, amount, merchantId, orderId]
+      properties:
+        cardToken:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+          default: CAD
+        merchantId:
+          type: string
+        merchantName:
+          type: string
+        orderId:
+          type: string
+        description:
+          type: string
+
+    PaymentAuthorizationResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [approved, declined, error]
+        authorizationCode:
+          type: string
+        declineReason:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
