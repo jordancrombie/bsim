@@ -50,7 +50,7 @@ services:
       # TransferSim P2P Integration
       TRANSFERSIM_API_KEY: ${TRANSFERSIM_API_KEY:-}
       # ContractSim Integration (escrow API authentication)
-      CONTRACTSIM_API_KEY: ${CONTRACTSIM_API_KEY:-80db551f4f8df36df2266fead0cff9da8637ddc44e17bccbb61bbc556b38f3d5}
+      CONTRACTSIM_API_KEY: ${CONTRACTSIM_API_KEY:-}
       CONTRACTSIM_WEBHOOK_URL: ${CONTRACTSIM_WEBHOOK_URL:-https://contract.banksim.ca/webhooks/bsim}
       CONTRACTSIM_WEBHOOK_SECRET: ${CONTRACTSIM_WEBHOOK_SECRET:-}
     volumes:
@@ -354,7 +354,7 @@ services:
       WSIM_MOBILE_API_URL: https://wsim.banksim.ca/api/mobile/payment
       # QR code payment URL (Phase 4)
       WSIM_QR_BASE_URL: https://wsim.banksim.ca/pay
-      WSIM_API_KEY: ${SSIM_WSIM_API_KEY:-wsim_api_e9da3d7ab1a8bfe90f976a7e5f831244}
+      WSIM_API_KEY: ${SSIM_WSIM_API_KEY:-}
       MWSIM_BROWSER_AWARE: "true"
       STORE_DOMAIN: ssim.banksim.ca
       STORE_NAME: SSIM Store
@@ -404,7 +404,7 @@ services:
       WSIM_MOBILE_API_URL: https://wsim.banksim.ca/api/mobile/payment
       # QR code payment URL (Phase 4)
       WSIM_QR_BASE_URL: https://wsim.banksim.ca/pay
-      WSIM_API_KEY: ${REGALMOOSE_WSIM_API_KEY:-wsim_api_34f2725a1f64bab779200aaa190b18f7}
+      WSIM_API_KEY: ${REGALMOOSE_WSIM_API_KEY:-}
       MWSIM_BROWSER_AWARE: "true"
       STORE_DOMAIN: regalmoose.ca
       STORE_NAME: Regal Moose
