@@ -5,6 +5,15 @@ All notable changes to the BSIM Banking Simulator project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.9] - 2026-01-14
+
+### Added
+- **ContractSim Integration Environment Variables** - Added configuration for escrow API authentication
+  - `CONTRACTSIM_API_KEY` - API key for ContractSim to authenticate with BSIM's escrow API
+  - `CONTRACTSIM_WEBHOOK_URL` - URL for BSIM to notify ContractSim of escrow events
+  - `CONTRACTSIM_WEBHOOK_SECRET` - Secret for webhook signature verification
+  - File modified: `docker-compose.yml` (backend service environment)
+
 ## [0.7.8] - 2026-01-07
 
 ### Changed

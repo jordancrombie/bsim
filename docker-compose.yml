@@ -49,6 +49,10 @@ services:
       WSIM_AUTH_URL: https://wsim-auth.banksim.ca
       # TransferSim P2P Integration
       TRANSFERSIM_API_KEY: ${TRANSFERSIM_API_KEY:-}
+      # ContractSim Integration (escrow API authentication)
+      CONTRACTSIM_API_KEY: ${CONTRACTSIM_API_KEY:-80db551f4f8df36df2266fead0cff9da8637ddc44e17bccbb61bbc556b38f3d5}
+      CONTRACTSIM_WEBHOOK_URL: ${CONTRACTSIM_WEBHOOK_URL:-https://contract.banksim.ca/webhooks/bsim}
+      CONTRACTSIM_WEBHOOK_SECRET: ${CONTRACTSIM_WEBHOOK_SECRET:-}
     volumes:
       - uploads_data:/app/uploads
     # No exposed ports - nginx will proxy to backend:3001

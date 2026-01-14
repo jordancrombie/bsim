@@ -93,6 +93,10 @@ services:
       APNS_PRODUCTION: "false"
       # TransferSim webhook secret for signature verification (must match TransferSim's WSIM_WEBHOOK_SECRET)
       TRANSFERSIM_WEBHOOK_SECRET: ac63f4cbe9f717bbcde7d84f62fa0429d23da1045c979a5cb12d5cf6996eed76
+      # ContractSim integration (escrow/contracts)
+      CONTRACTSIM_API_URL: http://contractsim-dev:3020
+      CONTRACTSIM_API_KEY: wsim-contractsim-dev-key-2026
+      CONTRACTSIM_WEBHOOK_SECRET: wsim-contractsim-webhook-secret-2026
     volumes:
       - ./certs/apns/AuthKey_28BT962RB9.p8:/app/certs/AuthKey.p8:ro
 
