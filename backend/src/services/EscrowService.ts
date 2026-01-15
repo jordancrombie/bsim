@@ -34,13 +34,14 @@ export interface EscrowHoldResponse {
 }
 
 export interface EscrowWebhookPayload {
-  eventId: string;
-  eventType: 'escrow.held' | 'escrow.expired';
+  event_id: string;
+  event_type: 'escrow.held' | 'escrow.expired';
   timestamp: string;
   data: {
-    escrowId: string;
-    contractId: string;
-    userId: string;
+    escrow_id: string;
+    contract_id: string;
+    user_id: string;
+    wallet_id: string;
     amount?: number;
   };
 }
@@ -133,9 +134,10 @@ export class EscrowService {
 
     // Send webhook to ContractSim
     await this.sendWebhook('escrow.held', {
-      escrowId: escrowHold.id,
-      contractId,
-      userId,
+      escrow_id: escrowHold.id,
+      contract_id: contractId,
+      user_id: userId,
+      wallet_id: accountId,
       amount,
     });
 
@@ -386,9 +388,10 @@ export class EscrowService {
 
         // Send webhook to ContractSim
         await this.sendWebhook('escrow.expired', {
-          escrowId: escrow.id,
-          contractId: escrow.contractId,
-          userId: escrow.userId,
+          escrow_id: escrow.id,
+          contract_id: escrow.contractId,
+          user_id: escrow.userId,
+          wallet_id: escrow.accountId,
         });
 
         processedCount++;
@@ -412,8 +415,8 @@ export class EscrowService {
     }
 
     const payload: EscrowWebhookPayload = {
-      eventId: `evt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      eventType,
+      event_id: `evt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      event_type: eventType,
       timestamp: new Date().toISOString(),
       data,
     };
