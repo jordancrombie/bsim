@@ -20,6 +20,7 @@ export class EscrowController {
       const {
         user_id,
         account_id,
+        wallet_id,
         amount,
         currency,
         contract_id,
@@ -45,6 +46,7 @@ export class EscrowController {
       const result = await this.escrowService.createHold({
         userId: user_id,
         accountId: account_id,
+        walletId: wallet_id,
         amount,
         currency,
         contractId: contract_id,

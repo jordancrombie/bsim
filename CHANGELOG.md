@@ -5,6 +5,15 @@ All notable changes to the BSIM Banking Simulator project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.11] - 2026-01-15
+
+### Fixed
+- **Escrow Webhook wallet_id Mismatch** - Fixed webhook to return the original `wallet_id` from ContractSim
+  - Added `wallet_id` column to `escrow_holds` table to store ContractSim's wallet ID
+  - Webhook now returns the stored `wallet_id` instead of BSIM's `account_id`
+  - Files modified: `backend/prisma/schema.prisma`, `backend/src/services/EscrowService.ts`, `backend/src/controllers/escrowController.ts`
+  - Migration: `20260115_add_escrow_wallet_id`
+
 ## [0.7.10] - 2026-01-15
 
 ### Fixed
