@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 export interface CreateEscrowHoldRequest {
   userId: string;
   accountId: string;
+  walletId?: string; // External wallet ID from ContractSim
   amount: number;
   currency?: string;
   contractId: string;
@@ -56,6 +57,7 @@ export class EscrowService {
     const {
       userId,
       accountId,
+      walletId,
       amount,
       currency = 'CAD',
       contractId,
@@ -106,6 +108,7 @@ export class EscrowService {
       data: {
         userId,
         accountId,
+        walletId,
         contractId,
         contractService,
         amount,
@@ -137,7 +140,7 @@ export class EscrowService {
       escrow_id: escrowHold.id,
       contract_id: contractId,
       user_id: userId,
-      wallet_id: accountId,
+      wallet_id: walletId || accountId, // Use walletId if provided, else fallback to accountId
       amount,
     });
 
@@ -391,7 +394,7 @@ export class EscrowService {
           escrow_id: escrow.id,
           contract_id: escrow.contractId,
           user_id: escrow.userId,
-          wallet_id: escrow.accountId,
+          wallet_id: escrow.walletId || escrow.accountId,
         });
 
         processedCount++;

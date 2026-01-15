@@ -510,6 +510,7 @@ model EscrowHold {
   id        String  @id @default(uuid())
   userId    String
   accountId String
+  walletId  String? @map("wallet_id") // External wallet ID from ContractSim
   account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   // Contract reference (from ContractSim)
