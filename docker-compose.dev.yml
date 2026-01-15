@@ -14,6 +14,7 @@
 #   127.0.0.1 wsim-dev.banksim.ca
 #   127.0.0.1 wsim-auth-dev.banksim.ca
 #   127.0.0.1 transfersim-dev.banksim.ca
+#   127.0.0.1 contract-dev.banksim.ca
 
 services:
   # Backend API - dev domain configuration
@@ -27,6 +28,10 @@ services:
       WSIM_AUTH_URL: https://wsim-auth-dev.banksim.ca
       # TransferSim P2P Integration
       TRANSFERSIM_API_KEY: transfersim-dev-api-key-2024
+      # ContractSim Escrow Integration
+      CONTRACTSIM_API_KEY: 99c33341e8817841833a6140027b83542f81e5d509b55d03d2fe7a2be212e72a
+      CONTRACTSIM_WEBHOOK_URL: https://contract-dev.banksim.ca/webhooks/bsim
+      CONTRACTSIM_WEBHOOK_SECRET: 831b2e41c25cd9f87f80f2b9f186cc9a8d349a9a2690aac0d6d4b5ab636e458a
 
   # Frontend - dev domain configuration
   frontend:
@@ -88,6 +93,10 @@ services:
       APNS_PRODUCTION: "false"
       # TransferSim webhook secret for signature verification (must match TransferSim's WSIM_WEBHOOK_SECRET)
       TRANSFERSIM_WEBHOOK_SECRET: ac63f4cbe9f717bbcde7d84f62fa0429d23da1045c979a5cb12d5cf6996eed76
+      # ContractSim integration (escrow/contracts)
+      CONTRACTSIM_API_URL: http://contractsim-dev:3020
+      CONTRACTSIM_API_KEY: wsim-contractsim-dev-key-2026
+      CONTRACTSIM_WEBHOOK_SECRET: wsim-contractsim-webhook-secret-2026
     volumes:
       - ./certs/apns/AuthKey_28BT962RB9.p8:/app/certs/AuthKey.p8:ro
 
