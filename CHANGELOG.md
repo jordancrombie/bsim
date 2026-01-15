@@ -5,6 +5,14 @@ All notable changes to the BSIM Banking Simulator project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.10] - 2026-01-15
+
+### Fixed
+- **ContractSim Webhook Payload Format** - Fixed escrow webhook to match ContractSim's documented spec
+  - Changed payload fields from camelCase to snake_case (`event_type`, `escrow_id`, `contract_id`, `user_id`)
+  - Added missing `wallet_id` field (mapped from `accountId`)
+  - File modified: `backend/src/services/EscrowService.ts`
+
 ## [0.7.9] - 2026-01-14
 
 ### Added
