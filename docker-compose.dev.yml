@@ -175,6 +175,10 @@ services:
       # WSIM webhook for push notifications (v0.3.0)
       WSIM_WEBHOOK_URL: http://wsim-backend:3003/api/webhooks/transfersim
       WSIM_WEBHOOK_SECRET: ac63f4cbe9f717bbcde7d84f62fa0429d23da1045c979a5cb12d5cf6996eed76
+      # ContractSim integration (settlements)
+      CONTRACTSIM_API_KEY: transfersim-contractsim-dev-key-2026
+      CONTRACTSIM_WEBHOOK_URL: http://contractsim-dev:3020/webhooks/transfersim
+      CONTRACTSIM_WEBHOOK_SECRET: contractsim-transfersim-webhook-secret-dev-2026
 
   # Nginx - use dev configuration
   nginx:
