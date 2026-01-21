@@ -7,6 +7,17 @@
 
 export type PaymentAuthorizationStatus = 'approved' | 'declined' | 'error';
 
+/**
+ * Agent context forwarded from NSIM for AI agent transactions (SACP)
+ * Present when a transaction is initiated by an AI agent on behalf of a user.
+ */
+export interface AgentContext {
+  agentId: string;      // Agent identifier (e.g., "agent_abc123")
+  ownerId: string;      // WSIM user ID who owns the agent (UUID)
+  humanPresent: boolean; // Whether human was present during transaction
+  mandateType?: 'intent' | 'cart' | 'payment'; // Type of authorization mandate
+}
+
 export interface PaymentAuthorizationRequest {
   cardToken: string;
   amount: number;
@@ -15,6 +26,8 @@ export interface PaymentAuthorizationRequest {
   merchantName: string;
   orderId: string;
   description?: string;
+  // SACP: Agent context forwarded from NSIM
+  agentContext?: AgentContext;
 }
 
 export interface PaymentAuthorizationResponse {
@@ -69,4 +82,6 @@ export interface PaymentAuthorization {
   createdAt: Date;
   expiresAt: Date;
   capturedAmount: number;
+  // SACP: Agent context for AI agent transactions
+  agentContext?: AgentContext;
 }

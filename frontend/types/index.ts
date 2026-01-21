@@ -166,6 +166,10 @@ export interface CreditCardTransaction {
   merchantName?: string;
   merchantId?: string;
   mccCode?: string;
+  // Agent context (SACP - SimToolBox Agent Commerce Protocol)
+  agentId?: string;
+  agentOwnerId?: string;
+  agentHumanPresent?: boolean;
   // Transaction timing
   transactionDate: string;
   creditCardId: string;

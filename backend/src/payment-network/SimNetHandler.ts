@@ -216,6 +216,10 @@ export class SimNetHandler implements IPaymentNetworkHandler {
           orderId: request.orderId,
           status: 'PENDING',
           expiresAt,
+          // SACP: Store agent context if present
+          agentId: request.agentContext?.agentId,
+          agentOwnerId: request.agentContext?.ownerId,
+          agentHumanPresent: request.agentContext?.humanPresent,
         },
       });
 
@@ -298,6 +302,10 @@ export class SimNetHandler implements IPaymentNetworkHandler {
             merchantName: auth.merchantName,
             merchantId: auth.merchantId,
             creditCardId: creditCard.id,
+            // SACP: Copy agent context from authorization
+            agentId: auth.agentId,
+            agentOwnerId: auth.agentOwnerId,
+            agentHumanPresent: auth.agentHumanPresent,
           },
         });
       }
@@ -387,6 +395,10 @@ export class SimNetHandler implements IPaymentNetworkHandler {
             merchantName: auth.merchantName,
             merchantId: auth.merchantId,
             creditCardId: creditCard.id,
+            // SACP: Copy agent context from authorization
+            agentId: auth.agentId,
+            agentOwnerId: auth.agentOwnerId,
+            agentHumanPresent: auth.agentHumanPresent,
           },
         });
       }
