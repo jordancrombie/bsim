@@ -293,11 +293,29 @@ export default function CreditCardDetailPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <p className="font-medium text-gray-900">
-                          {txn.merchantName || txn.description || txn.type}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-gray-900">
+                            {txn.merchantName || txn.description || txn.type}
+                          </p>
+                          {/* SACP: Agent badge for AI-initiated transactions */}
+                          {txn.agentId && (
+                            <span
+                              className="inline-flex items-center gap-1 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full"
+                              title={`AI Agent Transaction\nAgent: ${txn.agentId}\n${txn.agentHumanPresent ? 'Human present' : 'Autonomous'}`}
+                            >
+                              <span>🤖</span>
+                              <span>Agent</span>
+                            </span>
+                          )}
+                        </div>
                         {txn.merchantName && txn.description && (
                           <p className="text-sm text-gray-500">{txn.description}</p>
+                        )}
+                        {/* Agent context details */}
+                        {txn.agentId && (
+                          <p className="text-xs text-purple-500 mt-0.5">
+                            Via {txn.agentId}{!txn.agentHumanPresent && ' (autonomous)'}
+                          </p>
                         )}
                         <div className="flex items-center gap-2 mt-1">
                           <p className="text-xs text-gray-400">

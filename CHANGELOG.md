@@ -5,6 +5,34 @@ All notable changes to the BSIM Banking Simulator project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-01-21
+
+### Added
+- **SACP Agent Context Support (Prep Work)** - Database schema and backend changes for SimToolBox Agent Commerce Protocol
+  - Added `agent_id`, `agent_owner_id`, `agent_human_present` columns to `credit_card_transactions` table
+  - Added same agent context columns to `payment_authorizations` table for propagation during capture
+  - Added `idx_card_tx_agent` index for efficient agent transaction filtering
+  - Added `AgentContext` interface to payment network types
+  - Extended `PaymentAuthorizationRequest` to accept `agentContext` from NSIM
+  - SimNetHandler now stores agent context during authorize and propagates to transactions during capture/refund
+  - Files modified:
+    - `backend/prisma/schema.prisma` (CreditCardTransaction, PaymentAuthorization models)
+    - `backend/src/payment-network/types.ts` (AgentContext interface)
+    - `backend/src/payment-network/SimNetHandler.ts` (authorize, capture, refund methods)
+
+- **Agent Badge UI Component** - Transaction history UI updates for agent transaction visibility
+  - Added purple 🤖 Agent badge for agent-initiated transactions
+  - Shows agent ID and "(autonomous)" label when human not present
+  - Tooltip displays full agent context on hover
+  - Files modified:
+    - `frontend/types/index.ts` (CreditCardTransaction interface)
+    - `frontend/app/dashboard/credit-cards/[cardNumber]/page.tsx` (transaction history component)
+
+### Notes
+- Database migration required: `npx prisma migrate dev --name add_agent_context`
+- Part of SACP (SimToolBox Agent Commerce Protocol) initiative
+- BSIM is ready to receive agent context from NSIM once NSIM integration is deployed
+
 ## [0.7.12] - 2026-01-17
 
 ### Fixed

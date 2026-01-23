@@ -111,12 +111,17 @@ model CreditCardTransaction {
   merchantName    String?
   merchantId      String? // Merchant identifier
   mccCode         String? // Merchant Category Code (e.g., "5411" for grocery stores)
+  // Agent context (SACP - SimToolBox Agent Commerce Protocol)
+  agentId         String?                   @map("agent_id")
+  agentOwnerId    String?                   @map("agent_owner_id")
+  agentHumanPresent Boolean?                @map("agent_human_present")
   // Transaction timing
   transactionDate DateTime                  @default(now()) @map("transaction_date")
   creditCardId    String
   creditCard      CreditCard                @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
   createdAt       DateTime                  @default(now())
 
+  @@index([agentId], name: "idx_card_tx_agent")
   @@map("credit_card_transactions")
 }
 
@@ -380,6 +385,10 @@ model PaymentAuthorization {
   status            PaymentAuthorizationStatus @default(PENDING)
   capturedAmount    Decimal                    @default(0) @db.Decimal(15, 2)
   declineReason     String?
+  // Agent context (SACP - SimToolBox Agent Commerce Protocol)
+  agentId           String?                    @map("agent_id")
+  agentOwnerId      String?                    @map("agent_owner_id")
+  agentHumanPresent Boolean?                   @map("agent_human_present")
   expiresAt         DateTime
   createdAt         DateTime                   @default(now())
   updatedAt         DateTime                   @updatedAt
