@@ -38,7 +38,7 @@ export function createPaymentNetworkRoutes(prisma: PrismaClient): Router {
    */
   router.post('/authorize', async (req: Request, res: Response) => {
     try {
-      const { cardToken, amount, currency, merchantId, merchantName, orderId, description } = req.body;
+      const { cardToken, amount, currency, merchantId, merchantName, orderId, description, agentContext } = req.body;
 
       // Validate required fields
       if (!cardToken || !amount || !merchantId || !orderId) {
@@ -53,6 +53,7 @@ export function createPaymentNetworkRoutes(prisma: PrismaClient): Router {
         orderId,
         amount,
         cardToken: cardToken.substring(0, 10) + '...',
+        agentContext: agentContext ? { agentId: agentContext.agentId, humanPresent: agentContext.humanPresent } : undefined,
       });
 
       const result = await handler.authorize({
@@ -63,6 +64,7 @@ export function createPaymentNetworkRoutes(prisma: PrismaClient): Router {
         merchantName: merchantName || merchantId,
         orderId,
         description,
+        agentContext,
       });
 
       console.log(`[PaymentNetwork] Authorization result:`, {
