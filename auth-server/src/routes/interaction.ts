@@ -11,9 +11,42 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
   // Helper to get interaction details
   const getInteractionDetails = async (req: Request, res: Response) => {
     try {
+      // Log incoming request details for debugging session issues
+      const uid = req.params.uid;
+      const interactionCookie = req.cookies?._interaction;
+      const interactionResumeCookie = req.cookies?._interaction_resume;
+
+      console.log('[Interaction] getInteractionDetails called:', {
+        uid,
+        hasInteractionCookie: !!interactionCookie,
+        interactionCookieValue: interactionCookie ? interactionCookie.substring(0, 20) + '...' : null,
+        hasResumeCookie: !!interactionResumeCookie,
+        resumeCookieValue: interactionResumeCookie ? interactionResumeCookie.substring(0, 20) + '...' : null,
+        cookieHeader: req.headers.cookie ? req.headers.cookie.substring(0, 100) + '...' : 'NONE',
+        referer: req.headers.referer || 'NONE',
+        userAgent: req.headers['user-agent']?.substring(0, 50) || 'NONE',
+      });
+
       const details = await provider.interactionDetails(req, res);
+      console.log('[Interaction] interactionDetails SUCCESS:', {
+        uid: details.uid,
+        promptName: details.prompt?.name,
+        sessionExists: !!details.session,
+        sessionAccountId: details.session?.accountId || 'NONE',
+      });
       return details;
     } catch (err) {
+      // Log the actual error instead of silently returning null
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      const errorName = err instanceof Error ? err.name : 'Unknown';
+      console.error('[Interaction] interactionDetails FAILED:', {
+        uid: req.params.uid,
+        errorName,
+        errorMessage,
+        hasInteractionCookie: !!req.cookies?._interaction,
+        hasResumeCookie: !!req.cookies?._interaction_resume,
+        cookieHeader: req.headers.cookie ? req.headers.cookie.substring(0, 100) + '...' : 'NONE',
+      });
       return null;
     }
   };
@@ -38,9 +71,16 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
 
   // GET /interaction/:uid - Show login or consent page
   router.get('/:uid', async (req: Request, res: Response, next: NextFunction) => {
+    console.log('[Interaction] GET /:uid route hit:', {
+      uid: req.params.uid,
+      query: Object.keys(req.query),
+      origin: req.headers.origin || 'NONE',
+      referer: req.headers.referer || 'NONE',
+    });
     try {
       const details = await getInteractionDetails(req, res);
       if (!details) {
+        console.error('[Interaction] GET /:uid - No details found, returning 400');
         return res.status(400).send('Invalid interaction');
       }
 
@@ -165,9 +205,16 @@ export function createInteractionRoutes(provider: Provider, prisma: PrismaClient
 
   // POST /interaction/:uid/login - Handle login submission
   router.post('/:uid/login', async (req: Request, res: Response, next: NextFunction) => {
+    console.log('[Interaction] POST /:uid/login route hit:', {
+      uid: req.params.uid,
+      hasEmail: !!req.body?.email,
+      origin: req.headers.origin || 'NONE',
+      referer: req.headers.referer || 'NONE',
+    });
     try {
       const details = await getInteractionDetails(req, res);
       if (!details) {
+        console.error('[Interaction] POST /:uid/login - No details found, returning 400');
         return res.status(400).send('Invalid interaction');
       }
 

@@ -5,6 +5,22 @@ All notable changes to the BSIM Banking Simulator project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Auth Server 0.7.5] - 2026-01-24
+
+### Added
+- **Interaction Session Debugging Logs** - Added comprehensive logging to diagnose intermittent "interaction session not found" errors during WSIM enrollment
+  - `getInteractionDetails()` now logs: UID, cookie presence, cookie values, referer, user-agent
+  - Logs the actual oidc-provider error message on failure (previously silently swallowed)
+  - PrismaAdapter logs Interaction/Session upsert and find operations
+  - Route entry logging for GET/POST interaction endpoints
+  - Files modified:
+    - `auth-server/src/routes/interaction.ts` (getInteractionDetails helper, route handlers)
+    - `auth-server/src/adapters/prisma.ts` (upsert, find, findByUid methods)
+
+### Notes
+- This is a diagnostic release to capture data on the intermittent session lookup failures
+- Logs will show whether the issue is: missing cookies, race conditions, or session expiry
+
 ## [0.8.0] - 2026-01-21
 
 ### Added

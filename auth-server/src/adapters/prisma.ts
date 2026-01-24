@@ -30,6 +30,16 @@ export class PrismaAdapter implements Adapter {
   async upsert(id: string, payload: AdapterPayload, expiresIn: number): Promise<void> {
     const expiresAt = expiresIn ? new Date(Date.now() + expiresIn * 1000) : undefined;
 
+    // Log interaction/session creation for debugging
+    if (this.name === 'Interaction' || this.name === 'Session') {
+      console.log(`[PrismaAdapter] UPSERT ${this.name}:`, {
+        id: id.substring(0, 20) + '...',
+        uid: payload.uid?.substring(0, 20) || 'NONE',
+        expiresIn,
+        hasPrompt: !!(payload as any).prompt,
+      });
+    }
+
     await this.prisma.oidcPayload.upsert({
       where: { id: this.key(id) },
       update: {
@@ -49,16 +59,38 @@ export class PrismaAdapter implements Adapter {
         uid: payload.uid || null,
       },
     });
+
+    if (this.name === 'Interaction' || this.name === 'Session') {
+      console.log(`[PrismaAdapter] UPSERT ${this.name} COMPLETE:`, { id: id.substring(0, 20) + '...' });
+    }
   }
 
   async find(id: string): Promise<AdapterPayload | undefined> {
+    // Log interaction/session lookups for debugging
+    if (this.name === 'Interaction' || this.name === 'Session') {
+      console.log(`[PrismaAdapter] FIND ${this.name}:`, { id: id.substring(0, 20) + '...' });
+    }
+
     const record = await this.prisma.oidcPayload.findUnique({
       where: { id: this.key(id) },
     });
 
-    if (!record) return undefined;
-    if (record.expiresAt && record.expiresAt < new Date()) return undefined;
+    if (!record) {
+      if (this.name === 'Interaction' || this.name === 'Session') {
+        console.log(`[PrismaAdapter] FIND ${this.name} NOT FOUND:`, { id: id.substring(0, 20) + '...' });
+      }
+      return undefined;
+    }
+    if (record.expiresAt && record.expiresAt < new Date()) {
+      if (this.name === 'Interaction' || this.name === 'Session') {
+        console.log(`[PrismaAdapter] FIND ${this.name} EXPIRED:`, { id: id.substring(0, 20) + '...', expiresAt: record.expiresAt });
+      }
+      return undefined;
+    }
 
+    if (this.name === 'Interaction' || this.name === 'Session') {
+      console.log(`[PrismaAdapter] FIND ${this.name} SUCCESS:`, { id: id.substring(0, 20) + '...' });
+    }
     return record.payload as AdapterPayload;
   }
 
@@ -77,6 +109,11 @@ export class PrismaAdapter implements Adapter {
   }
 
   async findByUid(uid: string): Promise<AdapterPayload | undefined> {
+    // Log interaction/session lookups for debugging
+    if (this.name === 'Interaction' || this.name === 'Session') {
+      console.log(`[PrismaAdapter] FIND BY UID ${this.name}:`, { uid: uid.substring(0, 20) + '...' });
+    }
+
     const record = await this.prisma.oidcPayload.findFirst({
       where: {
         uid,
@@ -84,9 +121,22 @@ export class PrismaAdapter implements Adapter {
       },
     });
 
-    if (!record) return undefined;
-    if (record.expiresAt && record.expiresAt < new Date()) return undefined;
+    if (!record) {
+      if (this.name === 'Interaction' || this.name === 'Session') {
+        console.log(`[PrismaAdapter] FIND BY UID ${this.name} NOT FOUND:`, { uid: uid.substring(0, 20) + '...' });
+      }
+      return undefined;
+    }
+    if (record.expiresAt && record.expiresAt < new Date()) {
+      if (this.name === 'Interaction' || this.name === 'Session') {
+        console.log(`[PrismaAdapter] FIND BY UID ${this.name} EXPIRED:`, { uid: uid.substring(0, 20) + '...', expiresAt: record.expiresAt });
+      }
+      return undefined;
+    }
 
+    if (this.name === 'Interaction' || this.name === 'Session') {
+      console.log(`[PrismaAdapter] FIND BY UID ${this.name} SUCCESS:`, { uid: uid.substring(0, 20) + '...' });
+    }
     return record.payload as AdapterPayload;
   }
 
