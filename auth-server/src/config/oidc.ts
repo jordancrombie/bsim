@@ -176,6 +176,24 @@ export function createOidcProvider(prisma: PrismaClient): Provider {
       return shouldIssue;
     },
 
+    // CRITICAL: Control whether refresh tokens expire when the session ends
+    // For wallet enrollments, tokens must persist independently of browser sessions
+    // Otherwise, any new OAuth flow (re-enroll, add bank, etc.) would revoke existing tokens
+    async expiresWithSession(ctx, token) {
+      // Wallet enrollments need long-lived tokens that survive session changes
+      // When a user starts a new OAuth flow, oidc-provider may call endSession,
+      // which triggers revokeByGrantId - this would delete RefreshTokens if expiresWithSession=true
+      const isWalletEnrollment = token.scopes?.has('wallet:enroll');
+
+      if (isWalletEnrollment) {
+        console.log('[OIDC] expiresWithSession: FALSE for wallet:enroll (tokens persist across sessions)');
+        return false;
+      }
+
+      // Default: refresh tokens expire when session ends (standard OIDC behavior)
+      return true;
+    },
+
     // Cookies
     cookies: {
       keys: config.oidc.cookieKeys,

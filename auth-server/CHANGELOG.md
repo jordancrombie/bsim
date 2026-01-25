@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.7.9] - 2026-01-25
+
+### Fixed
+- **CRITICAL:** Fixed wallet enrollments losing OAuth tokens when user starts new OAuth flow
+  - Root cause: RefreshTokens created with `expiresWithSession: true` (oidc-provider default)
+  - When user starts new OAuth flow → endSession called → Grant revoked → RefreshTokens deleted
+  - Symptom: WSIM returns "invalid_grant" / "refresh token not found", requiring re-enrollment
+  - Fix: Added `expiresWithSession` hook that returns `false` for `wallet:enroll` scope
+  - Wallet RefreshTokens now persist independently of browser sessions
+  - File modified: `src/config/oidc.ts`
+
+### Impact
+- All existing wallet enrollments are already broken (tokens already deleted)
+- Users will need to re-enroll once, then tokens will persist correctly
+- New enrollments after this fix will survive session changes
+
 ## [0.7.8] - 2026-01-24
 
 ### Fixed
