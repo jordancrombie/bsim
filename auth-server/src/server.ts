@@ -92,6 +92,31 @@ oidc.on('authorization.error', (ctx, err) => {
   console.error('[OIDC Authorization Error] Request redirect_uri:', ctx.oidc?.params?.redirect_uri);
 });
 
+// Interaction lifecycle events for debugging
+oidc.on('interaction.started', (ctx, interaction) => {
+  console.log('[OIDC] interaction.started:', {
+    uid: interaction.uid?.substring(0, 20) + '...',
+    prompt: interaction.prompt?.name,
+  });
+});
+
+oidc.on('interaction.ended', (ctx) => {
+  console.log('[OIDC] interaction.ended:', {
+    uid: ctx.oidc?.uid?.substring(0, 20) + '...',
+  });
+});
+
+oidc.on('authorization.accepted', (ctx) => {
+  console.log('[OIDC] authorization.accepted:', {
+    uid: ctx.oidc?.uid?.substring(0, 20) + '...',
+    clientId: ctx.oidc?.client?.clientId,
+  });
+});
+
+oidc.on('authorization.success', (ctx) => {
+  console.log('[OIDC] authorization.success - code issued');
+});
+
 // Interaction routes (login/consent UI)
 app.use('/interaction', createInteractionRoutes(oidc, prisma));
 

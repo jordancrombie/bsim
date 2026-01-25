@@ -68,7 +68,10 @@ export class PrismaAdapter implements Adapter {
   async find(id: string): Promise<AdapterPayload | undefined> {
     // Log interaction/session lookups for debugging
     if (this.name === 'Interaction' || this.name === 'Session') {
-      console.log(`[PrismaAdapter] FIND ${this.name}:`, { id: id.substring(0, 20) + '...' });
+      console.log(`[PrismaAdapter] FIND ${this.name}:`, {
+        id: id.substring(0, 20) + '...',
+        dbKey: this.key(id).substring(0, 30) + '...',
+      });
     }
 
     const record = await this.prisma.oidcPayload.findUnique({
@@ -77,7 +80,20 @@ export class PrismaAdapter implements Adapter {
 
     if (!record) {
       if (this.name === 'Interaction' || this.name === 'Session') {
-        console.log(`[PrismaAdapter] FIND ${this.name} NOT FOUND:`, { id: id.substring(0, 20) + '...' });
+        console.log(`[PrismaAdapter] FIND ${this.name} NOT FOUND:`, {
+          id: id.substring(0, 20) + '...',
+          dbKey: this.key(id),
+        });
+        // List all interactions in the database for debugging
+        const allInteractions = await this.prisma.oidcPayload.findMany({
+          where: { type: this.name },
+          select: { id: true, expiresAt: true, createdAt: true },
+          take: 10,
+        });
+        console.log(`[PrismaAdapter] All ${this.name} records in DB:`, allInteractions.map(i => ({
+          id: i.id.substring(0, 30) + '...',
+          expiresAt: i.expiresAt?.toISOString(),
+        })));
       }
       return undefined;
     }
@@ -148,10 +164,20 @@ export class PrismaAdapter implements Adapter {
   }
 
   async destroy(id: string): Promise<void> {
+    // Log all destroy calls for debugging - this helps identify why interactions disappear
+    if (this.name === 'Interaction' || this.name === 'Session') {
+      console.log(`[PrismaAdapter] DESTROY ${this.name}:`, { id: id.substring(0, 20) + '...' });
+      // Log call stack to identify who called destroy
+      console.log(`[PrismaAdapter] DESTROY ${this.name} called from:`, new Error().stack?.split('\n').slice(2, 6).join('\n'));
+    }
+
     await this.prisma.oidcPayload.delete({
       where: { id: this.key(id) },
     }).catch(() => {
       // Ignore if not found
+      if (this.name === 'Interaction' || this.name === 'Session') {
+        console.log(`[PrismaAdapter] DESTROY ${this.name} - record not found (already deleted or never existed)`);
+      }
     });
   }
 
