@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.7.7] - 2026-01-24
+
+### Added
+- Added `revokeByGrantId` logging with stack trace to identify what's deleting interactions
+- Added `grantId` logging to upsert operations
+
+### Investigation
+- Confirmed session destroy via `endSession` correlates with interaction deletion
+- Suspecting `revokeByGrantId` is cascade-deleting interactions when session is destroyed
+
 ## [0.7.6] - 2026-01-24
 
 ### Added

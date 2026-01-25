@@ -35,6 +35,7 @@ export class PrismaAdapter implements Adapter {
       console.log(`[PrismaAdapter] UPSERT ${this.name}:`, {
         id: id.substring(0, 20) + '...',
         uid: payload.uid?.substring(0, 20) || 'NONE',
+        grantId: payload.grantId?.substring(0, 20) || 'NONE',
         expiresIn,
         hasPrompt: !!(payload as any).prompt,
       });
@@ -182,6 +183,18 @@ export class PrismaAdapter implements Adapter {
   }
 
   async revokeByGrantId(grantId: string): Promise<void> {
+    // Log what will be deleted - this might be wiping interactions!
+    const toDelete = await this.prisma.oidcPayload.findMany({
+      where: { grantId },
+      select: { id: true, type: true },
+    });
+    console.log(`[PrismaAdapter] REVOKE BY GRANT ID:`, {
+      grantId: grantId?.substring(0, 20) + '...',
+      recordsToDelete: toDelete.length,
+      types: toDelete.map(r => `${r.type}:${r.id.substring(0, 20)}`),
+    });
+    console.log(`[PrismaAdapter] REVOKE BY GRANT ID called from:`, new Error().stack?.split('\n').slice(2, 6).join('\n'));
+
     await this.prisma.oidcPayload.deleteMany({
       where: { grantId },
     });
