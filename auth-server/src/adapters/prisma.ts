@@ -183,7 +183,7 @@ export class PrismaAdapter implements Adapter {
   }
 
   async revokeByGrantId(grantId: string): Promise<void> {
-    // Log what will be deleted - this might be wiping interactions!
+    // Log what will be deleted
     const toDelete = await this.prisma.oidcPayload.findMany({
       where: { grantId },
       select: { id: true, type: true },
@@ -193,10 +193,22 @@ export class PrismaAdapter implements Adapter {
       recordsToDelete: toDelete.length,
       types: toDelete.map(r => `${r.type}:${r.id.substring(0, 20)}`),
     });
-    console.log(`[PrismaAdapter] REVOKE BY GRANT ID called from:`, new Error().stack?.split('\n').slice(2, 6).join('\n'));
+
+    // FIX: Exclude Interactions from revocation!
+    // When a user logs in as a different user, endSession revokes the old grant.
+    // But new interactions get assigned the old grant's grantId (oidc-provider behavior),
+    // causing them to be deleted when the grant is revoked.
+    // Interactions should be ephemeral and expire naturally, not be revoked by grantId.
+    const interactionsToKeep = toDelete.filter(r => r.type === 'Interaction');
+    if (interactionsToKeep.length > 0) {
+      console.log(`[PrismaAdapter] REVOKE BY GRANT ID: Preserving ${interactionsToKeep.length} Interaction(s) from deletion`);
+    }
 
     await this.prisma.oidcPayload.deleteMany({
-      where: { grantId },
+      where: {
+        grantId,
+        type: { not: 'Interaction' },  // Don't delete Interactions!
+      },
     });
   }
 

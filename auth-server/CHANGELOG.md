@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.7.8] - 2026-01-24
+
+### Fixed
+- **CRITICAL:** Fixed "interaction session not found" error when switching users
+  - Root cause: New interactions inherited grantId from existing session
+  - When endSession revoked the old grant, it also deleted the new interaction
+  - Fix: Exclude Interaction type from `revokeByGrantId` deletion
+  - Interactions now expire naturally via TTL instead of being revoked
+
 ## [0.7.7] - 2026-01-24
 
 ### Added
